@@ -273,13 +273,19 @@ export default function CheckoutPage() {
         return
       }
 
-      // Validar dirección según el tipo de usuario
-      if (user && userAddresses.length > 0) {
-        if (!selectedAddressId) {
-          error("Dirección requerida", "Por favor selecciona una dirección de entrega")
-          return
+      // Validar dirección - unificado para usuarios logueados e invitados
+      let finalAddress = formData.address
+      let addressData = null
+      
+      if (user && userAddresses.length > 0 && selectedAddressId) {
+        // Usuario logueado con direcciones guardadas
+        const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
+        if (selectedAddress) {
+          addressData = selectedAddress
+          finalAddress = `${selectedAddress.calle} ${selectedAddress.numero}, ${selectedAddress.ciudad}, ${selectedAddress.provincia}`
         }
-      } else if (!formData.address) {
+      } else if (!finalAddress) {
+        // Usuario invitado o logueado sin direcciones guardadas
         error("Dirección requerida", "Por favor ingresa tu dirección de entrega")
         return
       }
@@ -289,19 +295,7 @@ export default function CheckoutPage() {
         return
       }
 
-      // Obtener la dirección seleccionada si el usuario está logueado
-      let finalAddress = formData.address
-      let selectedAddressData = null
-      
-      if (user && userAddresses.length > 0 && selectedAddressId) {
-        const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
-        if (selectedAddress) {
-          selectedAddressData = selectedAddress
-          finalAddress = `${selectedAddress.calle} ${selectedAddress.numero}, ${selectedAddress.ciudad}, ${selectedAddress.provincia}`
-        }
-      }
-
-      // Preparar datos para la API
+      // Preparar datos para la API - unificado
       const paymentData = {
         items: items.map((item) => {
           if (!item.price || item.price <= 0) {
@@ -325,9 +319,9 @@ export default function CheckoutPage() {
         deliverySlot: deliveryOption === "delivery" ? selectedDeliverySlot : undefined,
         comments: formData.comments,
         isUserLoggedIn: !!user,
-        userId: user?.uid,
-        selectedAddressId: selectedAddressId || null,
-        selectedAddressData: selectedAddressData,
+        userId: user?.uid || null,
+        addressData: addressData, // Datos completos de la dirección (si existe)
+        addressId: selectedAddressId || null, // ID de la dirección (si existe)
       }
 
       console.log("📦 Datos del pago:", paymentData)
@@ -370,16 +364,21 @@ export default function CheckoutPage() {
   const handleOtherPaymentMethods = async () => {
     setIsSubmitting(true)
     try {
-      // Obtener la dirección final (misma lógica que MercadoPago)
+      // Obtener la dirección final - misma lógica que MercadoPago
       let finalAddress = formData.address
-      let selectedAddressData = null
+      let addressData = null
       
       if (user && userAddresses.length > 0 && selectedAddressId) {
+        // Usuario logueado con direcciones guardadas
         const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
         if (selectedAddress) {
-          selectedAddressData = selectedAddress
+          addressData = selectedAddress
           finalAddress = `${selectedAddress.calle} ${selectedAddress.numero}, ${selectedAddress.ciudad}, ${selectedAddress.provincia}`
         }
+      } else if (!finalAddress) {
+        // Usuario invitado o logueado sin direcciones guardadas
+        error("Dirección requerida", "Por favor ingresa tu dirección de entrega")
+        return
       }
 
       // Usar el mismo formato de datos que MercadoPago
@@ -403,8 +402,8 @@ export default function CheckoutPage() {
         })),
         // Campos adicionales para mantener consistencia
         isUserLoggedIn: !!user,
-        selectedAddressId: selectedAddressId || null,
-        selectedAddressData: selectedAddressData,
+        addressId: selectedAddressId || null,
+        addressData: addressData,
       }
 
       const newOrderId = await FirebaseService.addOrder(orderData)

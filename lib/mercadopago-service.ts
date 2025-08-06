@@ -37,9 +37,9 @@ export interface PaymentRequest {
   deliverySlot?: string
   comments?: string
   isUserLoggedIn: boolean
-  userId?: string
-  selectedAddressId?: string | null
-  selectedAddressData?: any
+  userId?: string | null
+  addressData?: any // Datos completos de la dirección (si existe)
+  addressId?: string | null // ID de la dirección (si existe)
 }
 
 export interface PaymentResponse {
@@ -204,8 +204,8 @@ export class MercadoPagoService {
         deliverySlot: data.deliverySlot,
         comments: data.comments,
         isUserLoggedIn: data.isUserLoggedIn,
-        selectedAddressId: data.selectedAddressId,
-        selectedAddressData: data.selectedAddressData
+        addressId: data.addressId || null,
+        addressData: data.addressData || null
       }
 
       await FirebaseService.addPendingPurchase(purchaseId, pendingPurchaseData)
@@ -291,8 +291,8 @@ export class MercadoPagoService {
               deliverySlot: pendingPurchaseData.deliverySlot,
               comments: pendingPurchaseData.comments,
               isUserLoggedIn: pendingPurchaseData.isUserLoggedIn,
-              selectedAddressId: pendingPurchaseData.selectedAddressId,
-              selectedAddressData: pendingPurchaseData.selectedAddressData
+              addressId: pendingPurchaseData.addressId || null,
+              addressData: pendingPurchaseData.addressData || null
             })
 
             // Eliminar la compra pendiente

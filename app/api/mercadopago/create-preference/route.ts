@@ -4,7 +4,7 @@ import { MercadoPagoService } from "@/lib/mercadopago-service"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { items, userData, deliveryOption, deliverySlot, comments, isUserLoggedIn, userId, selectedAddressId, selectedAddressData } = body
+    const { items, userData, deliveryOption, deliverySlot, comments, isUserLoggedIn, userId, addressId, addressData } = body
 
     // Validaciones básicas
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
       comments,
       isUserLoggedIn,
       userId,
-      selectedAddressId,
-      selectedAddressData
+      addressId,
+      addressData
     })
 
     return NextResponse.json({
