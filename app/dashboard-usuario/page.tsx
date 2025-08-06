@@ -26,6 +26,26 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
+interface Purchase {
+  id: string
+  buyerName: string
+  buyerEmail: string
+  buyerPhone: string
+  buyerAddress: string
+  products: Array<{
+    name: string
+    quantity: number
+    price: number
+    imageUrl?: string
+  }>
+  totalAmount: number
+  orderStatus: 'en_preparacion' | 'listo_para_entrega' | 'en_camino' | 'entregado' | 'cancelado'
+  createdAt: Date
+  deliveryOption: 'delivery' | 'pickup'
+  deliverySlot?: string
+  comments?: string
+}
+
 export default function DashboardUsuarioPage() {
   const { user, userData, logout, loading } = useAuth()
   const { success } = useToast()
@@ -40,33 +60,89 @@ export default function DashboardUsuarioPage() {
     direccionesGuardadas: 0
   })
 
+  // Últimos pedidos
+  const [lastPurchases, setLastPurchases] = useState<Purchase[]>([])
+
   // Cargar estadísticas del usuario
-  useEffect(() => {
-    const loadUserStats = async () => {
-      if (user?.uid) {
-        console.log(`📊 Dashboard: Cargando estadísticas para userId: ${user.uid}`)
-        try {
-          // Cargar pedidos del usuario
-          const pedidos = await FirebaseService.getPedidosByUser(user.uid)
-          const totalPedidos = pedidos.length
-          const pedidosPendientes = pedidos.filter(p => p.estado === 'pendiente' || p.estado === 'en_preparacion').length
+  const loadUserStats = async () => {
+    if (user?.uid) {
+      console.log(`📊 Dashboard: Cargando estadísticas para userId: ${user.uid}`)
+      try {
+        // Cargar pedidos del usuario (orders collection)
+        const pedidos = await FirebaseService.getPedidosByUser(user.uid)
+        const totalPedidos = pedidos.length
+        const pedidosPendientes = pedidos.filter(p => 
+          p.estado === 'pendiente' || p.estado === 'confirmado'
+        ).length
 
-          // Cargar direcciones del usuario
-          const direcciones = await FirebaseService.getDireccionesByUser(user.uid)
-          const direccionesGuardadas = direcciones.length
-          console.log(`📊 Dashboard: Direcciones encontradas: ${direccionesGuardadas}`)
+        // Cargar compras completadas (purchases collection)
+        const comprasCompletadas = await FirebaseService.getCompletedPurchasesByUser(user.uid)
+        const totalCompras = comprasCompletadas.length
+        const comprasPendientes = comprasCompletadas.filter(p => 
+          p.orderStatus === 'en_preparacion' || p.orderStatus === 'listo_para_entrega' || p.orderStatus === 'en_camino'
+        ).length
 
-          setStats({
-            totalPedidos,
-            pedidosPendientes,
-            direccionesGuardadas
-          })
-        } catch (error) {
-          console.error('Error cargando estadísticas:', error)
-        }
+        // Combinar estadísticas
+        const totalPedidosCombinados = totalPedidos + totalCompras
+        const totalPendientesCombinados = pedidosPendientes + comprasPendientes
+
+        // Cargar direcciones del usuario
+        const direcciones = await FirebaseService.getDireccionesByUser(user.uid)
+        const direccionesGuardadas = direcciones.length
+        console.log(`📊 Dashboard: Direcciones encontradas: ${direccionesGuardadas}`)
+
+        setStats({
+          totalPedidos: totalPedidosCombinados,
+          pedidosPendientes: totalPendientesCombinados,
+          direccionesGuardadas
+        })
+
+        // Establecer últimos pedidos (combinar orders y purchases)
+        const allPurchases = [
+          ...pedidos.map(p => ({
+            id: p.id || '',
+            buyerName: p.userName || '',
+            buyerEmail: p.userEmail || '',
+            buyerPhone: p.phone || '',
+            buyerAddress: p.address || '',
+            products: p.items || [],
+            totalAmount: p.totalAmount || 0,
+            orderStatus: p.estado || 'pendiente',
+            createdAt: p.fechaCreacion || new Date(),
+            deliveryOption: p.deliveryOption || 'delivery',
+            deliverySlot: p.deliverySlot || '',
+            comments: p.comments || ''
+          })),
+          ...comprasCompletadas.map(p => ({
+            id: p.id || '',
+            buyerName: p.buyerName || '',
+            buyerEmail: p.buyerEmail || '',
+            buyerPhone: p.buyerPhone || '',
+            buyerAddress: p.buyerAddress || '',
+            products: p.products || [],
+            totalAmount: p.totalAmount || 0,
+            orderStatus: p.orderStatus || 'en_preparacion',
+            createdAt: p.createdAt || new Date(),
+            deliveryOption: p.deliveryOption || 'delivery',
+            deliverySlot: p.deliverySlot || '',
+            comments: p.comments || ''
+          }))
+        ].sort((a, b) => {
+          // Manejar diferentes formatos de fecha
+          const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt)
+          const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt)
+          return dateB.getTime() - dateA.getTime()
+        })
+        .slice(0, 5) // Solo los últimos 5
+
+        setLastPurchases(allPurchases)
+      } catch (error) {
+        console.error('Error cargando estadísticas:', error)
       }
     }
+  }
 
+  useEffect(() => {
     loadUserStats()
   }, [user?.uid])
 
@@ -90,6 +166,106 @@ export default function DashboardUsuarioPage() {
       router.push("/")
     } catch (error) {
       console.error("Error al cerrar sesión:", error)
+    }
+  }
+
+  // Función para obtener el texto del estado
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'en_preparacion':
+        return 'En preparación'
+      case 'listo_para_entrega':
+        return 'Listo para entrega'
+      case 'en_camino':
+        return 'En camino'
+      case 'entregado':
+        return 'Entregado'
+      case 'cancelado':
+        return 'Cancelado'
+      case 'pendiente':
+        return 'Pendiente'
+      case 'confirmado':
+        return 'Confirmado'
+      case 'enviado':
+        return 'Enviado'
+      default:
+        return status
+    }
+  }
+
+  // Función para obtener el color del estado
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'en_preparacion':
+      case 'pendiente':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'listo_para_entrega':
+      case 'confirmado':
+        return 'bg-blue-100 text-blue-800'
+      case 'en_camino':
+      case 'enviado':
+        return 'bg-purple-100 text-purple-800'
+      case 'entregado':
+        return 'bg-green-100 text-green-800'
+      case 'cancelado':
+        return 'bg-red-100 text-red-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  // Función para formatear la fecha
+  const formatDate = (date: Date | string | any) => {
+    let dateObj: Date
+    
+    try {
+      // Si es un objeto Firestore Timestamp
+      if (date && typeof date === 'object' && date.toDate) {
+        dateObj = date.toDate()
+      }
+      // Si es un string
+      else if (typeof date === 'string') {
+        dateObj = new Date(date)
+      }
+      // Si ya es un objeto Date
+      else if (date instanceof Date) {
+        dateObj = date
+      }
+      // Si es un timestamp numérico
+      else if (typeof date === 'number') {
+        dateObj = new Date(date)
+      }
+      // Si es null, undefined o inválido
+      else {
+        return 'Fecha no disponible'
+      }
+
+      // Verificar si la fecha es válida
+      if (isNaN(dateObj.getTime())) {
+        return 'Fecha no disponible'
+      }
+
+      const now = new Date()
+      const diffTime = Math.abs(now.getTime() - dateObj.getTime())
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      
+      if (diffDays === 1) {
+        return 'Hace 1 día'
+      } else if (diffDays < 7) {
+        return `Hace ${diffDays} días`
+      } else if (diffDays < 30) {
+        const weeks = Math.floor(diffDays / 7)
+        return `Hace ${weeks} ${weeks === 1 ? 'semana' : 'semanas'}`
+      } else {
+        return dateObj.toLocaleDateString('es-ES', { 
+          day: 'numeric', 
+          month: 'long', 
+          year: 'numeric' 
+        })
+      }
+    } catch (error) {
+      console.error('Error formateando fecha:', error, date)
+      return 'Fecha no disponible'
     }
   }
 
@@ -162,8 +338,6 @@ export default function DashboardUsuarioPage() {
                 <p className="text-xs text-neutral-600">Guardadas</p>
               </CardContent>
             </Card>
-
-
           </div>
 
           {/* Quick Actions */}
@@ -208,25 +382,38 @@ export default function DashboardUsuarioPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">Ravioles de Osobuco</p>
-                      <p className="text-sm text-neutral-600">Hace 2 días</p>
+                  {lastPurchases.length > 0 ? (
+                    lastPurchases.map((purchase) => (
+                      <div key={purchase.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-medium">
+                            {purchase.products.length > 0 
+                              ? purchase.products.map(p => p.name).join(', ')
+                              : 'Pedido sin productos'
+                            }
+                          </p>
+                          <p className="text-sm text-neutral-600">
+                            {formatDate(purchase.createdAt)}
+                          </p>
+                          <p className="text-xs text-neutral-500">
+                            ${purchase.totalAmount?.toLocaleString() || '0'}
+                          </p>
+                        </div>
+                        <span className={`text-sm px-2 py-1 rounded-full ${getStatusColor(purchase.orderStatus)}`}>
+                          {getStatusText(purchase.orderStatus)}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-neutral-500">
+                      <p>No tienes pedidos aún</p>
+                      <Link href="/pastas">
+                        <Button variant="outline" size="sm" className="mt-2">
+                          Hacer tu primer pedido
+                        </Button>
+                      </Link>
                     </div>
-                    <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                      Entregado
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">Lasaña Clásica</p>
-                      <p className="text-sm text-neutral-600">Hace 1 semana</p>
-                    </div>
-                    <span className="text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                      En preparación
-                    </span>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -245,10 +432,10 @@ export default function DashboardUsuarioPage() {
                 <div>
                   <h4 className="font-medium text-neutral-900 mb-2">Datos de la cuenta</h4>
                   <div className="space-y-2 text-sm">
-                                         <p><span className="font-medium">Nombre:</span> {userData?.nombre || "No especificado"}</p>
-                     <p><span className="font-medium">Email:</span> {user.email}</p>
-                     <p><span className="font-medium">Teléfono:</span> {userData?.telefono || "No especificado"}</p>
-                     <p><span className="font-medium">DNI/CUIT:</span> {userData?.dni || "No especificado"}</p>
+                    <p><span className="font-medium">Nombre:</span> {userData?.nombre || "No especificado"}</p>
+                    <p><span className="font-medium">Email:</span> {user.email}</p>
+                    <p><span className="font-medium">Teléfono:</span> {userData?.telefono || "No especificado"}</p>
+                    <p><span className="font-medium">DNI/CUIT:</span> {userData?.dni || "No especificado"}</p>
                   </div>
                 </div>
                 

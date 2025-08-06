@@ -110,6 +110,12 @@ export default function AdminPage() {
             Productos
           </Link>
           <Link
+            href="/admin/orders"
+            className="py-2 px-4 text-sm font-medium text-neutral-600 hover:text-primary-600 hover:border-primary-600 transition-colors"
+          >
+            Pedidos
+          </Link>
+          <Link
             href="/admin/home-sections"
             className="py-2 px-4 text-sm font-medium text-neutral-600 hover:text-primary-600 hover:border-primary-600 transition-colors"
           >

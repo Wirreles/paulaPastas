@@ -608,7 +608,13 @@ export class FirebaseService {
 
   static async addCompletedPurchase(purchaseData: any): Promise<string> {
     try {
-      const purchaseRef = await addDoc(collection(db, "purchases"), purchaseData)
+      // Agregar campo de estado por defecto
+      const purchaseWithStatus = {
+        ...purchaseData,
+        orderStatus: 'en_preparacion', // Estado por defecto
+        createdAt: purchaseData.createdAt || new Date()
+      }
+      const purchaseRef = await addDoc(collection(db, "purchases"), purchaseWithStatus)
       return purchaseRef.id
     } catch (error) {
       console.error("Error agregando compra completada:", error)
@@ -623,6 +629,52 @@ export class FirebaseService {
     } catch (error) {
       console.error("Error agregando compra fallida:", error)
       throw error
+    }
+  }
+
+  // Método para obtener compras completadas por usuario
+  static async getCompletedPurchasesByUser(userId: string): Promise<any[]> {
+    try {
+      const q = query(
+        collection(db, "purchases"),
+        where("buyerId", "==", userId),
+        orderBy("createdAt", "desc"),
+        limit(10) // Limitar a los últimos 10 pedidos
+      )
+      const snapshot = await getDocs(q)
+      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+    } catch (error) {
+      console.error("Error en getCompletedPurchasesByUser:", error)
+      return []
+    }
+  }
+
+  // Método para actualizar el estado de una compra
+  static async updatePurchaseStatus(purchaseId: string, status: string): Promise<void> {
+    try {
+      const purchaseRef = doc(db, "purchases", purchaseId)
+      await updateDoc(purchaseRef, { 
+        orderStatus: status,
+        updatedAt: new Date()
+      })
+    } catch (error) {
+      console.error("Error actualizando estado de la compra:", error)
+      throw error
+    }
+  }
+
+  // Método para obtener todas las compras (para el admin)
+  static async getAllPurchases(): Promise<any[]> {
+    try {
+      const q = query(
+        collection(db, "purchases"),
+        orderBy("createdAt", "desc")
+      )
+      const snapshot = await getDocs(q)
+      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+    } catch (error) {
+      console.error("Error en getAllPurchases:", error)
+      return []
     }
   }
 }
