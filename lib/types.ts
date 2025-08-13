@@ -3,6 +3,7 @@ export interface Producto {
   nombre: string
   slug: string
   descripcion: string
+  descripcionAcortada?: string
   precio: number
   categoria: "rellenas" | "sin-relleno" | "sin-tacc" | "salsas" // Añadido "salsas"
   subcategoria:
@@ -18,9 +19,22 @@ export interface Producto {
   ingredientes: string[]
   disponible: boolean
   destacado: boolean
-  orden: number
   porciones?: number
-  tiempoPreparacion?: string
+  // tiempoPreparacion removido según solicitud
+  // Nuevas secciones dinámicas para productos
+  comoPreparar?: {
+    titulo: string
+    texto: string
+  }
+  historiaPlato?: {
+    titulo: string
+    texto: string
+  }
+  // Sección de preguntas frecuentes dinámicas
+  preguntasFrecuentes?: {
+    pregunta: string
+    respuesta: string
+  }[]
   informacionNutricional?: {
     calorias?: number
     proteinas?: number
@@ -98,11 +112,18 @@ export interface Usuario {
     whatsapp: boolean
     email: boolean
   }
-  // Campos para el checkout
-  direccion?: string
-  codigoPostal?: string
-  ciudad?: string
-  provincia?: string
+  direccion?: {
+    calle: string
+    numero: string
+    piso?: string
+    departamento?: string
+    codigoPostal: string
+    ciudad: string
+    provincia: string
+  }
+  baneado?: boolean
+  fechaBaneo?: Date | null
+  fechaActualizacion?: Date
 }
 
 export interface BlogPost {
@@ -177,6 +198,21 @@ export interface OrderItem {
 }
 
 // NUEVO: Interfaz para un pedido completo
+export interface Review {
+  id?: string
+  productoId: string // ID del producto al que pertenece la reseña
+  userId: string // ID del usuario que creó la reseña
+  userName: string // Nombre del usuario
+  userEmail: string // Email del usuario
+  rating: number // Calificación de 1 a 5 estrellas
+  testimonial: string // Texto de la reseña
+  aprobada: boolean // Requiere aprobación del administrador
+  destacada: boolean // Reseña destacada para uso futuro
+  fechaCreacion: Date
+  fechaAprobacion?: Date // Fecha cuando fue aprobada
+  aprobadaPor?: string // ID del administrador que la aprobó
+}
+
 export interface Order {
   id?: string
   userId: string | null // ID del usuario si está logueado, null si es invitado

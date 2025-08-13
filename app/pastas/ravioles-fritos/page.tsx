@@ -32,10 +32,10 @@ export const metadata: Metadata = {
 
 async function getProductosRaviolesFritos() {
   try {
-    // Asumiendo que 'ravioles-fritos' es una subcategoría de 'sin-relleno'
-    return await FirebaseService.getProductosPorSubcategoria("sin-relleno", "ravioles-fritos")
+    // Cambiado para obtener productos con subcategoria "ravioles" (no "ravioles-fritos")
+    return await FirebaseService.getProductosPorSubcategoria("rellenas", "ravioles")
   } catch (error) {
-    console.error("Error fetching productos de ravioles fritos:", error)
+    console.error("Error fetching productos de ravioles:", error)
     return []
   }
 }
@@ -68,16 +68,61 @@ export default async function RaviolesFritosPage() {
     },
   }
 
-  const faqs = [
+  // Preguntas sobre temperatura y salsas (sección separada)
+  const preguntasTemperaturaSalsas = [
     {
       question: "¿Se comen fríos o calientes?",
       answer:
-        "Lo ideal es comerlos calientes o tibios, recién fritos o después de unos minutos reposando. También pueden servirse a temperatura ambiente, como parte de una tabla de picada, sin problema. No se recomiendan fríos de heladera, ya que pierden textura crocante y cremosidad interna.",
+        "Lo ideal es comerlos calientes o tibios, recién fritos o después de unos minutos reposando. También pueden servirse a temperatura ambiente, como parte de una tabla de picada, sin problema. No se recomiendan fríos de heladera, ya que pierden textura crocante y cremosidad interna. El tiempo máximo de exposición de los alimentos a temperatura ambiente es 2 hs en climas fríos y se reduce a 1 h en épocas cálidas, teniendo en cuenta que sea seguro ingerirlo por la conservación.",
     },
     {
       question: "¿Con qué salsas combinan mejor?",
       answer:
         "Funcionan mejor con salsas de acompañamiento tipo finger food. Algunas recomendaciones gourmet: Crema de ajo asado: Cremosa y suave, realza el sabor del relleno sin taparlo. Ideal con ossobuco o espinaca. Dip de queso azul o roquefort: Para paladares más intensos. Combina increíble con hongos o carnes. Crema de limón y albahaca: Fresca, ligera, muy buena con rellenos vegetarianos o de ricota.",
+    },
+  ]
+
+  // Preguntas frecuentes sobre delivery, envíos, pagos, etc.
+  const faqs = [
+    {
+      question: "¿Dónde comprar pastas artesanales en Rosario? ¿Hacen envíos?",
+      answer:
+        "Realizamos envíos a Rosario, Funes, Fisherton, Villa Gobernador Gálvez, Alvear y zonas cercanas. Si tenés dudas sobre tu barrio, consultanos por WhatsApp y te confirmamos la cobertura.",
+    },
+    {
+      question: "¿Cómo se garantiza la cadena de frío en los envíos?",
+      answer:
+        "Todos nuestros productos congelados se despachan en cajas térmicas o conservadoras, garantizando el mantenimiento de la cadena de frío en todo momento. Las entregas se realizan siempre en menos de 60 minutos, asegurando que tus pastas lleguen en óptimas condiciones, sin riesgo de descongelamiento.",
+    },
+    {
+      question: "¿Cómo funciona el sistema de delivery?",
+      answer:
+        "Dependiendo del volumen del pedido, el envío se realiza mediante cadetería tradicional (moto o auto). Trabajamos con Pedidos Ya y Uber, y próximamente incorporaremos nuestro servicio de delivery propio.",
+    },
+    {
+      question: "¿Hay mínimo de compra para envío sin cargo?",
+      answer:
+        "Ofrecemos envío sin cargo en compras mayores a $90.000",
+    },
+    {
+      question: "¿Qué días entregan pedidos?",
+      answer:
+        "Realizamos entregas de lunes a sábados, con cronograma variable según la zona. En Rosario, los envíos fijos se realizan martes, jueves, viernes y sábados. En zonas aledañas, consultar disponibilidad. Si necesitás una entrega fuera de los días establecidos en Rosario, podemos coordinarla con anticipación según disponibilidad.",
+    },
+    {
+      question: "¿Qué métodos de pago aceptan?",
+      answer:
+        "Aceptamos pagos en efectivo, transferencia bancaria, débito, crédito.",
+    },
+    {
+      question: "¿Cuánto cuesta el envío?",
+      answer:
+        "El costo de envío depende de la distancia y el tipo de transporte requerido.",
+    },
+    {
+      question: "¿Puedo pasar a retirar por un punto de entrega?",
+      answer:
+        "Contamos con puntos de retiro en: Rosario Centro y Pueblo Esther",
     },
   ]
 
@@ -270,17 +315,11 @@ export default async function RaviolesFritosPage() {
             </ul>
           </section>
 
-          {/* 6. SECCIÓN GUÍA DE PREPARACIÓN */}
+          {/* 6. SECCIÓN GUÍA DE PREPARACIÓN - ACTUALIZADA */}
           <section className="bg-white rounded-2xl shadow-lg p-8 mb-16 text-center">
             <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-8">¿Cómo prepararlos?</h2>
             <p className="text-lg text-neutral-700 leading-relaxed max-w-4xl mx-auto mb-8">
-              El ritual comienza. Elegí tu música preferida mientras el agua hierve con una pizca generosa de sal. Dejas
-              tu salsa preferida descongelando en una sartén. Cuando el agua burbujea, agregá suavemente los ravioles
-              directamente desde el freezer, sin descongelar. En unos 3-5 minutos, verás como suben a la superficie. Que
-              floten es su forma de decirte que están listos. Escurrilos con suavidad, elegí tu plato más lindo y
-              servilos con tu salsa favorita. <span className="font-semibold">Consejo de chef:</span> cuando empieza a
-              flotar el primero, podés apagar la cocina y dejarlo tapado hasta que suban todos para asegurarte que no se
-              pasen!
+              Freí los ravioles de Paula Pastas directamente congelados en aceite caliente (170–180 °C) durante 3 a 4 minutos, hasta que estén dorados, crocantes y bien cocidos por dentro. Retiralos con espumadera, escurrí sobre papel absorbente y serví preferentemente calientes, solos o con la salsa que prefieras para dipear.
             </p>
             <Link
               href="/pastas"
@@ -291,14 +330,40 @@ export default async function RaviolesFritosPage() {
             </Link>
           </section>
 
-          {/* 7. SECCIÓN FAQ / INFORMACIÓN ADICIONAL */}
+          {/* 7. NUEVA SECCIÓN - PREGUNTAS SOBRE TEMPERATURA Y SALSAS */}
+          <section className="bg-primary-50 rounded-2xl shadow-lg p-8 mb-16 text-center">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-8">
+              Consejos para disfrutar al máximo
+            </h2>
+            <p className="text-lg text-neutral-600 mb-8">
+              Todo lo que necesitás saber para que tus ravioles fritos queden perfectos.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-4xl mx-auto">
+              {preguntasTemperaturaSalsas.map((item, index) => (
+                <div key={index} className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-primary-100 rounded-full flex-shrink-0 mt-1"></div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                      {item.question}
+                    </h3>
+                    <p className="text-neutral-700 leading-relaxed">
+                      {item.answer}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* 8. SECCIÓN FAQ / INFORMACIÓN ADICIONAL - ACTUALIZADA */}
           <section className="bg-white rounded-2xl shadow-lg p-8">
             <div className="text-center mb-12">
               <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
                 Preguntas frecuentes
               </h2>
               <p className="text-lg text-neutral-600">
-                Resolvemos tus dudas más comunes sobre nuestros ravioles fritos.
+                Resolvemos las dudas más comunes sobre nuestras pastas artesanales y el proceso de compra.
               </p>
             </div>
 

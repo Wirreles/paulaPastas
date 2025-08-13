@@ -9,6 +9,7 @@ import { Plus, Edit, Trash2, Eye, Package, BarChart3, Image, FileText } from "lu
 import { FirebaseService } from "@/lib/firebase-service"
 import type { Producto } from "@/lib/types"
 import ProductForm from "@/components/admin/ProductForm"
+import AdminNavigation from "@/components/admin/AdminNavigation"
 
 export default function AdminPage() {
   const { user, isAdmin, loading } = useAuth()
@@ -98,42 +99,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-neutral-900 mb-2">Panel de Administración</h1>
-          <p className="text-neutral-600">Gestiona productos, categorías y configuraciones del sitio</p>
-        </div>
-
-        {/* Navigation Tabs/Links */}
-        <div className="mb-8 flex space-x-4 border-b border-neutral-200">
-          <Link href="/admin" className="py-2 px-4 text-sm font-medium text-primary-600 border-b-2 border-primary-600">
-            Productos
-          </Link>
-          <Link
-            href="/admin/orders"
-            className="py-2 px-4 text-sm font-medium text-neutral-600 hover:text-primary-600 hover:border-primary-600 transition-colors"
-          >
-            Pedidos
-          </Link>
-          <Link
-            href="/admin/home-sections"
-            className="py-2 px-4 text-sm font-medium text-neutral-600 hover:text-primary-600 hover:border-primary-600 transition-colors"
-          >
-            Secciones del Home
-          </Link>
-          <Link
-            href="/admin/page-banners"
-            className="py-2 px-4 text-sm font-medium text-neutral-600 hover:text-primary-600 hover:border-primary-600 transition-colors"
-          >
-            Banners de Páginas
-          </Link>
-          <Link
-            href="/admin/blog"
-            className="py-2 px-4 text-sm font-medium text-neutral-600 hover:text-primary-600 hover:border-primary-600 transition-colors"
-          >
-            Blog
-          </Link>
-        </div>
+        <AdminNavigation />
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-6 mb-8">

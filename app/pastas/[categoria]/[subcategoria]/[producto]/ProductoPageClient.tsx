@@ -18,52 +18,19 @@ import {
 import ProductCard from "@/components/ProductCard"
 import ComplementaryProductCard from "@/components/ComplementaryProductCard" // Importar el nuevo componente
 import { useState, useEffect } from "react" // Importar useState y useEffect para el carrusel
+import { useAuth } from "@/lib/auth-context"
+import { FirebaseService } from "@/lib/firebase-service"
+import ReviewForm from "@/components/ReviewForm"
+import type { Review as ReviewType } from "@/lib/types"
 
-interface Review {
-  id: number
-  name: string
-  rating: number
-  testimonial: string
-}
+// Usar la interfaz Review de types.ts en lugar de la local
 
 interface Faq {
   question: string
   answer: string
 }
 
-// Datos de ejemplo para reseñas (pueden venir de Firebase en el futuro)
-const reviews: Review[] = [
-  {
-    id: 1,
-    name: "Martina S.",
-    rating: 5,
-    testimonial: "¡Los ravioles de osobuco son una locura! Súper tiernos y con un sabor increíble. Mis favoritos.",
-  },
-  {
-    id: 2,
-    name: "Facundo R.",
-    rating: 5,
-    testimonial: "La lasaña de carne es como la de la nonna. Perfecta para un domingo en familia. ¡Recomendadísima!",
-  },
-  {
-    id: 3,
-    name: "Lucía P.",
-    rating: 4,
-    testimonial: "Pedí los ñoquis y llegaron perfectos. Muy ricos y el delivery fue rápido. Volveré a pedir.",
-  },
-  {
-    id: 4,
-    name: "Diego M.",
-    rating: 5,
-    testimonial: "Los sorrentinos de jamón y queso son un clásico que nunca falla. Calidad y sabor garantizados.",
-  },
-  {
-    id: 5,
-    name: "Valeria G.",
-    rating: 5,
-    testimonial: "Probé los ravioles fritos y son una adicción. Ideales para picar con amigos. ¡Una joya!",
-  },
-]
+// Las reseñas ahora se cargan dinámicamente desde Firebase
 
 // Datos de ejemplo para FAQ (pueden venir de Firebase en el futuro)
 const faqs: Faq[] = [
@@ -92,7 +59,6 @@ interface Producto {
   precio: number
   disponible: boolean
   porciones?: number
-  tiempoPreparacion?: string
   ingredientes?: string[]
   destacado?: boolean
   categoria: string
@@ -100,7 +66,22 @@ interface Producto {
   slug: string
   seoTitle?: string
   seoDescription?: string
+  descripcionAcortada?: string
   seoKeywords?: string[]
+  // Nuevas secciones dinámicas para productos
+  comoPreparar?: {
+    titulo: string
+    texto: string
+  }
+  historiaPlato?: {
+    titulo: string
+    texto: string
+  }
+  // Sección de preguntas frecuentes dinámicas
+  preguntasFrecuentes?: {
+    pregunta: string
+    respuesta: string
+  }[]
 }
 
 interface ProductoPageClientProps {
@@ -273,7 +254,13 @@ export default function ProductoPageClient({
                 <h1 className="font-display text-4xl font-bold text-neutral-900 mt-2">{producto.nombre}</h1>
               </div>
 
-              <p className="text-lg text-neutral-600 leading-relaxed">{producto.descripcion}</p>
+              <p className="text-lg text-neutral-600 leading-relaxed whitespace-pre-line">{producto.descripcion}</p>
+              
+              {producto.descripcionAcortada && (
+                <p className="text-base text-neutral-500 leading-relaxed whitespace-pre-line italic">
+                  {producto.descripcionAcortada}
+                </p>
+              )}
 
               {/* Precio y detalles */}
               <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -291,12 +278,6 @@ export default function ProductoPageClient({
                     <div className="flex items-center">
                       <Users className="w-4 h-4 mr-2" />
                       {producto.porciones} porciones
-                    </div>
-                  )}
-                  {producto.tiempoPreparacion && (
-                    <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2" />
-                      {producto.tiempoPreparacion}
                     </div>
                   )}
                 </div>
@@ -326,28 +307,26 @@ export default function ProductoPageClient({
           )}
 
           {/* 3. ✅ Acordeones: Ingredientes y Envío */}
-          <section className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Ingredientes */}
-            <details
-              className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer group"
-              style={{ fontFamily: "var(--font-playfair)" }}
-            >
-              <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl">
-                Ingredientes
-                <ChevronRight className="w-6 h-6 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
-              </summary>
-              <div className="mt-4 text-neutral-700 leading-relaxed">
-                {producto.ingredientes && producto.ingredientes.length > 0 ? (
+          <section className={`mt-16 grid gap-8 ${producto.ingredientes && producto.ingredientes.length > 0 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+            {/* Ingredientes - Solo mostrar si el producto tiene ingredientes */}
+            {producto.ingredientes && producto.ingredientes.length > 0 && (
+              <details
+                className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer group"
+                style={{ fontFamily: "var(--font-playfair)" }}
+              >
+                <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl">
+                  Ingredientes
+                  <ChevronRight className="w-6 h-6 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                </summary>
+                <div className="mt-4 text-neutral-700 leading-relaxed">
                   <ul className="list-disc list-inside space-y-1">
                     {producto.ingredientes.map((ingrediente, index) => (
                       <li key={index}>{ingrediente}</li>
                     ))}
                   </ul>
-                ) : (
-                  <p>No hay información de ingredientes disponible para este producto.</p>
-                )}
-              </div>
-            </details>
+                </div>
+              </details>
+            )}
 
             {/* Envío */}
             <details
@@ -357,7 +336,7 @@ export default function ProductoPageClient({
               <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl">
                 Envío y Conservación
                 <ChevronRight className="w-6 h-6 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
-              </summary>
+                </summary>
               <div className="mt-4 text-neutral-700 leading-relaxed">
                 <p className="mb-2">
                   Realizamos envíos a Rosario, Funes, Fisherton, Villa Gobernador Gálvez, Alvear y zonas cercanas.
@@ -378,15 +357,11 @@ export default function ProductoPageClient({
           {/* 4. ✅ Descripción del producto */}
           <section className="mt-16 bg-white rounded-2xl shadow-lg p-8 text-center">
             <h2 className="font-display text-2xl font-bold text-neutral-900 mb-4">
-              Un plato con historia, cocinado a fuego lento.
+              {producto.historiaPlato?.titulo || "Un plato con historia, cocinado a fuego lento."}
             </h2>
-            <p className="text-lg text-neutral-700 leading-relaxed mb-8">
-              {producto.descripcion} Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-              incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
-              laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit
-              esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa
-              qui officia deserunt mollit anim id est laborum.
-            </p>
+                          <p className="text-lg text-neutral-700 leading-relaxed mb-8 whitespace-pre-line">
+                {producto.historiaPlato?.texto || producto.descripcion}
+              </p>
             <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-neutral-700">
               <div className="flex items-center space-x-2">
                 <Leaf className="w-5 h-5 text-primary-600" />
@@ -404,21 +379,19 @@ export default function ProductoPageClient({
           </section>
 
           {/* 5. ✅ Sección: "¿Cómo prepararlos?" */}
-          <section className="mt-16 bg-primary-50 rounded-2xl shadow-lg p-8 text-center">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-8">¿Cómo prepararlos?</h2>
-            <p className="text-lg text-neutral-700 leading-relaxed max-w-4xl mx-auto">
-              El ritual comienza. Elegí tu música preferida mientras el agua hierve con una pizca generosa de sal. Dejas
-              tu salsa preferida descongelando en una sartén. Cuando el agua burbujea, agregá suavemente los ravioles
-              directamente desde el freezer, sin descongelar. En unos 3-5 minutos, verás como suben a la superficie. Que
-              floten es su forma de decirte que están listos. Escurrilos con suavidad, elegí tu plato más lindo y
-              servilos con tu salsa favorita. <span className="font-semibold">Consejo de chef:</span> cuando empieza a
-              flotar el primero, podés apagar la cocina y dejarlo tapado hasta que suban todos para asegurarte que no se
-              pasen!
-            </p>
-          </section>
+          {producto.comoPreparar && (
+            <section className="mt-16 bg-primary-50 rounded-2xl shadow-lg p-8 text-center">
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-8">
+                {producto.comoPreparar.titulo}
+              </h2>
+              <p className="text-lg text-neutral-700 leading-relaxed max-w-4xl mx-auto whitespace-pre-line">
+                {producto.comoPreparar.texto}
+              </p>
+            </section>
+          )}
 
           {/* 6. ✅ Sección: Reseñas (Carrusel) */}
-          <ReviewsCarousel />
+          <ReviewsSection productoId={producto.id || ""} productoNombre={producto.nombre} />
 
           {/* 7. ✅ Sección: Preguntas Frecuentes (Acordeón) */}
           <section className="mt-16 bg-white rounded-2xl shadow-lg p-8">
@@ -427,24 +400,41 @@ export default function ProductoPageClient({
                 Preguntas frecuentes
               </h2>
               <p className="text-lg text-neutral-600">
-                Resolvemos las dudas más comunes sobre nuestros ravioles artesanales y el proceso de compra.
+                Resolvemos las dudas más comunes sobre nuestros productos artesanales y el proceso de compra.
               </p>
             </div>
 
             <div className="space-y-4 max-w-3xl mx-auto">
-              {faqs.map((faq, index) => (
-                <details
-                  key={index}
-                  className="bg-neutral-50 rounded-lg shadow-sm p-5 cursor-pointer group"
-                  style={{ fontFamily: "var(--font-playfair)" }}
-                >
-                  <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg">
-                    {faq.question}
-                    <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
-                  </summary>
-                  <div className="mt-4 text-neutral-700 leading-relaxed">{faq.answer}</div>
-                </details>
-              ))}
+              {producto.preguntasFrecuentes && producto.preguntasFrecuentes.length > 0 ? (
+                producto.preguntasFrecuentes.map((faq, index) => (
+                  <details
+                    key={index}
+                    className="bg-neutral-50 rounded-lg shadow-sm p-5 cursor-pointer group"
+                    style={{ fontFamily: "var(--font-playfair)" }}
+                  >
+                    <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg">
+                      {faq.pregunta}
+                      <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                    </summary>
+                    <div className="mt-4 text-neutral-700 leading-relaxed whitespace-pre-line">{faq.respuesta}</div>
+                  </details>
+                ))
+              ) : (
+                // Mostrar FAQs estáticas si no hay dinámicas
+                faqs.map((faq, index) => (
+                  <details
+                    key={index}
+                    className="bg-neutral-50 rounded-lg shadow-sm p-5 cursor-pointer group"
+                    style={{ fontFamily: "var(--font-playfair)" }}
+                  >
+                    <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg">
+                      {faq.question}
+                      <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                    </summary>
+                    <div className="mt-4 text-neutral-700 leading-relaxed">{faq.answer}</div>
+                  </details>
+                ))
+              )}
             </div>
           </section>
 
@@ -467,10 +457,30 @@ export default function ProductoPageClient({
   )
 }
 
-// Componente de carrusel de reseñas (Client Component)
-function ReviewsCarousel() {
+// Componente de reseñas dinámicas (Client Component)
+function ReviewsSection({ productoId, productoNombre }: { productoId: string; productoNombre: string }) {
+  const { user, userData } = useAuth()
+  const [reviews, setReviews] = useState<ReviewType[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [showReviewForm, setShowReviewForm] = useState(false)
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0)
   const [itemsPerPage, setItemsPerPage] = useState(1)
+  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        const productReviews = await FirebaseService.getReviewsByProduct(productoId)
+        setReviews(productReviews)
+      } catch (error) {
+        console.error("Error cargando reseñas:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadReviews()
+  }, [productoId])
 
   useEffect(() => {
     const calculateItemsPerPage = () => {
@@ -490,71 +500,169 @@ function ReviewsCarousel() {
   }, [])
 
   const nextReview = () => {
-    setCurrentReviewIndex((prevIndex) => (prevIndex + 1) % reviews.length)
+    if (reviews.length > 0) {
+      setCurrentReviewIndex((prevIndex) => (prevIndex + 1) % reviews.length)
+    }
   }
 
   const prevReview = () => {
-    setCurrentReviewIndex((prevIndex) => (prevIndex - 1 + reviews.length) % reviews.length)
+    if (reviews.length > 0) {
+      setCurrentReviewIndex((prevIndex) => (prevIndex - 1 + reviews.length) % reviews.length)
+    }
   }
+
+  const handleReviewSubmitted = () => {
+    // Recargar las reseñas después de enviar una nueva
+    const loadReviews = async () => {
+      try {
+        const productReviews = await FirebaseService.getReviewsByProduct(productoId)
+        setReviews(productReviews)
+      } catch (error) {
+        console.error("Error recargando reseñas:", error)
+      }
+    }
+    loadReviews()
+  }
+
+  const toggleReviewExpansion = (reviewId: string) => {
+    setExpandedReviews(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(reviewId)) {
+        newSet.delete(reviewId)
+      } else {
+        newSet.add(reviewId)
+      }
+      return newSet
+    })
+  }
+
+  const isReviewExpanded = (reviewId: string) => expandedReviews.has(reviewId)
+
+  const canUserReview = user && userData && userData.rol === "cliente"
 
   return (
     <section className="py-16 bg-neutral-100 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-4">Los que ya probaron</h2>
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
+            Los que ya probaron
+          </h2>
           <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
             La opinión de nuestros clientes es lo más importante.
           </p>
-        </div>
-
-        <div className="relative">
-          <div className="overflow-hidden">
-            <div
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{
-                transform: `translateX(-${currentReviewIndex * (100 / itemsPerPage)}%)`,
-              }}
+          
+          {canUserReview && (
+            <button
+              onClick={() => setShowReviewForm(true)}
+              className="mt-6 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
             >
-              {reviews.map((review) => (
-                <div key={review.id} className="flex-shrink-0 w-full md:w-1/2 lg:w-1/3 px-4">
-                  <div className="bg-white rounded-lg p-6 shadow-sm h-full flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center mb-4">
-                        {[...Array(review.rating)].map((_, i) => (
-                          <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                        ))}
-                        {[...Array(5 - review.rating)].map((_, i) => (
-                          <Star key={i + review.rating} className="w-5 h-5 text-neutral-300" />
-                        ))}
-                      </div>
-                      <p className="text-neutral-700 italic mb-4">"{review.testimonial}"</p>
-                    </div>
-                    <p className="font-semibold text-neutral-900" aria-label={`Reseña de ${review.name}`}>
-                      - {review.name}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Navigation Buttons */}
-          <button
-            onClick={prevReview}
-            className="absolute top-1/2 left-0 -translate-y-1/2 bg-white p-2 rounded-full shadow-md hover:bg-neutral-100 transition-colors z-10 hidden md:block"
-            aria-label="Reseña anterior"
-          >
-            <ChevronLeft className="w-6 h-6 text-neutral-700" />
-          </button>
-          <button
-            onClick={nextReview}
-            className="absolute top-1/2 right-0 -translate-y-1/2 bg-white p-2 rounded-full shadow-md hover:bg-neutral-100 transition-colors z-10 hidden md:block"
-            aria-label="Siguiente reseña"
-          >
-            <ChevronRight className="w-6 h-6 text-neutral-700" />
-          </button>
+              Escribir Reseña
+            </button>
+          )}
         </div>
+
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="inline-block w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-4 text-neutral-600">Cargando reseñas...</p>
+          </div>
+        ) : reviews.length > 0 ? (
+          <div className="relative">
+            <div className="flex items-center justify-center space-x-8">
+              {reviews
+                .slice(currentReviewIndex, currentReviewIndex + itemsPerPage)
+                .map((review, index) => (
+                  <div
+                    key={review.id}
+                    className={`bg-white rounded-2xl shadow-lg p-8 text-center w-[350px] flex flex-col overflow-hidden transition-all duration-500 ease-in-out ${
+                      isReviewExpanded(review.id || "") 
+                        ? "h-auto min-h-[280px] shadow-xl border-2 border-primary-200" 
+                        : "h-[280px]"
+                    }`}
+                    style={{ fontFamily: "var(--font-playfair)" }}
+                  >
+                    <div className="flex justify-center mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-6 h-6 ${
+                            i < review.rating ? "text-yellow-400 fill-current" : "text-neutral-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    
+                    <div className={`flex flex-col ${
+                      !isReviewExpanded(review.id || "") ? "flex-1" : ""
+                    }`}>
+                      <div className={`review-text-container ${
+                        !isReviewExpanded(review.id || "") ? "flex-1 overflow-hidden" : ""
+                      }`}>
+                        <p className={`text-lg text-neutral-700 mb-4 italic text-wrap-safe leading-relaxed ${
+                          !isReviewExpanded(review.id || "") ? "line-clamp-3" : ""
+                        }`}>
+                          "{review.testimonial}"
+                        </p>
+                      </div>
+                      
+                      {/* Botón "Ver más" solo si el texto es largo */}
+                      {review.testimonial.length > 120 && (
+                        <button
+                          onClick={() => toggleReviewExpansion(review.id || "")}
+                          className={`text-primary-600 hover:text-primary-700 text-sm font-medium mb-4 transition-colors ${
+                            isReviewExpanded(review.id || "") ? "font-semibold" : ""
+                          }`}
+                        >
+                          {isReviewExpanded(review.id || "") ? "Ver menos" : "Ver más"}
+                        </button>
+                      )}
+                    </div>
+                    
+                    <p className="text-neutral-600 font-semibold mt-auto">- {review.userName}</p>
+                  </div>
+                ))}
+            </div>
+
+            {reviews.length > itemsPerPage && (
+              <>
+                <button
+                  onClick={prevReview}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-neutral-50 transition-colors"
+                >
+                  <ChevronLeft className="w-6 h-6 text-neutral-600" />
+                </button>
+
+                <button
+                  onClick={nextReview}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-neutral-50 transition-colors"
+                >
+                  <ChevronRight className="w-6 h-6 text-neutral-600" />
+                </button>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-lg text-neutral-600 mb-4">
+              Aún no hay reseñas para este producto.
+            </p>
+            {canUserReview && (
+              <p className="text-neutral-500">
+                ¡Sé el primero en compartir tu experiencia!
+              </p>
+            )}
+          </div>
+        )}
       </div>
+
+      {showReviewForm && (
+        <ReviewForm
+          productoId={productoId}
+          productoNombre={productoNombre}
+          onClose={() => setShowReviewForm(false)}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      )}
     </section>
   )
 }

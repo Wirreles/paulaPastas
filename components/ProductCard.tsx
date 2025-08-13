@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { ShoppingBag, Star, Minus, Plus } from "lucide-react" // Importar Minus y Plus
+import { Eye, Star, Minus, Plus } from "lucide-react" // Cambiar ShoppingBag por Eye
 import type { Producto } from "@/lib/types"
 import { useState } from "react" // Importar useState
 import { useCart } from "@/lib/cart-context" // Importar useCart
@@ -10,10 +10,15 @@ import { formatPrice } from "@/lib/utils" // Importar formatPrice
 
 interface ProductCardProps {
   producto: Producto
+  baseUrl?: string // Prop opcional para baseUrl
 }
 
-export default function ProductCard({ producto }: ProductCardProps) {
-  const productUrl = `/pastas/${producto.categoria}/${producto.subcategoria}/${producto.slug}`
+export default function ProductCard({ producto, baseUrl }: ProductCardProps) {
+  // Usar baseUrl si se proporciona, sino construir la URL estándar
+  const productUrl = baseUrl 
+    ? `${baseUrl}/${producto.slug}`
+    : `/pastas/${producto.categoria}/${producto.subcategoria}/${producto.slug}`
+  
   const [quantity, setQuantity] = useState(1) // Estado para la cantidad
   const { addItem } = useCart() // Usar el hook useCart
 
@@ -27,8 +32,9 @@ export default function ProductCard({ producto }: ProductCardProps) {
   }
 
   return (
-    <article className="bg-white rounded-lg shadow-lg overflow-hidden hover-lift group">
-      <div className="relative h-48">
+    <article className="bg-white rounded-lg shadow-lg overflow-hidden hover-lift group flex flex-col h-full">
+      {/* Imagen más grande como en el home */}
+      <div className="relative h-64">
         <Link href={productUrl}>
           <Image
             src={producto.imagen || "/placeholder.svg"}
@@ -50,79 +56,64 @@ export default function ProductCard({ producto }: ProductCardProps) {
         )}
       </div>
 
-      <div className="p-6">
-        <div className="mb-2">
-          <span className="text-xs font-medium text-primary-600 uppercase tracking-wide">
-            {producto.categoria.replace("-", " ")} • {producto.subcategoria}
-          </span>
-        </div>
-
+      {/* Contenido de la card con flex-grow para ocupar el espacio disponible */}
+      <div className="p-4 flex flex-col flex-grow">
         <Link href={productUrl}>
-          <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors">
+          <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors">
             {producto.nombre}
           </h3>
         </Link>
 
-        <p className="text-neutral-600 mb-4 line-clamp-2">{producto.descripcion}</p>
+        <p className="text-neutral-600 mb-4 text-sm line-clamp-4 flex-grow">
+          {producto.descripcionAcortada || producto.descripcion}
+        </p>
 
-        {producto.ingredientes.length > 0 && (
-          <div className="mb-4">
-            <p className="text-xs text-neutral-500 mb-1">Ingredientes principales:</p>
-            <p className="text-sm text-neutral-600">
-              {producto.ingredientes.slice(0, 3).join(", ")}
-              {producto.ingredientes.length > 3 && "..."}
-            </p>
-          </div>
-        )}
-
+        {/* Precio dinámico y selector de cantidad en la misma línea */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <span className="text-2xl font-bold text-primary-600">{formatPrice(producto.precio)}</span>
+            <span className="text-xl font-bold text-primary-600">{formatPrice(producto.precio * quantity)}</span>
             {producto.porciones && (
               <span className="text-sm text-neutral-500 ml-2">{producto.porciones} porciones</span>
             )}
           </div>
 
-          {producto.tiempoPreparacion && (
-            <span className="text-xs text-neutral-500 bg-neutral-100 px-2 py-1 rounded-full">
-              {producto.tiempoPreparacion}
-            </span>
-          )}
+          {/* Selector de cantidad */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleQuantityChange(-1)}
+              className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+              disabled={quantity <= 1}
+            >
+              <Minus className="w-4 h-4 text-neutral-700" />
+            </button>
+            <span className="text-lg font-semibold text-neutral-900 w-8 text-center">{quantity}</span>
+            <button
+              onClick={() => handleQuantityChange(1)}
+              className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+            >
+              <Plus className="w-4 h-4 text-neutral-700" />
+            </button>
+          </div>
         </div>
+      </div>
 
-        {/* Selector de cantidad */}
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <button
-            onClick={() => handleQuantityChange(-1)}
-            className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
-            disabled={quantity <= 1}
-          >
-            <Minus className="w-4 h-4 text-neutral-700" />
-          </button>
-          <span className="text-lg font-semibold text-neutral-900 w-8 text-center">{quantity}</span>
-          <button
-            onClick={() => handleQuantityChange(1)}
-            className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
-          >
-            <Plus className="w-4 h-4 text-neutral-700" />
-          </button>
-        </div>
-
+      {/* Botones siempre al fondo de la card */}
+      <div className="p-4 pt-0 mt-auto">
         <div className="flex gap-2">
+          <button
+            onClick={handleAddToCart}
+            className="flex-1 bg-primary-600 text-white text-center px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium"
+            disabled={!producto.disponible}
+          >
+            Agregar al carro
+          </button>
           <Link
             href={productUrl}
-            className="flex-1 bg-primary-600 text-white text-center px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium"
+            className="bg-neutral-900 text-white p-2 rounded-lg hover:bg-neutral-800 transition-colors flex items-center justify-center"
+            title="Ver detalles"
           >
-            Ver Detalles
+            <Eye className="w-5 h-5" />
           </Link>
-          <button
-            onClick={handleAddToCart} // Usar el handler para agregar al carrito
-            className="bg-neutral-900 text-white p-2 rounded-lg hover:bg-neutral-800 transition-colors"
-            disabled={!producto.disponible}
-            title="Agregar al carrito"
-          >
-            <ShoppingBag className="w-5 h-5" />
-          </button>
         </div>
       </div>
     </article>

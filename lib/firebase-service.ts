@@ -24,6 +24,8 @@ import type {
   Order, // Importar Order
   PageBanner,
   BlogArticle,
+  Usuario, // Importar Usuario
+  Review, // Importar Review
 } from "./types"
 
 export class FirebaseService {
@@ -100,11 +102,16 @@ export class FirebaseService {
 
   static async getProductosDestacados(): Promise<Producto[]> {
     try {
+      console.log("🔍 FirebaseService: Buscando productos destacados...")
       const q = query(collection(db, "productos"), where("destacado", "==", true), orderBy("orden", "asc"))
+      console.log("🔍 FirebaseService: Query creada, ejecutando...")
       const snapshot = await getDocs(q)
-      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Producto)
+      console.log("🔍 FirebaseService: Snapshot obtenido, docs:", snapshot.docs.length)
+      const productos = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Producto)
+      console.log("🔍 FirebaseService: Productos mapeados:", productos.length)
+      return productos
     } catch (error) {
-      console.error("Error en getProductosDestacados:", error)
+      console.error("❌ Error en getProductosDestacados:", error)
       return []
     }
   }
@@ -675,6 +682,178 @@ export class FirebaseService {
     } catch (error) {
       console.error("Error en getAllPurchases:", error)
       return []
+    }
+  }
+
+  // Métodos para gestión de usuarios
+  static async getUsuarios(): Promise<Usuario[]> {
+    try {
+      const usuariosRef = collection(db, "usuarios")
+      const q = query(usuariosRef, orderBy("fechaCreacion", "desc"))
+      const snapshot = await getDocs(q)
+      const usuarios = snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }) as Usuario)
+
+      console.log(`FirebaseService.getUsuarios(): Encontrados ${usuarios.length} usuarios`)
+      return usuarios
+    } catch (error) {
+      console.error("Error en getUsuarios:", error)
+      return []
+    }
+  }
+
+  static async getUsuario(uid: string): Promise<Usuario | null> {
+    try {
+      const usuarioDoc = await getDoc(doc(db, "usuarios", uid))
+      if (!usuarioDoc.exists()) return null
+
+      return { uid: usuarioDoc.id, ...usuarioDoc.data() } as Usuario
+    } catch (error) {
+      console.error("Error en getUsuario:", error)
+      return null
+    }
+  }
+
+  static async updateUsuario(uid: string, usuarioData: Partial<Usuario>): Promise<void> {
+    try {
+      await updateDoc(doc(db, "usuarios", uid), {
+        ...usuarioData,
+        fechaActualizacion: serverTimestamp(),
+      })
+      console.log(`Usuario ${uid} actualizado exitosamente`)
+    } catch (error) {
+      console.error("Error en updateUsuario:", error)
+      throw error
+    }
+  }
+
+  static async banUsuario(uid: string): Promise<void> {
+    try {
+      await updateDoc(doc(db, "usuarios", uid), {
+        baneado: true,
+        fechaBaneo: serverTimestamp(),
+      })
+      console.log(`Usuario ${uid} baneado exitosamente`)
+    } catch (error) {
+      console.error("Error en banUsuario:", error)
+      throw error
+    }
+  }
+
+  static async unbanUsuario(uid: string): Promise<void> {
+    try {
+      await updateDoc(doc(db, "usuarios", uid), {
+        baneado: false,
+        fechaBaneo: null,
+      })
+      console.log(`Usuario ${uid} desbaneado exitosamente`)
+    } catch (error) {
+      console.error("Error en unbanUsuario:", error)
+      throw error
+    }
+  }
+
+  // Métodos para manejar reseñas
+  static async addReview(review: Omit<Review, "id" | "fechaCreacion">): Promise<string> {
+    try {
+      const reviewData = {
+        ...review,
+        fechaCreacion: serverTimestamp(),
+      }
+      const docRef = await addDoc(collection(db, "reviews"), reviewData)
+      return docRef.id
+    } catch (error) {
+      console.error("Error al agregar reseña:", error)
+      throw error
+    }
+  }
+
+  static async getReviewsByProduct(productId: string): Promise<Review[]> {
+    try {
+      const reviewsRef = collection(db, "reviews")
+      const q = query(
+        reviewsRef,
+        where("productoId", "==", productId),
+        where("aprobada", "==", true), // Solo reseñas aprobadas
+        orderBy("fechaCreacion", "desc")
+      )
+      const snapshot = await getDocs(q)
+      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Review)
+    } catch (error) {
+      console.error("Error al obtener reseñas del producto:", error)
+      return []
+    }
+  }
+
+  static async getReviewsByUser(userId: string): Promise<Review[]> {
+    try {
+      const reviewsRef = collection(db, "reviews")
+      const q = query(
+        reviewsRef,
+        where("userId", "==", userId),
+        orderBy("fechaCreacion", "desc")
+      )
+      const snapshot = await getDocs(q)
+      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Review)
+    } catch (error) {
+      console.error("Error al obtener reseñas del usuario:", error)
+      throw error
+    }
+  }
+
+  static async updateReviewStatus(reviewId: string, aprobada: boolean, aprobadaPor?: string): Promise<void> {
+    try {
+      const reviewRef = doc(db, "reviews", reviewId)
+      await updateDoc(reviewRef, {
+        aprobada,
+        fechaAprobacion: aprobada ? serverTimestamp() : null,
+        aprobadaPor: aprobada ? aprobadaPor : null,
+      })
+    } catch (error) {
+      console.error("Error al actualizar estado de reseña:", error)
+      throw error
+    }
+  }
+
+  static async toggleReviewDestacada(reviewId: string, destacada: boolean): Promise<void> {
+    try {
+      const reviewRef = doc(db, "reviews", reviewId)
+      await updateDoc(reviewRef, {
+        destacada,
+      })
+    } catch (error) {
+      console.error("Error al cambiar estado destacado de reseña:", error)
+      throw error
+    }
+  }
+
+  static async deleteReview(reviewId: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, "reviews", reviewId))
+    } catch (error) {
+      console.error("Error al eliminar reseña:", error)
+      throw error
+    }
+  }
+
+  static async getAllReviews(): Promise<Review[]> {
+    try {
+      const reviewsRef = collection(db, "reviews")
+      const q = query(reviewsRef, orderBy("fechaCreacion", "desc"))
+      const querySnapshot = await getDocs(q)
+      
+      const reviews: Review[] = []
+      querySnapshot.forEach((doc) => {
+        reviews.push({
+          id: doc.id,
+          ...doc.data(),
+          fechaCreacion: doc.data().fechaCreacion?.toDate() || new Date(),
+        } as Review)
+      })
+      
+      return reviews
+    } catch (error) {
+      console.error("Error obteniendo todas las reseñas:", error)
+      throw error
     }
   }
 }

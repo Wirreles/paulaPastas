@@ -7,6 +7,7 @@ import { Edit, FileText, Plus, Eye, Trash2, Calendar, Clock } from "lucide-react
 import { FirebaseService } from "@/lib/firebase-service"
 import { BlogArticle } from "@/lib/types"
 import BlogArticleForm from "@/components/admin/BlogArticleForm"
+import AdminNavigation from "@/components/admin/AdminNavigation"
 
 type BlogArticleFormType = Omit<BlogArticle, "publishedAt"> & { publishedAt?: string };
 
@@ -124,46 +125,7 @@ export default function AdminBlogPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-display text-3xl font-bold text-neutral-900 mb-2">Gestión del Blog</h1>
-              <p className="text-neutral-600">Administra los artículos del blog, crea contenido y gestiona publicaciones</p>
-            </div>
-            <Link
-              href="/admin"
-              className="text-sm text-neutral-500 hover:text-neutral-700"
-            >
-              ← Volver al Panel
-            </Link>
-          </div>
-        </div>
-
-        {/* Navigation Tabs/Links */}
-        <div className="mb-8 flex space-x-4 border-b border-neutral-200">
-          <Link href="/admin" className="py-2 px-4 text-sm font-medium text-neutral-600 hover:text-primary-600 hover:border-primary-600 transition-colors">
-            Productos
-          </Link>
-          <Link
-            href="/admin/home-sections"
-            className="py-2 px-4 text-sm font-medium text-neutral-600 hover:text-primary-600 hover:border-primary-600 transition-colors"
-          >
-            Secciones del Home
-          </Link>
-          <Link
-            href="/admin/page-banners"
-            className="py-2 px-4 text-sm font-medium text-neutral-600 hover:text-primary-600 hover:border-primary-600 transition-colors"
-          >
-            Banners de Páginas
-          </Link>
-          <Link
-            href="/admin/blog"
-            className="py-2 px-4 text-sm font-medium text-primary-600 border-b-2 border-primary-600"
-          >
-            Blog
-          </Link>
-        </div>
+                <AdminNavigation />
 
         {/* Filter Section */}
         <div className="mb-6 flex items-center justify-between">

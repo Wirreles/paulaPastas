@@ -3,9 +3,10 @@
 import { Suspense, useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowRight, Star, Clock, Truck, Leaf, Award, MessageCircle, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowRight, Star, Clock, Truck, Leaf, Award, MessageCircle, ChevronLeft, ChevronRight, Minus, Plus, Eye, ShoppingBag } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
-import ProductCard from "@/components/ProductCard"
+import { useCart } from "@/lib/cart-context"
+import { formatPrice } from "@/lib/utils"
 import type { HomeSection } from "@/lib/types" // Importar el nuevo tipo
 
 // Datos de ejemplo para reseñas
@@ -82,6 +83,16 @@ export default function HomePage() {
   const [homeSections, setHomeSections] = useState<HomeSection[]>([]) // Nuevo estado para secciones del home
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0)
   const [itemsPerPage, setItemsPerPage] = useState(1) // Default for mobile
+  const [quantities, setQuantities] = useState<{ [key: string]: number }>({}) // Estado para cantidades de productos
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true) // Estado de carga para productos
+  const [reviewsDestacadas, setReviewsDestacadas] = useState<any[]>([]) // Estado para reseñas destacadas y aprobadas
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true) // Estado de carga para reseñas
+  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set()) // Estado para controlar expansión de reseñas
+  const { addItem } = useCart() // Hook del carrito
+  
+  // Debug: Log del estado inicial
+  console.log("🏠 HomePage renderizado, productosDestacados:", productosDestacados)
+  console.log("🛒 Hook useCart ejecutado, addItem:", typeof addItem)
 
   useEffect(() => {
     const calculateItemsPerPage = () => {
@@ -116,21 +127,99 @@ export default function HomePage() {
   useEffect(() => {
     async function loadProducts() {
       try {
+        console.log("🔄 Iniciando carga de productos destacados...")
+        setIsLoadingProducts(true)
         const data = await FirebaseService.getProductosDestacados()
+        console.log("📦 Productos destacados obtenidos:", data)
+        console.log("📊 Cantidad de productos:", data.length)
         setProductosDestacados(data)
       } catch (error) {
-        console.error("Error fetching productos destacados:", error)
+        console.error("❌ Error fetching productos destacados:", error)
+      } finally {
+        setIsLoadingProducts(false)
       }
     }
     loadProducts()
   }, [])
 
+  // useEffect para cargar reseñas destacadas y aprobadas
+  useEffect(() => {
+    async function loadReviewsDestacadas() {
+      try {
+        console.log("🔄 Iniciando carga de reseñas destacadas...")
+        setIsLoadingReviews(true)
+        const allReviews = await FirebaseService.getAllReviews()
+        
+        // Filtrar solo reseñas aprobadas y destacadas
+        const reviewsFiltradas = allReviews.filter(review => 
+          review.aprobada === true && review.destacada === true
+        )
+        
+        console.log("⭐ Reseñas destacadas obtenidas:", reviewsFiltradas)
+        console.log("📊 Cantidad de reseñas destacadas:", reviewsFiltradas.length)
+        
+        // Si no hay reseñas destacadas, usar las estáticas como fallback
+        if (reviewsFiltradas.length === 0) {
+          console.log("⚠️ No hay reseñas destacadas, usando fallback estático")
+          setReviewsDestacadas(reviews)
+        } else {
+          setReviewsDestacadas(reviewsFiltradas)
+        }
+      } catch (error) {
+        console.error("❌ Error fetching reseñas destacadas:", error)
+        // En caso de error, usar las estáticas como fallback
+        setReviewsDestacadas(reviews)
+      } finally {
+        setIsLoadingReviews(false)
+      }
+    }
+    loadReviewsDestacadas()
+  }, [])
+
   const nextReview = () => {
-    setCurrentReviewIndex((prevIndex) => (prevIndex + 1) % reviews.length)
+    setCurrentReviewIndex((prevIndex) => (prevIndex + 1) % reviewsDestacadas.length)
   }
 
   const prevReview = () => {
-    setCurrentReviewIndex((prevIndex) => (prevIndex - 1 + reviews.length) % reviews.length)
+    setCurrentReviewIndex((prevIndex) => (prevIndex - 1 + reviewsDestacadas.length) % reviewsDestacadas.length)
+  }
+
+  // Funciones para controlar la expansión de reseñas
+  const toggleReviewExpansion = (reviewId: string) => {
+    setExpandedReviews(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(reviewId)) {
+        newSet.delete(reviewId)
+      } else {
+        newSet.add(reviewId)
+      }
+      return newSet
+    })
+  }
+
+  const isReviewExpanded = (reviewId: string) => expandedReviews.has(reviewId)
+
+  // Funciones para manejar cantidades de productos
+  const getQuantity = (productId: string) => quantities[productId] || 1
+  
+  const handleQuantityChange = (productId: string, amount: number) => {
+    setQuantities(prev => ({
+      ...prev,
+      [productId]: Math.max(1, (prev[productId] || 1) + amount)
+    }))
+  }
+
+  const handleAddToCart = (producto: any) => {
+    console.log("🛒 handleAddToCart ejecutado para:", producto.nombre)
+    const quantity = getQuantity(producto.id)
+    console.log("🛒 Cantidad a agregar:", quantity)
+    addItem(producto, quantity)
+    // Resetear cantidad a 1 después de agregar
+    setQuantities(prev => ({
+      ...prev,
+      [producto.id]: 1
+    }))
+    console.log("🛒 Producto agregado al carrito")
   }
 
   // Obtener imágenes dinámicas
@@ -226,6 +315,9 @@ export default function HomePage() {
     })),
   }
 
+  // Debug: Log antes del render
+  console.log("🔍 Antes del render - productosDestacados:", productosDestacados)
+
   return (
     <div className="min-h-screen">
       {/* JSON-LD para reseñas y FAQ */}
@@ -290,12 +382,107 @@ export default function HomePage() {
             </p>
           </div>
 
-          <Suspense fallback={<div className="text-center">Cargando productos...</div>}>
-            {productosDestacados.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {productosDestacados.slice(0, 6).map((producto: any) => (
-                  <ProductCard key={producto.id} producto={producto} />
-                ))}
+          {isLoadingProducts ? (
+            <div className="text-center py-12">
+              <div className="w-24 h-24 bg-neutral-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">⏳</span>
+              </div>
+              <h3 className="text-xl font-semibold text-neutral-900 mb-2">Cargando productos...</h3>
+              <p className="text-neutral-600">Esperá un momento mientras cargamos nuestros productos destacados</p>
+            </div>
+          ) : productosDestacados.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {productosDestacados.slice(0, 6).map((producto: any) => {
+                  console.log("🔍 Renderizando producto:", producto)
+                  const productUrl = `/pastas/${producto.categoria}/${producto.subcategoria}/${producto.slug}`
+                  const quantity = getQuantity(producto.id)
+                  
+                  return (
+                    <article key={producto.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover-lift group flex flex-col h-full">
+                      {/* Imagen más grande */}
+                      <div className="relative h-64">
+                        <Link href={productUrl}>
+                          <Image
+                            src={producto.imagen || "/placeholder.svg"}
+                            alt={`${producto.nombre} caseros artesanales`}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </Link>
+                        {producto.destacado && (
+                          <div className="absolute top-4 left-4 bg-primary-600 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center">
+                            <Star className="w-3 h-3 mr-1" />
+                            Destacado
+                          </div>
+                        )}
+                        {!producto.disponible && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <span className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold">No Disponible</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Contenido de la card con flex-grow para ocupar el espacio disponible */}
+                      <div className="p-4 flex flex-col flex-grow">
+                        <Link href={productUrl}>
+                          <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors">
+                            {producto.nombre}
+                          </h3>
+                        </Link>
+
+                        <p className="text-neutral-600 mb-4 text-sm line-clamp-4 flex-grow">{producto.descripcionAcortada}</p>
+
+                        {/* Precio dinámico y selector de cantidad en la misma línea */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <span className="text-xl font-bold text-primary-600">{formatPrice(producto.precio * quantity)}</span>
+                            {producto.porciones && (
+                              <span className="text-sm text-neutral-500 ml-2">{producto.porciones} porciones</span>
+                            )}
+                          </div>
+
+                          {/* Selector de cantidad */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleQuantityChange(producto.id, -1)}
+                              className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+                              disabled={quantity <= 1}
+                            >
+                              <Minus className="w-4 h-4 text-neutral-700" />
+                            </button>
+                            <span className="text-lg font-semibold text-neutral-900 w-8 text-center">{quantity}</span>
+                            <button
+                              onClick={() => handleQuantityChange(producto.id, 1)}
+                              className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+                            >
+                              <Plus className="w-4 h-4 text-neutral-700" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Botones siempre al fondo de la card */}
+                      <div className="p-4 pt-0 mt-auto">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleAddToCart(producto)}
+                            className="flex-1 bg-primary-600 text-white text-center px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                            disabled={!producto.disponible}
+                          >
+                            Agregar al carro
+                          </button>
+                          <Link
+                            href={productUrl}
+                            className="bg-neutral-900 text-white p-2 rounded-lg hover:bg-neutral-800 transition-colors flex items-center justify-center"
+                            title="Ver detalles"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </Link>
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
               </div>
             ) : (
               <div className="text-center py-12">
@@ -306,7 +493,6 @@ export default function HomePage() {
                 <p className="text-neutral-600">Estamos preparando deliciosos productos para esta categoría</p>
               </div>
             )}
-          </Suspense>
 
           <div className="text-center mt-12">
             <Link
@@ -462,22 +648,36 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="relative">
-            <div className="overflow-hidden">
-              <div
-                className="flex transition-transform duration-500 ease-in-out"
-                style={{
-                  transform: `translateX(-${currentReviewIndex * (100 / itemsPerPage)}%)`,
-                }}
-              >
-                {reviews.map((review) => (
-                  <div
-                    key={review.id}
-                    className="flex-shrink-0 w-full md:w-1/2 lg:w-1/3 px-4" // Adjust width for responsive cards
-                  >
-                    <div className="bg-neutral-50 rounded-lg p-6 shadow-sm h-full flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center mb-4">
+          {isLoadingReviews ? (
+            <div className="text-center py-12">
+              <div className="w-24 h-24 bg-neutral-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">⭐</span>
+              </div>
+              <h3 className="text-xl font-semibold text-neutral-900 mb-2">Cargando reseñas...</h3>
+              <p className="text-neutral-600">Esperá un momento mientras cargamos las opiniones de nuestros clientes</p>
+            </div>
+          ) : reviewsDestacadas.length > 0 ? (
+            <div className="relative">
+              <div className="overflow-hidden">
+                <div
+                  className="flex transition-transform duration-500 ease-in-out"
+                  style={{
+                    transform: `translateX(-${currentReviewIndex * (100 / itemsPerPage)}%)`,
+                  }}
+                >
+                  {reviewsDestacadas.map((review) => (
+                    <div
+                      key={review.id}
+                      className="flex-shrink-0 w-full md:w-1/2 lg:w-1/3 px-4" // Adjust width for responsive cards
+                    >
+                      <div 
+                        className={`bg-neutral-50 rounded-lg p-6 shadow-sm flex flex-col overflow-hidden transition-all duration-500 ease-in-out ${
+                          isReviewExpanded(review.id || "") 
+                            ? "h-auto min-h-[200px] shadow-lg border-2 border-primary-200" 
+                            : "h-[200px]"
+                        }`}
+                      >
+                        <div className="flex justify-center mb-2">
                           {[...Array(review.rating)].map((_, i) => (
                             <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                           ))}
@@ -485,16 +685,41 @@ export default function HomePage() {
                             <Star key={i + review.rating} className="w-5 h-5 text-neutral-300" />
                           ))}
                         </div>
-                        <p className="text-neutral-700 italic mb-4">"{review.testimonial}"</p>
+                        
+                        <div className={`flex flex-col ${
+                          !isReviewExpanded(review.id || "") ? "flex-1" : ""
+                        }`}>
+                          <div className={`review-text-container ${
+                            !isReviewExpanded(review.id || "") ? "flex-1 overflow-hidden" : ""
+                          }`}>
+                            <p className={`text-neutral-700 italic mb-2 text-wrap-safe leading-relaxed ${
+                              !isReviewExpanded(review.id || "") ? "line-clamp-2" : ""
+                            }`}>
+                              "{review.testimonial}"
+                            </p>
+                          </div>
+                          
+                          {/* Botón "Ver más" solo si el texto es largo */}
+                          {review.testimonial.length > 60 && (
+                            <button
+                              onClick={() => toggleReviewExpansion(review.id || "")}
+                              className={`text-primary-600 hover:text-primary-700 text-sm font-medium mb-2 transition-colors ${
+                                isReviewExpanded(review.id || "") ? "font-semibold" : ""
+                              }`}
+                            >
+                              {isReviewExpanded(review.id || "") ? "Ver menos" : "Ver más"}
+                            </button>
+                          )}
+                        </div>
+                        
+                        <p className="font-semibold text-neutral-900 mt-auto" aria-label={`Reseña de ${review.userName || review.name}`}>
+                          - {review.userName || review.name}
+                        </p>
                       </div>
-                      <p className="font-semibold text-neutral-900" aria-label={`Reseña de ${review.name}`}>
-                        - {review.name}
-                      </p>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
 
             {/* Navigation Buttons */}
             <button
@@ -512,6 +737,15 @@ export default function HomePage() {
               <ChevronRight className="w-6 h-6 text-neutral-700" />
             </button>
           </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-24 h-24 bg-neutral-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">💬</span>
+              </div>
+              <h3 className="text-xl font-semibold text-neutral-900 mb-2">Sin reseñas destacadas</h3>
+              <p className="text-neutral-600">Aún no tenemos reseñas destacadas. ¡Sé el primero en compartir tu experiencia!</p>
+            </div>
+          )}
         </div>
       </section>
 

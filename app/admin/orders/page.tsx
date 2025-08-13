@@ -1,5 +1,20 @@
 "use client"
 
+/**
+ * Panel de Administración - Gestión de Pedidos
+ * 
+ * Funcionalidades:
+ * - Visualización de todos los pedidos
+ * - Actualización de estados de pedidos
+ * - Contacto directo con clientes vía WhatsApp
+ * - Mensajes dinámicos según el estado del pedido:
+ *   * En preparación: Informa sobre la elaboración
+ *   * Listo para entrega: Confirma que está listo
+ *   * En camino: Notifica que está siendo entregado
+ *   * Entregado: Solicita feedback y nuevos pedidos
+ *   * Cancelado: Ofrece asistencia post-cancelación
+ */
+
 import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
@@ -15,13 +30,15 @@ import {
   Eye,
   Edit,
   Search,
-  Filter
+  Filter,
+  MessageCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import AdminNavigation from "@/components/admin/AdminNavigation"
 
 interface Purchase {
   id: string
@@ -83,6 +100,91 @@ export default function OrdersPage() {
       await loadPurchases() // Recargar la lista
     } catch (error) {
       console.error("Error updating purchase status:", error)
+    }
+  }
+
+  const handleWhatsAppContact = (phoneNumber: string, customerName: string, orderId: string, orderStatus: string) => {
+    // Limpiar el número de teléfono (remover espacios, guiones, etc.)
+    const cleanPhone = phoneNumber.replace(/\s+/g, '').replace(/[-()]/g, '')
+    
+    // Agregar código de país si no lo tiene (asumiendo Argentina +54)
+    let formattedPhone = cleanPhone
+    if (!cleanPhone.startsWith('54')) {
+      formattedPhone = `54${cleanPhone}`
+    }
+    
+    // Generar mensaje dinámico según el estado del pedido
+    const message = generateWhatsAppMessage(customerName, orderId, orderStatus)
+    
+    // Crear URL de WhatsApp
+    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`
+    
+    // Abrir WhatsApp en nueva pestaña
+    window.open(whatsappUrl, '_blank')
+  }
+
+  // Función para generar mensajes dinámicos según el estado del pedido
+  const generateWhatsAppMessage = (customerName: string, orderId: string, orderStatus: string) => {
+    const orderNumber = orderId.slice(-8)
+    
+    switch (orderStatus) {
+      case 'en_preparacion':
+        return `Hola ${customerName}! 👋 Te contactamos desde Paula Pastas sobre tu pedido #${orderNumber}. 🍝
+
+Tu pedido está siendo preparado con mucho amor y los ingredientes más frescos. Te avisaremos cuando esté listo para la entrega.
+
+¿Tenés alguna consulta o querés hacer algún cambio?`
+
+      case 'listo_para_entrega':
+        return `Hola ${customerName}! 🎉 Tu pedido #${orderNumber} está listo para la entrega. 🚚
+
+Nuestro equipo de delivery saldrá en breve hacia tu dirección. Te enviaremos una notificación cuando esté en camino.
+
+¡Gracias por elegir Paula Pastas! 😊`
+
+      case 'en_camino':
+        return `Hola ${customerName}! 🚚 Tu pedido #${orderNumber} está en camino hacia tu casa. 
+
+Nuestro delivery debería llegar en los próximos minutos. ¡Prepará el plato para disfrutar de nuestras pastas frescas! 🍝
+
+¿Necesitás que te contactemos por algo más?`
+
+      case 'entregado':
+        return `Hola ${customerName}! ✅ Tu pedido #${orderNumber} ya fue entregado exitosamente.
+
+¡Esperamos que estés disfrutando de nuestras pastas artesanales! 🍝
+
+¿Cómo te gustó? ¿Tenés alguna sugerencia o querés hacer otro pedido?`
+
+      case 'cancelado':
+        return `Hola ${customerName}! 😔 Te contactamos sobre tu pedido #${orderNumber} que fue cancelado.
+
+Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido, estamos acá para ayudarte.
+
+¿En qué podemos asistirte?`
+
+      default:
+        return `Hola ${customerName}! 👋 Te contactamos desde Paula Pastas sobre tu pedido #${orderNumber}. 
+
+¿Tenés alguna consulta o necesitás ayuda con tu pedido? Estamos acá para asistirte. 😊`
+    }
+  }
+
+  // Función para obtener un resumen del mensaje que se enviará
+  const getMessagePreview = (orderStatus: string) => {
+    switch (orderStatus) {
+      case 'en_preparacion':
+        return 'Mensaje: Pedido en preparación'
+      case 'listo_para_entrega':
+        return 'Mensaje: Listo para entrega'
+      case 'en_camino':
+        return 'Mensaje: En camino'
+      case 'entregado':
+        return 'Mensaje: Pedido entregado'
+      case 'cancelado':
+        return 'Mensaje: Pedido cancelado'
+      default:
+        return 'Mensaje: Consulta general'
     }
   }
 
@@ -215,30 +317,7 @@ export default function OrdersPage() {
     <ProtectedRoute requireAuth={true} requireAdmin={true} redirectTo="/login">
       <div className="min-h-screen bg-neutral-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="font-display text-3xl font-bold text-neutral-900 mb-2">Gestión de Pedidos</h1>
-            <p className="text-neutral-600">Administra y actualiza el estado de los pedidos</p>
-          </div>
-
-          {/* Navigation */}
-          <div className="mb-8 flex space-x-4 border-b border-neutral-200">
-            <Link href="/admin" className="py-2 px-4 text-sm font-medium text-neutral-600 hover:text-primary-600 hover:border-primary-600 transition-colors">
-              Productos
-            </Link>
-            <Link href="/admin/orders" className="py-2 px-4 text-sm font-medium text-primary-600 border-b-2 border-primary-600">
-              Pedidos
-            </Link>
-            <Link href="/admin/home-sections" className="py-2 px-4 text-sm font-medium text-neutral-600 hover:text-primary-600 hover:border-primary-600 transition-colors">
-              Secciones del Home
-            </Link>
-            <Link href="/admin/page-banners" className="py-2 px-4 text-sm font-medium text-neutral-600 hover:text-primary-600 hover:border-primary-600 transition-colors">
-              Banners de Páginas
-            </Link>
-            <Link href="/admin/blog" className="py-2 px-4 text-sm font-medium text-neutral-600 hover:text-primary-600 hover:border-primary-600 transition-colors">
-              Blog
-            </Link>
-          </div>
+          <AdminNavigation />
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
@@ -376,7 +455,25 @@ export default function OrdersPage() {
                         <h4 className="font-medium mb-2">Detalles de Entrega</h4>
                         <div className="space-y-1 text-sm">
                           <p><span className="font-medium">Dirección:</span> {purchase.buyerAddress}</p>
-                          <p><span className="font-medium">Teléfono:</span> {purchase.buyerPhone}</p>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Teléfono:</span> 
+                            <span>{purchase.buyerPhone}</span>
+                            <div className="ml-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                                onClick={() => handleWhatsAppContact(purchase.buyerPhone, purchase.buyerName, purchase.id, purchase.orderStatus)}
+                                title={`Contactar por WhatsApp - ${getStatusText(purchase.orderStatus)}`}
+                              >
+                                <MessageCircle className="w-4 h-4 mr-1" />
+                                WhatsApp
+                              </Button>
+                              <p className="text-xs text-green-600 mt-1 text-center">
+                                {getMessagePreview(purchase.orderStatus)}
+                              </p>
+                            </div>
+                          </div>
                           <p><span className="font-medium">Opción:</span> {purchase.deliveryOption === 'delivery' ? 'Entrega a domicilio' : 'Retiro por local'}</p>
                           {purchase.deliverySlot && (
                             <p><span className="font-medium">Horario:</span> {purchase.deliverySlot}</p>

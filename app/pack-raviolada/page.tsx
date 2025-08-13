@@ -1,32 +1,77 @@
-import type { Metadata } from "next"
+"use client"
+
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { ChevronDown, MessageCircle, ArrowRight, ShoppingBag, Minus, Plus, Package, Gift, Clock, Users } from "lucide-react"
+import { FirebaseService } from "@/lib/firebase-service"
+import { PageBanner } from "@/lib/types"
 
-export const metadata: Metadata = {
-  title: "Packs y Combos Artesanales | Paula Pastas - Rosario",
-  description: "Proba más sabores, compartí más momentos. Packs ideales para cenas con amigos, degustaciones en pareja o para regalar. Combos artesanales con menor precio por unidad.",
-  keywords: "packs pastas, combos artesanales, raviolada, cenas compartidas, regalos gastronómicos, paula pastas, rosario, delivery packs",
-  openGraph: {
-    title: "Packs y Combos Artesanales | Paula Pastas",
-    description: "Packs ideales para cenas con amigos, degustaciones en pareja o para regalar. Menor precio por unidad y siempre listos para sorprender.",
-    images: [
-      {
-        url: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=630&fit=crop",
-        width: 1200,
-        height: 630,
-        alt: "Packs y combos artesanales Paula Pastas",
-      },
-    ],
-    type: "website",
-    locale: "es_AR",
-  },
-  alternates: {
-    canonical: "https://paulapastas.com/pack-raviolada",
-  },
-}
+
 
 export default function PackRavioladaPage() {
+  const [banner, setBanner] = useState<PageBanner | null>(null)
+  const [isLoadingBanner, setIsLoadingBanner] = useState(true)
+
+  // useEffect para cargar el banner dinámicamente
+  useEffect(() => {
+    async function loadBanner() {
+      try {
+        setIsLoadingBanner(true)
+        console.log("🔄 Cargando banner para pack-raviolada...")
+        
+        // Obtener todos los banners y filtrar por la página específica
+        const allBanners = await FirebaseService.getPageBanners()
+        const packBanner = allBanners.find(b => 
+          b.slug === "pack-raviolada" && 
+          b.pageType === "subcategoria" &&
+          b.subcategoria === "pack"
+        )
+        
+        if (packBanner) {
+          console.log("✅ Banner encontrado:", packBanner)
+          setBanner(packBanner)
+        } else {
+          console.log("⚠️ No se encontró banner específico, usando fallback")
+          // Banner fallback con datos estáticos
+          setBanner({
+            id: "fallback",
+            name: "Banner Pack Raviolada",
+            description: "Banner principal de la página de Packs y Combos Artesanales",
+            imageUrl: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop",
+            title: "Nuestros combos artesanales",
+            subtitle: "Proba más sabores, compartí más momentos. Packs ideales para cenas con amigos, degustaciones en pareja o para regalar.",
+            pageType: "subcategoria",
+            categoria: "sin-tacc",
+            subcategoria: "pack",
+            slug: "pack-raviolada",
+            order: 1
+          })
+        }
+      } catch (error) {
+        console.error("❌ Error cargando banner:", error)
+        // En caso de error, usar banner fallback
+        setBanner({
+          id: "fallback",
+          name: "Banner Pack Raviolada",
+          description: "Banner principal de la página de Packs y Combos Artesanales",
+          imageUrl: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop",
+          title: "Nuestros combos artesanales",
+          subtitle: "Proba más sabores, compartí más momentos. Packs ideales para cenas con amigos, degustaciones en pareja o para regalar.",
+          pageType: "subcategoria",
+          categoria: "sin-tacc",
+          subcategoria: "pack",
+          slug: "pack-raviolada",
+          order: 1
+        })
+      } finally {
+        setIsLoadingBanner(false)
+      }
+    }
+    
+    loadBanner()
+  }, [])
+
   // JSON-LD para datos estructurados
   const jsonLd = {
     "@context": "https://schema.org",
@@ -159,32 +204,49 @@ export default function PackRavioladaPage() {
           </div>
         </div>
 
-        {/* 1. Banner Principal */}
+        {/* 1. Banner Principal - Ahora dinámico */}
         <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 z-0">
-            <Image
-              src="https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop"
-              alt="Packs y combos artesanales de pastas"
-              fill
-              className="object-cover"
-              priority
-            />
-            <div className="absolute inset-0 bg-black/60" />
-          </div>
-
-          <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
-            <h1 className="font-display text-5xl md:text-7xl font-bold mb-6">
-              Nuestros combos artesanales
-            </h1>
-            <div className="bg-black/40 backdrop-blur-sm rounded-lg p-8 max-w-3xl mx-auto">
-              <p className="text-xl md:text-2xl text-neutral-100 leading-relaxed mb-4">
-                Proba más sabores, compartí más momentos.
-              </p>
-              <p className="text-lg md:text-xl text-neutral-200">
-                Packs ideales para cenas con amigos, degustaciones en pareja o para regalar.
-              </p>
+          {isLoadingBanner ? (
+            // Loading state
+            <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-neutral-600">Cargando banner...</p>
+              </div>
             </div>
-          </div>
+          ) : banner ? (
+            // Banner dinámico
+            <>
+              <div className="absolute inset-0 z-0">
+                <Image
+                  src={banner.imageUrl}
+                  alt={banner.description}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 bg-black/60" />
+              </div>
+
+              <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
+                <h1 className="font-display text-5xl md:text-7xl font-bold mb-6">
+                  {banner.title}
+                </h1>
+                <div className="bg-black/40 backdrop-blur-sm rounded-lg p-8 max-w-3xl mx-auto">
+                  <p className="text-xl md:text-2xl text-neutral-100 leading-relaxed mb-4">
+                    {banner.subtitle}
+                  </p>
+                </div>
+              </div>
+            </>
+          ) : (
+            // Fallback si no hay banner
+            <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-neutral-600">Banner no disponible</p>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 2. Sección de Productos */}

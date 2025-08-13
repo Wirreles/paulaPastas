@@ -19,6 +19,7 @@ export default function ProductForm({ producto, onClose, onSave }: ProductFormPr
     nombre: "",
     slug: "",
     descripcion: "",
+    descripcionAcortada: "",
     precio: 0,
     categoria: "rellenas",
     subcategoria: "",
@@ -26,9 +27,17 @@ export default function ProductForm({ producto, onClose, onSave }: ProductFormPr
     ingredientes: [],
     disponible: true,
     destacado: false,
-    orden: 1,
     porciones: 4,
-    tiempoPreparacion: "",
+    // tiempoPreparacion removido
+    comoPreparar: {
+      titulo: "Cómo se prepara",
+      texto: ""
+    },
+    historiaPlato: {
+      titulo: "Historia del plato",
+      texto: ""
+    },
+    preguntasFrecuentes: [],
     seoTitle: "",
     seoDescription: "",
     seoKeywords: [],
@@ -37,12 +46,30 @@ export default function ProductForm({ producto, onClose, onSave }: ProductFormPr
   const [ingredienteInput, setIngredienteInput] = useState("")
   const [keywordInput, setKeywordInput] = useState("")
   const [loading, setLoading] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string>("")
+  const [faqPregunta, setFaqPregunta] = useState("")
+  const [faqRespuesta, setFaqRespuesta] = useState("")
 
   const { success, error } = useToast()
 
   useEffect(() => {
     if (producto) {
-      setFormData(producto)
+      setFormData({
+        ...producto,
+        comoPreparar: producto.comoPreparar || {
+          titulo: "Cómo se prepara",
+          texto: ""
+        },
+        historiaPlato: producto.historiaPlato || {
+          titulo: "Historia del plato",
+          texto: ""
+        },
+        preguntasFrecuentes: producto.preguntasFrecuentes || []
+      })
+      if (producto.imagen) {
+        setImagePreview(producto.imagen)
+      }
     }
   }, [producto])
 
@@ -109,6 +136,52 @@ export default function ProductForm({ producto, onClose, onSave }: ProductFormPr
     }))
   }
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedImage(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleNestedInputChange = (section: 'comoPreparar' | 'historiaPlato', field: 'titulo' | 'texto', value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value
+      }
+    }))
+  }
+
+  const addFAQ = () => {
+    if (faqPregunta.trim() && faqRespuesta.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        preguntasFrecuentes: [
+          ...(prev.preguntasFrecuentes || []),
+          {
+            pregunta: faqPregunta.trim(),
+            respuesta: faqRespuesta.trim()
+          }
+        ],
+      }))
+      setFaqPregunta("")
+      setFaqRespuesta("")
+    }
+  }
+
+  const removeFAQ = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      preguntasFrecuentes: prev.preguntasFrecuentes?.filter((_, i) => i !== index) || [],
+    }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -124,14 +197,43 @@ export default function ProductForm({ producto, onClose, onSave }: ProductFormPr
       return
     }
 
+    // Validar que se haya seleccionado una imagen para productos nuevos
+    if (!producto?.id && !selectedImage && !formData.imagen) {
+      error("Error de validación", "Debes seleccionar una imagen para el producto")
+      return
+    }
+
     setLoading(true)
 
     try {
+      let imageUrl = formData.imagen
+
+      // Subir nueva imagen si se seleccionó una
+      if (selectedImage) {
+        const timestamp = Date.now()
+        const fileName = `productos/${timestamp}-${selectedImage.name}`
+        imageUrl = await FirebaseService.uploadImage(selectedImage, fileName)
+        
+        // Si había una imagen anterior y se sube una nueva, eliminar la anterior
+        if (producto?.imagen && producto.imagen !== formData.imagen) {
+          try {
+            await FirebaseService.deleteImage(producto.imagen)
+          } catch (deleteError) {
+            console.warn("No se pudo eliminar la imagen anterior:", deleteError)
+          }
+        }
+      }
+
+      const productData = {
+        ...formData,
+        imagen: imageUrl,
+      }
+
       if (producto?.id) {
-        await FirebaseService.updateProducto(producto.id, formData)
+        await FirebaseService.updateProducto(producto.id, productData)
         success("Producto actualizado", "El producto se ha actualizado correctamente")
       } else {
-        await FirebaseService.addProducto(formData as Omit<Producto, "id">)
+        await FirebaseService.addProducto(productData as Omit<Producto, "id">)
         success("Producto creado", "El producto se ha creado correctamente")
       }
       onSave()
@@ -186,12 +288,29 @@ export default function ProductForm({ producto, onClose, onSave }: ProductFormPr
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Descripción *</label>
                 <textarea
                   required
-                  rows={3}
+                  rows={4}
                   value={formData.descripcion}
                   onChange={(e) => handleInputChange("descripcion", e.target.value)}
-                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Descripción del producto..."
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono"
+                  placeholder="Descripción del producto...&#10;Puedes usar Enter para crear párrafos&#10;y respetar la ortografía..."
                 />
+                <p className="text-xs text-neutral-500 mt-1">
+                  💡 Usa Enter para crear párrafos. El formato se respetará al mostrar el producto.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Descripción Acortada</label>
+                <textarea
+                  rows={2}
+                  value={formData.descripcionAcortada}
+                  onChange={(e) => handleInputChange("descripcionAcortada", e.target.value)}
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Descripción breve del producto para mostrar en listas o resúmenes..."
+                />
+                <p className="text-xs text-neutral-500 mt-1">
+                  💡 Descripción más corta para mostrar en cards o listas de productos.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -276,16 +395,7 @@ export default function ProductForm({ producto, onClose, onSave }: ProductFormPr
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Tiempo de Preparación</label>
-                <input
-                  type="text"
-                  value={formData.tiempoPreparacion}
-                  onChange={(e) => handleInputChange("tiempoPreparacion", e.target.value)}
-                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Ej: 8-10 minutos"
-                />
-              </div>
+
             </div>
 
             {/* Configuración adicional */}
@@ -293,56 +403,52 @@ export default function ProductForm({ producto, onClose, onSave }: ProductFormPr
               <h3 className="text-lg font-medium text-neutral-900">Configuración</h3>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">URL de Imagen</label>
-                <input
-                  type="url"
-                  value={formData.imagen}
-                  onChange={(e) => handleInputChange("imagen", e.target.value)}
-                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="https://..."
-                />
-                {formData.imagen && (
-                  <img
-                    src={formData.imagen || "/placeholder.svg"}
-                    alt="Preview"
-                    className="mt-2 w-32 h-24 object-cover rounded-lg"
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Imagen del Producto *</label>
+                <div className="space-y-3">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
+                  <p className="text-xs text-neutral-500">
+                    💡 Formatos soportados: JPG, PNG, GIF. Tamaño máximo recomendado: 2MB
+                  </p>
+                </div>
+                
+                {/* Preview de imagen */}
+                {(imagePreview || formData.imagen) && (
+                  <div className="mt-3">
+                    <p className="text-sm font-medium text-neutral-700 mb-2">Vista previa:</p>
+                    <img
+                      src={imagePreview || formData.imagen || "/placeholder.svg"}
+                      alt="Preview"
+                      className="w-32 h-24 object-cover rounded-lg border border-neutral-200"
+                    />
+                  </div>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Orden</label>
+              <div className="flex items-center space-x-4 pt-6">
+                <label className="flex items-center">
                   <input
-                    type="number"
-                    min="1"
-                    value={formData.orden}
-                    onChange={(e) => handleInputChange("orden", Number.parseInt(e.target.value))}
-                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    type="checkbox"
+                    checked={formData.disponible}
+                    onChange={(e) => handleInputChange("disponible", e.target.checked)}
+                    className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
                   />
-                </div>
+                  <span className="ml-2 text-sm text-neutral-700">Disponible</span>
+                </label>
 
-                <div className="flex items-center space-x-4 pt-6">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.disponible}
-                      onChange={(e) => handleInputChange("disponible", e.target.checked)}
-                      className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span className="ml-2 text-sm text-neutral-700">Disponible</span>
-                  </label>
-
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.destacado}
-                      onChange={(e) => handleInputChange("destacado", e.target.checked)}
-                      className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span className="ml-2 text-sm text-neutral-700">Destacado</span>
-                  </label>
-                </div>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.destacado}
+                    onChange={(e) => handleInputChange("destacado", e.target.checked)}
+                    className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="ml-2 text-sm text-neutral-700">Destacado</span>
+                </label>
               </div>
 
               {/* Ingredientes */}
@@ -383,6 +489,146 @@ export default function ProductForm({ producto, onClose, onSave }: ProductFormPr
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Nuevas secciones dinámicas */}
+          <div className="border-t border-neutral-200 pt-6">
+            <h3 className="text-lg font-medium text-neutral-900 mb-4">Información Adicional del Producto</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Sección: Cómo se prepara */}
+              <div className="space-y-3">
+                <h4 className="text-md font-medium text-neutral-800">Cómo se prepara</h4>
+                
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Título de la sección</label>
+                  <input
+                    type="text"
+                    value={formData.comoPreparar?.titulo || ""}
+                    onChange={(e) => handleNestedInputChange("comoPreparar", "titulo", e.target.value)}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Ej: Cómo preparar este plato"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Instrucciones de preparación</label>
+                  <textarea
+                    rows={4}
+                    value={formData.comoPreparar?.texto || ""}
+                    onChange={(e) => handleNestedInputChange("comoPreparar", "texto", e.target.value)}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono"
+                    placeholder="Paso 1: Hervir agua con sal...&#10;Paso 2: Cocinar la pasta...&#10;Paso 3: Servir caliente..."
+                  />
+                  <p className="text-xs text-neutral-500 mt-1">
+                    💡 Usa Enter para separar pasos. El formato se respetará al mostrar el producto.
+                  </p>
+                </div>
+              </div>
+
+              {/* Sección: Historia del plato */}
+              <div className="space-y-3">
+                <h4 className="text-md font-medium text-neutral-800">Historia del plato</h4>
+                
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Título de la sección</label>
+                  <input
+                    type="text"
+                    value={formData.historiaPlato?.titulo || ""}
+                    onChange={(e) => handleNestedInputChange("historiaPlato", "titulo", e.target.value)}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Ej: Historia y origen de este plato"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Historia y origen</label>
+                  <textarea
+                    rows={4}
+                    value={formData.historiaPlato?.texto || ""}
+                    onChange={(e) => handleNestedInputChange("historiaPlato", "texto", e.target.value)}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono"
+                    placeholder="Este plato tiene sus orígenes en...&#10;La tradición cuenta que...&#10;Hoy en día se prepara..."
+                  />
+                  <p className="text-xs text-neutral-500 mt-1">
+                    💡 Usa Enter para crear párrafos. El formato se respetará al mostrar el producto.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sección de Preguntas Frecuentes */}
+          <div className="border-t border-neutral-200 pt-6">
+            <h3 className="text-lg font-medium text-neutral-900 mb-4">Preguntas Frecuentes</h3>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Pregunta</label>
+                  <input
+                    type="text"
+                    value={faqPregunta}
+                    onChange={(e) => setFaqPregunta(e.target.value)}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Ej: ¿Cuánto tiempo tarda en cocinarse?"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Respuesta</label>
+                  <textarea
+                    rows={3}
+                    value={faqRespuesta}
+                    onChange={(e) => setFaqRespuesta(e.target.value)}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono"
+                    placeholder="Respuesta a la pregunta..."
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={addFAQ}
+                  disabled={!faqPregunta.trim() || !faqRespuesta.trim()}
+                  className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  + Agregar Pregunta Frecuente
+                </button>
+              </div>
+
+              {/* Lista de FAQs existentes */}
+              {formData.preguntasFrecuentes && formData.preguntasFrecuentes.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-md font-medium text-neutral-800">Preguntas agregadas:</h4>
+                  {formData.preguntasFrecuentes.map((faq, index) => (
+                    <div key={index} className="bg-neutral-50 p-4 rounded-lg border border-neutral-200">
+                      <div className="flex justify-between items-start mb-2">
+                        <h5 className="font-medium text-neutral-900">Pregunta {index + 1}</h5>
+                        <button
+                          type="button"
+                          onClick={() => removeFAQ(index)}
+                          className="text-red-500 hover:text-red-700 text-sm"
+                        >
+                          × Eliminar
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-sm font-medium text-neutral-700">Pregunta:</span>
+                          <p className="text-sm text-neutral-600 mt-1">{faq.pregunta}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-neutral-700">Respuesta:</span>
+                          <p className="text-sm text-neutral-600 mt-1 whitespace-pre-line">{faq.respuesta}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
