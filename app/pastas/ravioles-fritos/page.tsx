@@ -82,7 +82,7 @@ export default async function RaviolesFritosPage() {
     },
   ]
 
-  // Preguntas frecuentes sobre delivery, envíos, pagos, etc.
+  // Preguntas frecuentes sobre ravioles fritos y el proceso de compra
   const faqs = [
     {
       question: "¿Dónde comprar pastas artesanales en Rosario? ¿Hacen envíos?",
@@ -90,39 +90,29 @@ export default async function RaviolesFritosPage() {
         "Realizamos envíos a Rosario, Funes, Fisherton, Villa Gobernador Gálvez, Alvear y zonas cercanas. Si tenés dudas sobre tu barrio, consultanos por WhatsApp y te confirmamos la cobertura.",
     },
     {
-      question: "¿Cómo se garantiza la cadena de frío en los envíos?",
+      question: "¿Los ravioles fritos son lo mismo que los tradicionales?",
       answer:
-        "Todos nuestros productos congelados se despachan en cajas térmicas o conservadoras, garantizando el mantenimiento de la cadena de frío en todo momento. Las entregas se realizan siempre en menos de 60 minutos, asegurando que tus pastas lleguen en óptimas condiciones, sin riesgo de descongelamiento.",
+        "Los ravioles fritos son exactamente la misma receta que los tradicionales, lo único que cambia es el método de cocción. Con tu compra te enviamos de regalo un Manual de Consejos del Chef para poder obtener resultados de restaurante gourmet en casa, o donde y con quien prefieras. Además, nuestra masa de sémola hace a nuestros ravioles más resistentes al aceite, obteniendo mejores resultados tanto estéticamente como desde el punto de vista saludable.",
     },
     {
-      question: "¿Cómo funciona el sistema de delivery?",
+      question: "¿Puedo hacerlos al horno o en airfryer?",
       answer:
-        "Dependiendo del volumen del pedido, el envío se realiza mediante cadetería tradicional (moto o auto). Trabajamos con Pedidos Ya y Uber, y próximamente incorporaremos nuestro servicio de delivery propio.",
+        "¡Sí! Es posible hornear o cocinar en Air Fryer nuestros ravioles. Ambos métodos de cocción se encuentran en nuestro Manual de Consejos del Chef de regalo para vos.",
     },
     {
-      question: "¿Hay mínimo de compra para envío sin cargo?",
+      question: "¿Cuál es el sabor más pedido por los clientes?",
       answer:
-        "Ofrecemos envío sin cargo en compras mayores a $90.000",
+        "Tenemos un podio bastante aclamado, pero el ganador siempre es el Ossobuco Malbec que con su sabor profundo y sus largas horas de cocción es, mes a mes, el más pedido.",
     },
     {
-      question: "¿Qué días entregan pedidos?",
+      question: "¿Puedo pagar con Mercado Pago?",
       answer:
-        "Realizamos entregas de lunes a sábados, con cronograma variable según la zona. En Rosario, los envíos fijos se realizan martes, jueves, viernes y sábados. En zonas aledañas, consultar disponibilidad. Si necesitás una entrega fuera de los días establecidos en Rosario, podemos coordinarla con anticipación según disponibilidad.",
+        "Por supuesto, aceptamos Mercado Pago como medio de pago.",
     },
     {
-      question: "¿Qué métodos de pago aceptan?",
+      question: "¿Cuánto duran en el freezer? ¿Y en la heladera?",
       answer:
-        "Aceptamos pagos en efectivo, transferencia bancaria, débito, crédito.",
-    },
-    {
-      question: "¿Cuánto cuesta el envío?",
-      answer:
-        "El costo de envío depende de la distancia y el tipo de transporte requerido.",
-    },
-    {
-      question: "¿Puedo pasar a retirar por un punto de entrega?",
-      answer:
-        "Contamos con puntos de retiro en: Rosario Centro y Pueblo Esther",
+        "Nuestros ravioles duran 2 meses en el freezer. Si necesitás conservar ravioles fritos, lo ideal es calcular las porciones y, si sobra, guardarlos congelados y recalentarlos en horno o freidora de aire para recuperar la textura crocante.",
     },
   ]
 
@@ -363,7 +353,7 @@ export default async function RaviolesFritosPage() {
                 Preguntas frecuentes
               </h2>
               <p className="text-lg text-neutral-600">
-                Resolvemos las dudas más comunes sobre nuestras pastas artesanales y el proceso de compra.
+                Resolvemos las dudas más comunes sobre nuestros ravioles fritos y el proceso de compra.
               </p>
             </div>
 

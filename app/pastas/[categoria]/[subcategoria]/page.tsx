@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, ChevronRight, MessageCircle } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import ProductCard from "@/components/ProductCard"
 
@@ -13,6 +13,50 @@ interface SubcategoriaPageProps {
     subcategoria: string
   }
 }
+
+// FAQs específicas para ravioles
+const raviolesFaqs = [
+  {
+    question: "¿Qué diferencia hay entre los ravioles de Paula y los de supermercado?",
+    answer:
+      "Los ravioles de Paula Pastas se distinguen en cada detalle frente a los productos industriales. La masa está elaborada 100% con sémola de trigo de grano duro de alta calidad, sin colorantes ni conservantes artificiales. Nuestros rellenos no contienen aditivos: al cortarlos o morderlos, podés ver claramente los ingredientes reales que usamos. A diferencia de muchas opciones comerciales —que emplean harinas refinadas, estabilizantes, colorantes y etiquetas poco claras como \"sabores naturales\" o \"aditivos autorizados\"—, en Paula Pastas te ofrecemos transparencia, pureza y sabor real en tu mesa.",
+  },
+  {
+    question: "¿Cuánto duran en el freezer? ¿Y en la heladera?",
+    answer:
+      "Nuestros ravioles pueden conservarse hasta 2 meses en freezer. Una vez cocidos, duran entre 2 y 3 días en heladera (en recipiente hermético). Sin embargo, recomendamos consumirlos dentro de las primeras 48 horas para preservar su sabor y textura originales.",
+  },
+  {
+    question: "¿Cuántos ravioles se calculan por persona?",
+    answer:
+      "Cada caja de 500 gramos contiene aproximadamente 48 ravioles artesanales, de gran tamaño (4 cm en crudo). Ese contenido representa: 2 porciones abundantes (24 unidades c/u) o 3 porciones moderadas (16 unidades c/u). La cantidad ideal puede variar según el tipo de comida o el apetito de quienes los disfruten.",
+  },
+  {
+    question: "¿Cuál es el sabor más pedido por los clientes?",
+    answer:
+      "Tenemos un podio muy aclamado aunque sin dudas hay un ganador. En primer lugar está el Ossobuco al Malbec, con su sabor profundo y sus horas de cocción lenta, es el favorito indiscutido.",
+  },
+  {
+    question: "¿Tienen ravioles para vegetarianos?",
+    answer:
+      "¡Sí! Tenemos ravioles aptos para vegetarianos: Espinaca Cremosa con Crocante de Nuez. Y próximamente ampliaremos nuestra carta con más opciones veggie. Tip: no te pierdas nuestros Ñoquis de los 29, también aptos para vegetarianos.",
+  },
+  {
+    question: "¿Puedo cocinarlos al horno o fritos, o solo hervidos?",
+    answer:
+      "Nuestros ravioles son aptos para: hervido, frito, salteado, horno o en air fryer. Con cada compra incluimos nuestro manual de consejos del chef, para que los disfrutes al máximo con cualquier técnica.",
+  },
+  {
+    question: "¿Cómo se cocinan los ravioles congelados?",
+    answer:
+      "Los ravioles se exponen al método de cocción que elijas directo desde el freezer. Nunca se descongelan.",
+  },
+  {
+    question: "¿Dónde comprar ravioles artesanales en Rosario?",
+    answer:
+      "En Paula Pastas elaboramos cada raviol artesanalmente, uno por uno, con el cuidado y la atención que hacen la diferencia. Sí, son los mejores. Obviamente. 😉",
+  },
+]
 
 const subcategoriaData = {
   rellenas: {
@@ -278,6 +322,127 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
               )}
             </Suspense>
           </section>
+
+          {/* NUEVA SECCIÓN: "¿Por qué nuestros ravioles son diferentes?" - Solo para ravioles */}
+          {subcategoria === "ravioles" && (
+            <section className="mt-16 bg-primary-50 rounded-2xl shadow-lg p-8 text-center">
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-8">
+                ¿Por qué nuestros ravioles son diferentes?
+              </h2>
+              <p className="text-lg text-neutral-600 mb-8">
+                Descubrí lo que hace únicos a nuestros ravioles artesanales.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-4xl mx-auto">
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-primary-100 rounded-full flex-shrink-0 mt-1"></div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                      Calidad artesanal
+                    </h3>
+                    <p className="text-neutral-700 leading-relaxed">
+                      Porque no se trata solo de pasta. Cocinamos a fuego lento los rellenos como si fueran el plato principal: ossobuco braseado, carré glaseado, espinaca cremosa con crocante de nuez.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-primary-100 rounded-full flex-shrink-0 mt-1"></div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                      Elaboración tradicional
+                    </h3>
+                    <p className="text-neutral-700 leading-relaxed">
+                      Cada raviol está elaborado artesanalmente en Rosario, con sémola seleccionada y sin conservantes. Y lo mejor: en menos de 10 minutos, tenes un plato que podrías servir en un restaurante... pero en tu casa.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* NUEVA SECCIÓN: Preguntas Frecuentes - Solo para ravioles */}
+          {subcategoria === "ravioles" && (
+            <section className="mt-16 bg-white rounded-2xl shadow-lg p-8">
+              <div className="text-center mb-12">
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
+                  Preguntas frecuentes
+                </h2>
+                <p className="text-lg text-neutral-600">
+                  Resolvemos las dudas más comunes sobre nuestros ravioles artesanales y el proceso de compra.
+                </p>
+              </div>
+
+              <div className="space-y-4 max-w-3xl mx-auto">
+                {raviolesFaqs.map((faq, index) => (
+                  <details
+                    key={index}
+                    className="bg-neutral-50 rounded-lg shadow-sm p-5 cursor-pointer group"
+                    style={{ fontFamily: "var(--font-playfair)" }}
+                  >
+                    <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg">
+                      {faq.question}
+                      <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                    </summary>
+                    <div className="mt-4 text-neutral-700 leading-relaxed">{faq.answer}</div>
+                  </details>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* NUEVA SECCIÓN: "¿Tenés otra consulta?" - Solo para ravioles */}
+          {subcategoria === "ravioles" && (
+            <section className="mt-16 bg-white rounded-2xl shadow-lg p-8 text-center">
+              <div className="max-w-2xl mx-auto">
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-6">¿Tenés otra consulta?</h2>
+                <p className="text-lg text-neutral-600 mb-8 max-w-xl mx-auto leading-relaxed">
+                  Te ayudamos por WhatsApp. Nuestro equipo está listo para responder todas tus preguntas sobre nuestros ravioles artesanales.
+                </p>
+                <a
+                  href="https://wa.me/5493411234567"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-8 py-4 bg-[#25D366] text-white font-semibold rounded-xl hover:bg-[#1DA851] transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  aria-label="Chatear por WhatsApp con Paula Pastas"
+                >
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  Hablemos por WhatsApp
+                </a>
+              </div>
+            </section>
+          )}
+
+          {/* NUEVA SECCIÓN: "Mantente informado" - Solo para ravioles */}
+          {subcategoria === "ravioles" && (
+            <section className="mt-16 bg-primary-50 rounded-2xl shadow-lg p-8 text-center">
+              <div className="max-w-3xl mx-auto">
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-6">Mantente informado</h2>
+                <p className="text-lg text-neutral-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+                  Suscribite a nuestro newsletter y recibí un 10% de descuento en tu primer pedido de ravioles artesanales.
+                </p>
+                <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                  <label htmlFor="email-newsletter" className="sr-only">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email-newsletter"
+                    name="email"
+                    placeholder="Tu email"
+                    required
+                    className="flex-1 px-5 py-3 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 text-neutral-900 transition-all duration-200 shadow-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="px-8 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  >
+                    Suscribirme
+                  </button>
+                </form>
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </>

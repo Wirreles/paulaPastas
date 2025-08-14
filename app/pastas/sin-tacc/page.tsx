@@ -37,6 +37,14 @@ const faqs = [
     question: "¿Cuándo estarán disponibles?",
     answer: "Esperamos lanzarlas pronto. Suscribite para enterarte primero.",
   },
+  {
+    question: "¿Qué debo tener en cuenta al comprar productos sin TACC?",
+    answer: "Al elegir pastas sin TACC, es fundamental verificar que estén elaboradas en un entorno libre de contaminación cruzada y también es importante revisar la lista de ingredientes, ya que algunos productos pueden no contener gluten en su composición pero sí estar expuestos a trazas. En Paula Pastas, por el momento no elaboramos productos sin TACC, ya que trabajamos exclusivamente con sémola de trigo.",
+  },
+  {
+    question: "¿Van a tener cocina o línea de producción separada para sin TACC?",
+    answer: "¡Sí! Consideramos fundamental tener una línea de producción aislada para asegurar la integridad de nuestros productos sin TACC.",
+  },
 ]
 
 export default async function PastasSinTaccPage() {

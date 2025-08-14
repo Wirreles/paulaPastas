@@ -35,19 +35,44 @@ interface Faq {
 // Datos de ejemplo para FAQ (pueden venir de Firebase en el futuro)
 const faqs: Faq[] = [
   {
-    question: "¿Hasta dónde llegan los envíos?",
+    question: "¿Qué diferencia hay entre los ravioles de Paula y los de supermercado?",
     answer:
-      "Realizamos envíos a Rosario, Funes, Fisherton, Villa Gobernador Gálvez, Alvear y zonas cercanas. Si tenés dudas sobre tu barrio, consultanos por WhatsApp y te confirmamos la cobertura.",
+      "Los ravioles de Paula Pastas se distinguen en cada detalle frente a los productos industriales. La masa está elaborada 100% con sémola de trigo de grano duro de alta calidad, sin colorantes ni conservantes artificiales. Nuestros rellenos no contienen aditivos: al cortarlos o morderlos, podés ver claramente los ingredientes reales que usamos. A diferencia de muchas opciones comerciales —que emplean harinas refinadas, estabilizantes, colorantes y etiquetas poco claras como \"sabores naturales\" o \"aditivos autorizados\"—, en Paula Pastas te ofrecemos transparencia, pureza y sabor real en tu mesa.",
   },
   {
-    question: "¿Cómo se conservan las pastas?",
+    question: "¿Cuánto duran en el freezer? ¿Y en la heladera?",
     answer:
-      "Nuestras pastas se entregan frescas y se pueden conservar en la heladera por 2-3 días o congelar hasta por 3 meses para mantener su frescura y calidad.",
+      "Nuestros ravioles pueden conservarse hasta 2 meses en freezer. Una vez cocidos, duran entre 2 y 3 días en heladera (en recipiente hermético). Sin embargo, recomendamos consumirlos dentro de las primeras 48 horas para preservar su sabor y textura originales.",
   },
   {
-    question: "¿Puedo pedir con anticipación?",
+    question: "¿Cuántos ravioles se calculan por persona?",
     answer:
-      "Sí, puedes programar tu pedido para una fecha y hora específica durante el proceso de compra. Esto te asegura tener tus pastas listas cuando las necesites.",
+      "Cada caja de 500 gramos contiene aproximadamente 48 ravioles artesanales, de gran tamaño (4 cm en crudo). Ese contenido representa: 2 porciones abundantes (24 unidades c/u) o 3 porciones moderadas (16 unidades c/u). La cantidad ideal puede variar según el tipo de comida o el apetito de quienes los disfruten.",
+  },
+  {
+    question: "¿Cuál es el sabor más pedido por los clientes?",
+    answer:
+      "Tenemos un podio muy aclamado aunque sin dudas hay un ganador. En primer lugar está el Ossobuco al Malbec, con su sabor profundo y sus horas de cocción lenta, es el favorito indiscutido.",
+  },
+  {
+    question: "¿Tienen ravioles para vegetarianos?",
+    answer:
+      "¡Sí! Tenemos ravioles aptos para vegetarianos: Espinaca Cremosa con Crocante de Nuez. Y próximamente ampliaremos nuestra carta con más opciones veggie. Tip: no te pierdas nuestros Ñoquis de los 29, también aptos para vegetarianos.",
+  },
+  {
+    question: "¿Puedo cocinarlos al horno o fritos, o solo hervidos?",
+    answer:
+      "Nuestros ravioles son aptos para: hervido, frito, salteado, al horno o en air fryer. Con cada compra incluimos nuestro manual de consejos del chef, para que los disfrutes al máximo con cualquier técnica.",
+  },
+  {
+    question: "¿Cómo se cocinan los ravioles congelados?",
+    answer:
+      "Los ravioles se exponen al método de cocción que elijas directo desde el freezer. Nunca se descongelan.",
+  },
+  {
+    question: "¿Dónde comprar ravioles artesanales en Rosario?",
+    answer:
+      "En Paula Pastas elaboramos cada raviol artesanalmente, uno por uno, con el cuidado y la atención que hacen la diferencia. Sí, son los mejores. Obviamente. 😉",
   },
 ]
 
@@ -390,7 +415,28 @@ export default function ProductoPageClient({
             </section>
           )}
 
-          {/* 6. ✅ Sección: Reseñas (Carrusel) */}
+          {/* 6. ✅ NUEVA SECCIÓN: "¿Por qué nuestros ravioles son diferentes?" */}
+          <section className="mt-16 bg-white rounded-2xl shadow-lg p-8 text-center">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-8">
+              ¿Por qué nuestros ravioles son diferentes?
+            </h2>
+            <div className="text-lg text-neutral-700 leading-relaxed max-w-4xl mx-auto space-y-6 text-left">
+              <p>
+                Porque no se trata solo de pasta.
+              </p>
+              <p>
+                Cocinamos a fuego lento los rellenos como si fueran el plato principal: ossobuco braseado, carré glaseado, espinaca cremosa con crocante de nuez.
+              </p>
+              <p>
+                Cada raviol está elaborado artesanalmente en Rosario, con sémola seleccionada y sin conservantes.
+              </p>
+              <p>
+                Y lo mejor: en menos de 10 minutos, tenes un plato que podrías servir en un restaurante... pero en tu casa.
+              </p>
+            </div>
+          </section>
+
+          {/* 7. ✅ Sección: Reseñas (Carrusel) */}
           <ReviewsSection productoId={producto.id || ""} productoNombre={producto.nombre} />
 
           {/* 7. ✅ Sección: Preguntas Frecuentes (Acordeón) */}
@@ -400,7 +446,7 @@ export default function ProductoPageClient({
                 Preguntas frecuentes
               </h2>
               <p className="text-lg text-neutral-600">
-                Resolvemos las dudas más comunes sobre nuestros productos artesanales y el proceso de compra.
+                Resolvemos las dudas más comunes sobre nuestros ravioles artesanales y el proceso de compra.
               </p>
             </div>
 

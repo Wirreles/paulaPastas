@@ -49,32 +49,52 @@ const reviews = [
   },
 ]
 
-// Datos de ejemplo para FAQ
+// Datos de ejemplo para FAQ - Actualizados con el contenido correcto del home
 const faqs = [
   {
-    question: "¿Cuál es el horario de atención y delivery?",
+    question: "¿Dónde comprar pastas artesanales en Rosario? ¿Hacen envíos?",
     answer:
-      "Nuestro horario de atención y delivery es de Lunes a Viernes de 18:00 a 23:00 hs, y Sábados y Domingos de 12:00 a 23:00 hs.",
+      "Realizamos envíos a Rosario, Funes, Fisherton, Villa Gobernador Gálvez, Alvear y zonas cercanas. Si tenés dudas sobre tu barrio, consultanos por WhatsApp y te confirmamos la cobertura.",
   },
   {
-    question: "¿Qué zonas cubren con el delivery?",
+    question: "¿Qué tipos de pastas ofrecen?",
     answer:
-      "Realizamos delivery en Villa Gobernador Gálvez, Rosario Centro, Zona Sur y Zona Oeste. Puedes verificar la cobertura exacta en nuestra sección de Delivery.",
+      "Ofrecemos pastas artesanales congeladas elaboradas 100% con sémola de trigo, sin colorantes, conservantes ni aditivos: ravioles y sorrentinos clásicos y gourmet (ossobuco, cordero, carré), lasaña tradicional italiana, ya armada y lista para hornear, salsa Bolognesa para acompañar y próximamente tendremos nuevos productos. Además, todos los 29 preparamos un especial de ñoquis para celebrar la tradición. Toda nuestra pasta llega congelada, conservando su frescura y calidad, y se cocina en pocos minutos para disfrutar en casa del auténtico sabor artesanal.",
   },
   {
-    question: "¿Las pastas son frescas o congeladas?",
+    question: "¿Qué recomiendan para alguien que compra por primera vez?",
     answer:
-      "Todas nuestras pastas son elaboradas diariamente con ingredientes frescos y de primera calidad para garantizar la máxima frescura al momento de la entrega.",
+      "Si es tu primera vez con Paula Pastas, te invitamos a descubrir nuestras dos colecciones. Pensadas y creadas para que vivas una experiencia única y variada. La Colección Verde ofrece sabores suaves y frescos: espinaca cremosa con crocante de nuez, carne y espinaca a la italiana, y ossobuco braseado al Malbec. La Colección Fuego trae sabores intensos y gourmets: cordero campestre Blanc, carré glaseado con crema de cebollas y ossobuco braseado al Malbec.",
   },
   {
-    question: "¿Tienen opciones sin TACC?",
+    question: "¿Cuál es el sabor más pedido por los clientes?",
     answer:
-      "Sí, contamos con una variedad de pastas libres de gluten elaboradas con harinas certificadas sin TACC, perfectas para celíacos sin renunciar al sabor tradicional.",
+      "El sabor más pedido por los clientes es siempre, pero siempre el Ossobuco Malbec. Enamora cada paladar que conoce, y ¡siempre vuelven a pedirlo! Creemos que su larga cocción y el sabor profundo de nuestro caldo casero pueden tener algo que ver en el asunto…",
   },
   {
-    question: "¿Cómo puedo hacer un pedido?",
+    question: "¿Usan conservantes o aditivos?",
     answer:
-      "Puedes hacer tu pedido directamente desde nuestra página web, seleccionando los productos que desees y eligiendo tu zona de entrega. También puedes contactarnos por WhatsApp para asistencia personalizada.",
+      "Nuestras pastas no tienen ningún tipo de conservante, aditivo, colorante o agregado. Son hechas con productos naturales, de origen vegetal y animal.",
+  },
+  {
+    question: "¿Las pastas son aptas para vegetarianos?",
+    answer:
+      "¡Sí! Tenemos pasta apta para vegetarianos. Nuestro relleno de Espinaca Cremosa con Crocante de nuez, tanto en ravioles como en sorrentinos se encuentra disponible. Estamos trabajando para ampliar nuestra carta de sabores y tener más opciones disponibles próximamente. En los 29 de ñoquis también hay opciones disponibles.",
+  },
+  {
+    question: "¿Cuánto duran en el freezer? ¿Y en la heladera?",
+    answer:
+      "Nuestra pasta dura 2 meses en el freezer. Luego de la cocción pueden durar de 2 a 3 días en la heladera (en un recipiente hermético), aunque Paula Pastas recomienda ingerir siempre dentro de las 48 hs para conservar nuestras delicias intactas.",
+  },
+  {
+    question: "¿Qué diferencia hay entre la pasta fresca y la normal?",
+    answer:
+      "La pasta fresca se elabora con harina blanca 00 y huevo, lo que le confiere textura tierna y capacidad para absorber salsas y rellenos cremosos. Su elasticidad y humedad permiten una cocción rápida, normalmente es utilizada para preparaciones como ravioles. Por otro lado, la pasta seca se fabrica con sémola de trigo duro y agua, sometida a un proceso de secado que reduce su humedad al mínimo, otorgándole una textura firme y mayor resistencia a la cocción prolongada. Esta versión es utilizada en platos como espaguetis o tallarines que requieren tiempos más largos de cocción, y salsas que se adhieran bien a la pasta. En Paula Pastas, hacemos una pasta fresca especial, ya que trabajamos con masas al huevo y 100% sémola de grano duro, con una humedad que varía en base al producto al que se destine nuestra masa, para mantener la textura, elasticidad y sabor artesanal que caracteriza a la cocina italiana tradicional en cada uno de sus platos.",
+  },
+  {
+    question: "¿Puedo pagar con Mercado Pago?",
+    answer:
+      "¡Sí! Podés pagar desde Mercado Pago, con la forma de pago que elijas.",
   },
 ]
 

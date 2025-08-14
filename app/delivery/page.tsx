@@ -73,31 +73,39 @@ export default function DeliveryPage() {
     },
   }
 
-  // Datos de FAQ
+  // Datos de FAQ - Actualizados con el contenido del home
   const faqs = [
     {
-      pregunta: "¿Cuántas porciones rinde cada combo?",
-      respuesta: "Cada pack está diseñado para diferentes cantidades de personas. El Pack Clásico rinde 4-6 porciones, el Romántico para 2 personas, el Familiar para 6-8 personas y el Gourmet para 4 personas."
+      pregunta: "¿Dónde comprar pastas artesanales en Rosario? ¿Hacen envíos?",
+      respuesta: "Realizamos envíos a Rosario, Funes, Fisherton, Villa Gobernador Gálvez, Alvear y zonas cercanas. Si tenés dudas sobre tu barrio, consultanos por WhatsApp y te confirmamos la cobertura."
     },
     {
-      pregunta: "¿Hacen envíos a mi zona?",
-      respuesta: "Realizamos envíos a Rosario, Funes, Fisherton, Villa Gobernador Gálvez, Alvear y zonas cercanas. Si tenés dudas sobre tu barrio, contactanos por WhatsApp para confirmar la cobertura."
+      pregunta: "¿Cómo se garantiza la cadena de frío en los envíos?",
+      respuesta: "Todos nuestros productos congelados se despachan en cajas térmicas o conservadoras, garantizando el mantenimiento de la cadena de frío en todo momento. Las entregas se realizan siempre en menos de 60 minutos, asegurando que tus pastas lleguen en óptimas condiciones, sin riesgo de descongelamiento."
     },
     {
-      pregunta: "¿Cuánto dura el delivery?",
-      respuesta: "Nuestros envíos se realizan en el mismo día o al día siguiente, dependiendo del horario de tu pedido. Los horarios de entrega son flexibles y se coordinan por WhatsApp."
+      pregunta: "¿Cómo funciona el sistema de delivery?",
+      respuesta: "Dependiendo del volumen del pedido, el envío se realiza mediante cadetería tradicional (moto o auto). Trabajamos con Pedidos Ya y Uber, y próximamente incorporaremos nuestro servicio de delivery propio."
     },
     {
-      pregunta: "¿Cómo mantienen la cadena de frío?",
-      respuesta: "Utilizamos embalajes especiales con aislantes térmicos y hielo seco para mantener la temperatura óptima durante todo el trayecto. Nuestras pastas llegan congeladas y listas para guardar en tu freezer."
+      pregunta: "¿Hay mínimo de compra para envío sin cargo?",
+      respuesta: "Ofrecemos envío sin cargo en compras mayores a $90.000"
     },
     {
-      pregunta: "¿Cuál es el monto mínimo para delivery?",
-      respuesta: "El monto mínimo para delivery es de $2.500. Para pedidos menores, podés retirar en nuestro local o consultar por WhatsApp sobre opciones especiales."
+      pregunta: "¿Qué días entregan pedidos?",
+      respuesta: "Realizamos entregas de lunes a sábados, con cronograma variable según la zona. En Rosario, los envíos fijos se realizan martes, jueves, viernes y sábados. En zonas aledañas, consultar disponibilidad. Si necesitás una entrega fuera de los días establecidos en Rosario, podemos coordinarla con anticipación según disponibilidad."
     },
     {
       pregunta: "¿Qué métodos de pago aceptan?",
-      respuesta: "Aceptamos MercadoPago, transferencias bancarias, efectivo al momento de la entrega y tarjetas de crédito/débito en el local. El pago se coordina al momento de confirmar el pedido."
+      respuesta: "Aceptamos pagos en efectivo, transferencia bancaria, débito, crédito."
+    },
+    {
+      pregunta: "¿Cuánto cuesta el envío?",
+      respuesta: "El costo de envío depende de la distancia y el tipo de transporte requerido."
+    },
+    {
+      pregunta: "¿Puedo pasar a retirar por un punto de entrega?",
+      respuesta: "Contamos con puntos de retiro en: Rosario Centro y Pueblo Esther."
     }
   ]
 
@@ -208,7 +216,7 @@ export default function DeliveryPage() {
                 Preguntas frecuentes
               </h2>
               <p className="text-lg text-neutral-600">
-                Resolvemos las dudas más comunes sobre nuestros combos y el proceso de compra
+                Resolvemos las dudas más comunes sobre nuestro servicio de delivery y envíos
               </p>
             </div>
 
