@@ -362,25 +362,49 @@ export class MercadoPagoService {
    */
   static async handleWebhook(webhookData: any): Promise<void> {
     try {
+      console.log('🔍 === INICIO DE HANDLEWEBHOOK ===')
+      console.log('🔍 Webhook data recibida:', JSON.stringify(webhookData, null, 2))
+      
       const { type, data } = webhookData
+      console.log('🔍 Tipo extraído:', type)
+      console.log('🔍 Data extraída:', data)
 
       if (type === 'payment') {
+        console.log('🔍 Es notificación de pago, procesando...')
+        
         if (!client) {
+          console.error('❌ Cliente de MercadoPago no inicializado')
           throw new Error('Cliente de MercadoPago no inicializado')
         }
 
-        const paymentInstance = new Payment(client)
-        const paymentInfo = await paymentInstance.get({ id: data.id })
-        const { external_reference, status } = paymentInfo
+        if (!data?.id) {
+          console.error('❌ No se encontró ID del pago en los datos')
+          throw new Error('ID del pago no encontrado en los datos del webhook')
+        }
 
-        console.log('DEBUG: Webhook recibido:', { external_reference, status })
+        console.log('🔍 ID del pago a procesar:', data.id)
+        console.log('🔍 Cliente de MercadoPago disponible:', !!client)
+
+        const paymentInstance = new Payment(client)
+        console.log('🔍 Instancia de Payment creada')
+        
+        console.log('🔍 Intentando obtener información del pago...')
+        const paymentInfo = await paymentInstance.get({ id: data.id })
+        console.log('🔍 Información del pago obtenida:', JSON.stringify(paymentInfo, null, 2))
+        
+        const { external_reference, status } = paymentInfo
+        console.log('🔍 Referencia externa:', external_reference)
+        console.log('🔍 Estado del pago:', status)
 
         if (external_reference && external_reference.startsWith('purchase_')) {
+          console.log('🔍 Referencia válida encontrada, buscando compra pendiente...')
+          
           // Buscar la compra pendiente en Firestore
           const pendingPurchaseData = await FirebaseService.getPendingPurchase(external_reference)
+          console.log('🔍 Compra pendiente encontrada:', !!pendingPurchaseData)
 
           if (!pendingPurchaseData) {
-            console.error('Compra pendiente no encontrada:', external_reference)
+            console.error('❌ Compra pendiente no encontrada:', external_reference)
             return
           }
 
@@ -393,31 +417,43 @@ export class MercadoPagoService {
           console.log('Total final:', pendingPurchaseData.totalAmount)
 
           if (status === 'approved') {
+            console.log('✅ Pago aprobado, procesando compra...')
+            
             // Actualizar stock
+            console.log('🔍 Actualizando stock de productos...')
             for (const prod of pendingPurchaseData.products) {
-              const productData = await FirebaseService.getProductById(prod.productId)
+              try {
+                const productData = await FirebaseService.getProductById(prod.productId)
+                console.log(`🔍 Producto ${prod.productId} encontrado:`, !!productData)
 
-              if (!productData) continue
+                if (!productData) continue
 
-              if (typeof productData.stock === 'number') {
-                if (productData.stock < prod.quantity) {
-                  await FirebaseService.addFailedPurchase({
-                    reason: 'Stock insuficiente en webhook',
-                    ...prod,
-                    buyerId: pendingPurchaseData.buyerId,
-                    paymentId: paymentInfo.id,
-                    createdAt: new Date()
-                  })
-                  continue
+                if (typeof productData.stock === 'number') {
+                  if (productData.stock < prod.quantity) {
+                    console.log(`⚠️ Stock insuficiente para ${prod.productId}`)
+                    await FirebaseService.addFailedPurchase({
+                      reason: 'Stock insuficiente en webhook',
+                      ...prod,
+                      buyerId: pendingPurchaseData.buyerId,
+                      paymentId: paymentInfo.id,
+                      createdAt: new Date()
+                    })
+                    continue
+                  }
+
+                  console.log(`🔍 Actualizando stock de ${prod.productId}: ${productData.stock} -> ${productData.stock - prod.quantity}`)
+                  await FirebaseService.updateProductStock(prod.productId, productData.stock - prod.quantity)
                 }
-
-                await FirebaseService.updateProductStock(prod.productId, productData.stock - prod.quantity)
+              } catch (stockError) {
+                console.error(`❌ Error actualizando stock de ${prod.productId}:`, stockError)
+                // Continuar con otros productos
               }
             }
 
             // Marcar cupón como usado si se aplicó uno
             if (pendingPurchaseData.couponApplied) {
               try {
+                console.log('🔍 Marcando cupón como usado:', pendingPurchaseData.couponApplied.codigo)
                 await FirebaseService.markCouponAsUsed(pendingPurchaseData.couponApplied.id)
                 console.log('✅ Cupón marcado como usado en webhook:', pendingPurchaseData.couponApplied.codigo)
               } catch (couponError) {
@@ -427,6 +463,7 @@ export class MercadoPagoService {
             }
 
             // Guardar la compra finalizada
+            console.log('🔍 Guardando compra finalizada...')
             await FirebaseService.addCompletedPurchase({
               buyerId: pendingPurchaseData.buyerId,
               buyerEmail: pendingPurchaseData.buyerEmail || '',
@@ -449,20 +486,36 @@ export class MercadoPagoService {
               addressId: pendingPurchaseData.addressId || null,
               addressData: pendingPurchaseData.addressData || null
             })
+            console.log('✅ Compra finalizada guardada')
 
             // Eliminar la compra pendiente
+            console.log('🔍 Eliminando compra pendiente...')
             await FirebaseService.deletePendingPurchase(external_reference)
+            console.log('✅ Compra pendiente eliminada')
 
-            console.log('DEBUG: Compra procesada exitosamente:', external_reference)
+            console.log('✅ === COMPRA PROCESADA EXITOSAMENTE ===')
+            console.log('✅ Referencia:', external_reference)
           } else if (status === 'rejected' || status === 'cancelled') {
+            console.log('⚠️ Pago rechazado/cancelado, eliminando compra pendiente...')
             // Eliminar la compra pendiente si fue rechazada o cancelada
             await FirebaseService.deletePendingPurchase(external_reference)
-            console.log('DEBUG: Compra rechazada/cancelada eliminada:', external_reference)
+            console.log('✅ Compra rechazada/cancelada eliminada:', external_reference)
+          } else {
+            console.log('⚠️ Estado del pago no manejado:', status)
           }
+        } else {
+          console.log('⚠️ Referencia externa no válida:', external_reference)
         }
+      } else {
+        console.log('⚠️ Tipo de webhook no manejado:', type)
       }
+      
+      console.log('🔍 === FIN DE HANDLEWEBHOOK ===')
     } catch (error) {
-      console.error('❌ ERROR webhook:', error)
+      console.error('❌ === ERROR EN HANDLEWEBHOOK ===')
+      console.error('❌ Error completo:', error)
+      console.error('❌ Stack trace:', error instanceof Error ? error.stack : 'No stack trace')
+      console.error('❌ Mensaje:', error instanceof Error ? error.message : 'Error desconocido')
       throw new Error(error instanceof Error ? error.message : 'Error procesando notificación')
     }
   }
