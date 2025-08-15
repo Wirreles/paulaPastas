@@ -18,7 +18,7 @@ interface EmailResponse {
 class EmailService {
   private apiKey: string
   private baseUrl = 'https://api.brevo.com/v3/smtp/email'
-  private senderEmail = 'newsletter@paula-pastas.vercel.app' // Tu dominio real de Vercel
+  private senderEmail = 'newsletter@paulapastas.com' // Tu dominio real autentificado en Brevo
   private senderName = 'Paula Pastas'
 
   constructor() {
@@ -284,11 +284,11 @@ class EmailService {
     
     // Probar con diferentes dominios de remitente
     const testDomains = [
-      'newsletter@paula-pastas.vercel.app', // Tu dominio real de Vercel
-      'info@paula-pastas.vercel.app',       // Alternativa
-      'noreply@paula-pastas.vercel.app',    // Otra alternativa
-      'newsletter@paulapastas.com',         // Dominio personalizado (si lo tienes)
-      'joelrchirino@gmail.com'              // Fallback
+      'newsletter@paulapastas.com',         // Tu dominio principal autentificado
+      'info@paulapastas.com',               // Alternativa
+      'noreply@paulapastas.com',            // Otra alternativa
+      'newsletter@paula-pastas.vercel.app', // Fallback a Vercel
+      'joelrchirino@gmail.com'              // Fallback final
     ]
     
     for (const testDomain of testDomains) {
