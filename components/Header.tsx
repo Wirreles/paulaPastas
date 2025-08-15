@@ -2,28 +2,27 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image" // Importar Image
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { Menu, X, ShoppingBag, User, LogOut, ArrowLeft, ArrowRight } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { useCart } from "@/lib/cart-context" // Importar useCart
-import CartSidebar from "@/components/CartSidebar" // Importar CartSidebar
+import { useCart } from "@/lib/cart-context"
+import CartSidebar from "@/components/CartSidebar"
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [menuPath, setMenuPath] = useState<string[]>([]) // Tracks current path in nested menu
+  const [menuPath, setMenuPath] = useState<string[]>([])
   const pathname = usePathname()
   const { user, isAdmin, logout } = useAuth()
-  const { totalItems, toggleCart } = useCart() // Usar totalItems y toggleCart del contexto
+  const { totalItems, toggleCart } = useCart()
 
   // Effect to control body overflow
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = "hidden"
     } else {
-      document.body.style.overflow = "" // Reset to default
+      document.body.style.overflow = ""
     }
-    // Cleanup function to ensure overflow is reset when component unmounts
     return () => {
       document.body.style.overflow = ""
     }
@@ -56,9 +55,9 @@ export default function Header() {
           ],
         },
         { name: "Sin TACC", href: "/pastas/sin-tacc", id: "sin-tacc" },
-        { name: "Pack", href: "/pack-raviolada", id: "pack" }, // Adjusted to match screenshot
-        { name: "Ravioles fritos", href: "/pastas/ravioles-fritos", id: "ravioles-fritos" }, // Placeholder
-        { name: "Salsas", href: "/pastas/salsas", id: "salsas" }, // Placeholder
+        { name: "Pack", href: "/pack-raviolada", id: "pack" },
+        { name: "Ravioles fritos", href: "/pastas/ravioles-fritos", id: "ravioles-fritos" },
+        { name: "Salsas", href: "/pastas/salsas", id: "salsas" },
       ],
     },
     { name: "Nosotros", href: "/nosotros" },
@@ -76,7 +75,7 @@ export default function Header() {
       } else if (parent && parent.subcategorias) {
         currentItems = parent.subcategorias
       } else {
-        return [] // Path not found or no submenu/subcategories
+        return []
       }
     }
     return currentItems
@@ -92,7 +91,7 @@ export default function Header() {
     if (item.submenu || item.subcategorias) {
       setMenuPath([...menuPath, item.id])
     } else {
-      setIsMenuOpen(false) // Close menu on final link click
+      setIsMenuOpen(false)
     }
   }
 
@@ -101,22 +100,33 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-primary-350">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <Image src="/pplog2.png" alt="Paula Pastas Logo" width={40} height={40} />
+    <header className="sticky top-0 z-50 bg-primary-350 shadow-sm">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+        <div className="flex justify-between items-center h-14 sm:h-16">
+          {/* Logo - Responsive */}
+          <Link href="/" className="flex items-center space-x-2 sm:space-x-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
+              <Image 
+                src="/pplog2.png" 
+                alt="Paula Pastas Logo" 
+                width={40} 
+                height={40}
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div>
-              <h1 className="font-display text-xl font-bold text-neutral-900">Paula Pastas</h1>
+            <div className="hidden sm:block">
+              <h1 className="font-display text-lg sm:text-xl font-bold text-neutral-900">Paula Pastas</h1>
               <p className="text-xs text-neutral-600">Pastas Artesanales</p>
+            </div>
+            {/* Logo text for mobile */}
+            <div className="sm:hidden">
+              <h1 className="font-display text-base font-bold text-neutral-900">Paula</h1>
+              <p className="text-xs text-neutral-600">Pastas</p>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
             {navigation.map((item) => (
               <div key={item.name} className="relative group">
                 <Link
@@ -161,14 +171,14 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Right side actions */}
-          <div className="flex items-center space-x-4">
-            {/* Cart */}
+          {/* Right side actions - Responsive */}
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Cart - Responsive */}
             <button
               onClick={toggleCart}
-              className="p-2 text-neutral-900 hover:text-primary-600 transition-colors relative"
+              className="p-1.5 sm:p-2 text-neutral-900 hover:text-primary-600 transition-colors relative"
             >
-              <ShoppingBag className="w-5 h-5" />
+              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
               {totalItems > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                   {totalItems}
@@ -176,13 +186,13 @@ export default function Header() {
               )}
             </button>
 
-            {/* User menu */}
+            {/* User menu - Responsive */}
             {user ? (
               <div className="relative group">
-                <button className="flex items-center space-x-2 p-2 text-neutral-900 hover:text-primary-600 transition-colors">
-                  <User className="w-5 h-5" />
+                <button className="flex items-center space-x-1 sm:space-x-2 p-1.5 sm:p-2 text-neutral-900 hover:text-primary-600 transition-colors">
+                  <User className="w-4 h-4 sm:w-5 sm:h-5" />
                   {isAdmin && (
-                    <span className="text-xs bg-primary-100 text-primary-800 px-2 py-1 rounded-full">Admin</span>
+                    <span className="hidden sm:inline text-xs bg-primary-100 text-primary-800 px-2 py-1 rounded-full">Admin</span>
                   )}
                 </button>
 
@@ -208,7 +218,7 @@ export default function Header() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center space-x-4">
+              <div className="hidden sm:flex items-center space-x-4">
                 <Link
                   href="/login"
                   className="text-sm font-medium text-neutral-700 hover:text-primary-600 transition-colors"
@@ -227,49 +237,80 @@ export default function Header() {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="lg:hidden p-2 text-neutral-900 hover:text-primary-600 transition-colors"
+              className="lg:hidden p-1.5 sm:p-2 text-neutral-900 hover:text-primary-600 transition-colors"
+              aria-label="Abrir menú"
             >
               {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation - Improved */}
         {isMenuOpen && (
-          <div className="fixed top-16 left-0 right-0 h-[calc(100vh-4rem)] bg-primary-350 lg:hidden z-[999] flex flex-col overflow-y-auto">
+          <div className="fixed top-14 sm:top-16 left-0 right-0 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] bg-primary-350 lg:hidden z-[999] flex flex-col overflow-y-auto">
             {/* Top bar of mobile menu */}
             <div className="bg-primary-900 text-white p-4 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 {isSubMenu && (
-                  <button onClick={handleBackClick} className="p-2 text-white hover:text-primary-100">
+                  <button 
+                    onClick={handleBackClick} 
+                    className="p-2 text-white hover:text-primary-100 transition-colors"
+                    aria-label="Volver"
+                  >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
                 )}
-                <h2 className="font-display text-xl font-bold">{currentMenuTitle}</h2>
+                <h2 className="font-display text-lg sm:text-xl font-bold">{currentMenuTitle}</h2>
               </div>
-              <button onClick={() => setIsMenuOpen(false)} className="p-2 text-white hover:text-primary-100">
+              <button 
+                onClick={() => setIsMenuOpen(false)} 
+                className="p-2 text-white hover:text-primary-100 transition-colors"
+                aria-label="Cerrar menú"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            {/* Menu items */}
-            <nav className="py-4">
+
+            {/* Menu items - Improved spacing and touch targets */}
+            <nav className="py-4 flex-1">
               {currentMenuItems.map((item: any) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="flex items-center justify-between px-6 py-3 text-neutral-900 hover:bg-primary-100 transition-colors"
+                  className="flex items-center justify-between px-4 sm:px-6 py-4 text-neutral-900 hover:bg-primary-100 transition-colors min-h-[44px]"
                   onClick={() => handleMenuItemClick(item)}
                 >
-                  <span className="text-lg font-medium">{item.name}</span>
-                  {(item.submenu || item.subcategorias) && <ArrowRight className="w-5 h-5 text-neutral-500" />}
+                  <span className="text-base sm:text-lg font-medium">{item.name}</span>
+                  {(item.submenu || item.subcategorias) && (
+                    <ArrowRight className="w-5 h-5 text-neutral-500" />
+                  )}
                 </Link>
               ))}
             </nav>
-            {/* Removed the bottom section with "Conoce todas las pastas" and "Sin Conservantes" / "Frescura garantizada" */}
+
+            {/* Bottom section for mobile - Login/Register buttons */}
+            {!user && (
+              <div className="border-t border-primary-200 p-4 space-y-3">
+                <Link
+                  href="/login"
+                  className="block w-full text-center py-3 px-4 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Iniciar Sesión
+                </Link>
+                <Link
+                  href="/register"
+                  className="block w-full text-center py-3 px-4 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Registrarse
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </div>
-      <CartSidebar /> {/* Renderizar el CartSidebar aquí */}
+      <CartSidebar />
     </header>
   )
 }

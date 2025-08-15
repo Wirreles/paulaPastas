@@ -15,6 +15,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'assets.elgourmet.com',
+        port: '',
+        pathname: '/**',
+      },
       // Agregar otros dominios que SÍ quieras optimizar
     ],
     // Configuración de optimización para mejor rendimiento

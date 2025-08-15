@@ -28,9 +28,60 @@ import type {
   Review, // Importar Review
 } from "./types"
 
+// Cache para optimizar consultas
+interface CacheEntry<T> {
+  data: T
+  timestamp: number
+}
+
+class Cache {
+  private cache = new Map<string, CacheEntry<any>>()
+  private readonly TTL = 5 * 60 * 1000 // 5 minutos
+
+  get<T>(key: string): T | null {
+    const entry = this.cache.get(key)
+    if (!entry) return null
+    
+    if (Date.now() - entry.timestamp > this.TTL) {
+      this.cache.delete(key)
+      return null
+    }
+    
+    return entry.data
+  }
+
+  set<T>(key: string, data: T): void {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now()
+    })
+  }
+
+  clear(): void {
+    this.cache.clear()
+  }
+
+  invalidate(pattern: string): void {
+    for (const key of this.cache.keys()) {
+      if (key.includes(pattern)) {
+        this.cache.delete(key)
+      }
+    }
+  }
+}
+
+const cache = new Cache()
+
 export class FirebaseService {
-  // Productos
+  // Productos con cache
   static async getProductos(categoria?: string): Promise<Producto[]> {
+    const cacheKey = `productos_${categoria || 'all'}`
+    const cached = cache.get<Producto[]>(cacheKey)
+    if (cached) {
+      console.log(`📦 Cache hit: getProductos(${categoria || 'all'})`)
+      return cached
+    }
+
     try {
       const productosRef = collection(db, "productos")
       let q = query(productosRef, orderBy("orden", "asc"))
@@ -42,20 +93,27 @@ export class FirebaseService {
       const snapshot = await getDocs(q)
       const productos = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Producto)
 
-      console.log(`FirebaseService.getProductos(${categoria}): Encontrados ${productos.length} productos`)
+      console.log(`📦 FirebaseService.getProductos(${categoria}): Encontrados ${productos.length} productos`)
+      cache.set(cacheKey, productos)
       return productos
     } catch (error) {
-      console.error("Error en getProductos:", error)
+      console.error("❌ Error en getProductos:", error)
       return []
     }
   }
 
-  // Función específica para obtener productos por subcategoría
+  // Función específica para obtener productos por subcategoría con cache
   static async getProductosPorSubcategoria(categoria: string, subcategoria: string): Promise<Producto[]> {
+    const cacheKey = `productos_${categoria}_${subcategoria}`
+    const cached = cache.get<Producto[]>(cacheKey)
+    if (cached) {
+      console.log(`📦 Cache hit: getProductosPorSubcategoria(${categoria}, ${subcategoria})`)
+      return cached
+    }
+
     try {
       console.log(`🔍 Buscando productos para categoria: "${categoria}", subcategoria: "${subcategoria}"`)
 
-      // Primero intentar obtener todos los productos de la categoría
       const productosRef = collection(db, "productos")
       const q = query(productosRef, where("categoria", "==", categoria))
 
@@ -66,18 +124,13 @@ export class FirebaseService {
       })
 
       console.log(`📦 Productos encontrados en categoria "${categoria}":`, todosLosProductos.length)
-      todosLosProductos.forEach((p) => {
-        console.log(`  - ${p.nombre} (subcategoria: "${p.subcategoria}")`)
-      })
 
       // Filtrar por subcategoría
       const productosFiltrados = todosLosProductos.filter((p) => p.subcategoria === subcategoria)
 
       console.log(`✅ Productos filtrados para subcategoria "${subcategoria}":`, productosFiltrados.length)
-      productosFiltrados.forEach((p) => {
-        console.log(`  ✓ ${p.nombre}`)
-      })
-
+      
+      cache.set(cacheKey, productosFiltrados)
       return productosFiltrados
     } catch (error) {
       console.error("❌ Error fetching productos por subcategoria:", error)
@@ -86,6 +139,13 @@ export class FirebaseService {
   }
 
   static async getProducto(slug: string): Promise<Producto | null> {
+    const cacheKey = `producto_${slug}`
+    const cached = cache.get<Producto>(cacheKey)
+    if (cached) {
+      console.log(`📦 Cache hit: getProducto(${slug})`)
+      return cached
+    }
+
     try {
       const q = query(collection(db, "productos"), where("slug", "==", slug))
       const snapshot = await getDocs(q)
@@ -93,22 +153,31 @@ export class FirebaseService {
       if (snapshot.empty) return null
 
       const doc = snapshot.docs[0]
-      return { id: doc.id, ...doc.data() } as Producto
+      const producto = { id: doc.id, ...doc.data() } as Producto
+      cache.set(cacheKey, producto)
+      return producto
     } catch (error) {
-      console.error("Error en getProducto:", error)
+      console.error("❌ Error en getProducto:", error)
       return null
     }
   }
 
   static async getProductosDestacados(): Promise<Producto[]> {
+    const cacheKey = 'productos_destacados'
+    const cached = cache.get<Producto[]>(cacheKey)
+    if (cached) {
+      console.log("📦 Cache hit: getProductosDestacados")
+      return cached
+    }
+
     try {
       console.log("🔍 FirebaseService: Buscando productos destacados...")
       const q = query(collection(db, "productos"), where("destacado", "==", true), orderBy("orden", "asc"))
-      console.log("🔍 FirebaseService: Query creada, ejecutando...")
       const snapshot = await getDocs(q)
-      console.log("🔍 FirebaseService: Snapshot obtenido, docs:", snapshot.docs.length)
       const productos = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Producto)
-      console.log("🔍 FirebaseService: Productos mapeados:", productos.length)
+      
+      console.log("📦 FirebaseService: Productos destacados encontrados:", productos.length)
+      cache.set(cacheKey, productos)
       return productos
     } catch (error) {
       console.error("❌ Error en getProductosDestacados:", error)
@@ -123,9 +192,13 @@ export class FirebaseService {
         fechaCreacion: serverTimestamp(),
         fechaActualizacion: serverTimestamp(),
       })
+      
+      // Invalidar cache relacionado con productos
+      cache.invalidate('productos')
+      
       return docRef.id
     } catch (error) {
-      console.error("Error en addProducto:", error)
+      console.error("❌ Error en addProducto:", error)
       throw error
     }
   }
@@ -137,8 +210,11 @@ export class FirebaseService {
         ...producto,
         fechaActualizacion: serverTimestamp(),
       })
+      
+      // Invalidar cache relacionado con productos
+      cache.invalidate('productos')
     } catch (error) {
-      console.error("Error en updateProducto:", error)
+      console.error("❌ Error en updateProducto:", error)
       throw error
     }
   }
@@ -146,25 +222,45 @@ export class FirebaseService {
   static async deleteProducto(id: string): Promise<void> {
     try {
       await deleteDoc(doc(db, "productos", id))
+      
+      // Invalidar cache relacionado con productos
+      cache.invalidate('productos')
     } catch (error) {
-      console.error("Error en deleteProducto:", error)
+      console.error("❌ Error en deleteProducto:", error)
       throw error
     }
   }
 
-  // Categorías
+  // Categorías con cache
   static async getCategorias(): Promise<Categoria[]> {
+    const cacheKey = 'categorias'
+    const cached = cache.get<Categoria[]>(cacheKey)
+    if (cached) {
+      console.log("📦 Cache hit: getCategorias")
+      return cached
+    }
+
     try {
       const q = query(collection(db, "categorias"), orderBy("orden", "asc"))
       const snapshot = await getDocs(q)
-      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Categoria)
+      const categorias = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Categoria)
+      
+      cache.set(cacheKey, categorias)
+      return categorias
     } catch (error) {
-      console.error("Error en getCategorias:", error)
+      console.error("❌ Error en getCategorias:", error)
       return []
     }
   }
 
   static async getCategoria(slug: string): Promise<Categoria | null> {
+    const cacheKey = `categoria_${slug}`
+    const cached = cache.get<Categoria>(cacheKey)
+    if (cached) {
+      console.log(`📦 Cache hit: getCategoria(${slug})`)
+      return cached
+    }
+
     try {
       const q = query(collection(db, "categorias"), where("slug", "==", slug))
       const snapshot = await getDocs(q)
@@ -172,64 +268,59 @@ export class FirebaseService {
       if (snapshot.empty) return null
 
       const doc = snapshot.docs[0]
-      return { id: doc.id, ...doc.data() } as Categoria
+      const categoria = { id: doc.id, ...doc.data() } as Categoria
+      cache.set(cacheKey, categoria)
+      return categoria
     } catch (error) {
-      console.error("Error en getCategoria:", error)
+      console.error("❌ Error en getCategoria:", error)
       return null
     }
   }
 
-  // Packs
+  // Packs con cache
   static async getPacks(): Promise<Pack[]> {
+    const cacheKey = 'packs'
+    const cached = cache.get<Pack[]>(cacheKey)
+    if (cached) {
+      console.log("📦 Cache hit: getPacks")
+      return cached
+    }
+
     try {
       const q = query(collection(db, "packs"), orderBy("orden", "asc"))
       const snapshot = await getDocs(q)
-      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Pack)
+      const packs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Pack)
+      
+      cache.set(cacheKey, packs)
+      return packs
     } catch (error) {
-      console.error("Error en getPacks:", error)
+      console.error("❌ Error en getPacks:", error)
       return []
     }
   }
 
-  // Zonas
+  // Zonas con cache
   static async getZonas(): Promise<ZonaEntrega[]> {
+    const cacheKey = 'zonas'
+    const cached = cache.get<ZonaEntrega[]>(cacheKey)
+    if (cached) {
+      console.log("📦 Cache hit: getZonas")
+      return cached
+    }
+
     try {
       const snapshot = await getDocs(collection(db, "zonas"))
-      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as ZonaEntrega)
+      const zonas = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as ZonaEntrega)
+      
+      cache.set(cacheKey, zonas)
+      return zonas
     } catch (error) {
-      console.error("Error en getZonas:", error)
+      console.error("❌ Error en getZonas:", error)
       return []
     }
   }
 
-  static async getZona(slug: string): Promise<ZonaEntrega | null> {
-    try {
-      const q = query(collection(db, "zonas"), where("slug", "==", slug))
-      const snapshot = await getDocs(q)
 
-      if (snapshot.empty) return null
-
-      const doc = snapshot.docs[0]
-      return { id: doc.id, ...doc.data() } as ZonaEntrega
-    } catch (error) {
-      console.error("Error en getZona:", error)
-      return null
-    }
-  }
-
-  // Métodos para Home Sections
-  static async getHomeSections(): Promise<HomeSection[]> {
-    try {
-      const q = query(collection(db, "homeSections"), orderBy("order", "asc"))
-      const snapshot = await getDocs(q)
-      const sections = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as HomeSection)
-      console.log(`📋 HomeSections cargadas: ${sections.length} secciones`)
-      return sections
-    } catch (error) {
-      console.error("Error en getHomeSections:", error)
-      return []
-    }
-  }
 
   static async updateHomeSection(id: string, section: Partial<HomeSection>): Promise<void> {
     try {
@@ -835,7 +926,15 @@ export class FirebaseService {
     }
   }
 
+  // Reseñas con cache
   static async getAllReviews(): Promise<Review[]> {
+    const cacheKey = 'all_reviews'
+    const cached = cache.get<Review[]>(cacheKey)
+    if (cached) {
+      console.log("📦 Cache hit: getAllReviews")
+      return cached
+    }
+
     try {
       const reviewsRef = collection(db, "reviews")
       const q = query(reviewsRef, orderBy("fechaCreacion", "desc"))
@@ -850,10 +949,34 @@ export class FirebaseService {
         } as Review)
       })
       
+      cache.set(cacheKey, reviews)
       return reviews
     } catch (error) {
-      console.error("Error obteniendo todas las reseñas:", error)
+      console.error("❌ Error obteniendo todas las reseñas:", error)
       throw error
+    }
+  }
+
+  // Secciones del home con cache
+  static async getHomeSections(): Promise<HomeSection[]> {
+    const cacheKey = 'home_sections'
+    const cached = cache.get<HomeSection[]>(cacheKey)
+    if (cached) {
+      console.log("📦 Cache hit: getHomeSections")
+      return cached
+    }
+
+    try {
+      const sectionsRef = collection(db, "homeSections")
+      const q = query(sectionsRef, orderBy("orden", "asc"))
+      const snapshot = await getDocs(q)
+      const sections = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as HomeSection)
+      
+      cache.set(cacheKey, sections)
+      return sections
+    } catch (error) {
+      console.error("❌ Error obteniendo secciones del home:", error)
+      return []
     }
   }
 }

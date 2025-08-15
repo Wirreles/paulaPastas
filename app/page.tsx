@@ -1,18 +1,18 @@
 "use client" // Necesario para el carrusel y el acordeón interactivo
 
-import { Suspense, useState, useEffect } from "react"
+import { Suspense, useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import { ArrowRight, Star, Clock, Truck, Leaf, Award, MessageCircle, ChevronLeft, ChevronRight, Minus, Plus, Eye, ShoppingBag } from "lucide-react"
-import { FirebaseService } from "@/lib/firebase-service"
 import { useCart } from "@/lib/cart-context"
 import { formatPrice } from "@/lib/utils"
-import type { HomeSection } from "@/lib/types" // Importar el nuevo tipo
+import { useHomeData } from "@/hooks/use-home-data"
 import { HeroImage, ProductImage, ImageWrapper } from "@/components/ui/ImageWrapper"
 import { ImageDebugInfo } from "@/components/ui/ImageDebugInfo"
 import { HeroPlaceholder, ProductPlaceholder, CategoryPlaceholder } from "@/components/ui/ImagePlaceholder"
+import { ImagePreloader } from "@/components/ui/ImagePreloader"
 
-// Datos de ejemplo para reseñas
-const reviews = [
+// Datos estáticos para evitar consultas innecesarias
+const STATIC_REVIEWS = [
   {
     id: 1,
     name: "María G.",
@@ -51,8 +51,7 @@ const reviews = [
   },
 ]
 
-// Datos de ejemplo para FAQ - Actualizados con el contenido correcto del home
-const faqs = [
+const STATIC_FAQS = [
   {
     question: "¿Dónde comprar pastas artesanales en Rosario? ¿Hacen envíos?",
     answer:
@@ -100,114 +99,96 @@ const faqs = [
   },
 ]
 
-export default function HomePage() {
-  const [productosDestacados, setProductosDestacados] = useState<any[]>([])
-  const [homeSections, setHomeSections] = useState<HomeSection[]>([]) // Nuevo estado para secciones del home
-  const [currentReviewIndex, setCurrentReviewIndex] = useState(0)
-  const [itemsPerPage, setItemsPerPage] = useState(1) // Default for mobile
-  const [quantities, setQuantities] = useState<{ [key: string]: number }>({}) // Estado para cantidades de productos
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true) // Estado de carga para productos
-  const [reviewsDestacadas, setReviewsDestacadas] = useState<any[]>([]) // Estado para reseñas destacadas y aprobadas
-  const [isLoadingReviews, setIsLoadingReviews] = useState(true) // Estado de carga para reseñas
-  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set()) // Estado para controlar expansión de reseñas
-  const { addItem } = useCart() // Hook del carrito
-  
-  // Debug: Log del estado inicial
-  console.log("🏠 HomePage renderizado, productosDestacados:", productosDestacados)
-  console.log("🛒 Hook useCart ejecutado, addItem:", typeof addItem)
 
+
+export default function HomePage() {
+  const [currentReviewIndex, setCurrentReviewIndex] = useState(0)
+  const [itemsPerPage, setItemsPerPage] = useState(1)
+  const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
+  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set())
+  const { addItem } = useCart()
+  
+  // Usar el hook optimizado para datos del home
+  const {
+    productosDestacados,
+    homeSections,
+    reviewsDestacadas,
+    isLoadingProducts,
+    isLoadingReviews,
+  } = useHomeData()
+  
+  // Memoizar funciones para evitar re-renders innecesarios
+  const getQuantity = useCallback((productId: string) => {
+    return quantities[productId] || 0
+  }, [quantities])
+
+  const handleQuantityChange = useCallback((productId: string, newQuantity: number) => {
+    setQuantities(prev => ({
+      ...prev,
+      [productId]: Math.max(0, newQuantity)
+    }))
+  }, [])
+
+  const handleAddToCart = useCallback((producto: any) => {
+    const quantity = getQuantity(producto.id)
+    if (quantity > 0) {
+      addItem(producto, quantity)
+      setQuantities(prev => ({ ...prev, [producto.id]: 0 }))
+    }
+  }, [addItem, getQuantity])
+
+  // Efecto optimizado para responsive
   useEffect(() => {
     const calculateItemsPerPage = () => {
-      if (window.innerWidth >= 1024) {
-        setItemsPerPage(3)
-      } else if (window.innerWidth >= 768) {
-        setItemsPerPage(2)
-      } else {
-        setItemsPerPage(1)
-      }
+      const width = window.innerWidth
+      if (width >= 1024) setItemsPerPage(3)
+      else if (width >= 768) setItemsPerPage(2)
+      else setItemsPerPage(1)
     }
 
-    calculateItemsPerPage() // Set initial value
-    window.addEventListener("resize", calculateItemsPerPage) // Update on resize
-
-    return () => window.removeEventListener("resize", calculateItemsPerPage)
-  }, [])
-
-  // useEffect para cargar las secciones del home
-  useEffect(() => {
-    async function loadHomeSections() {
-      try {
-        const data = await FirebaseService.getHomeSections()
-        setHomeSections(data)
-      } catch (error) {
-        console.error("Error fetching home sections:", error)
-      }
+    calculateItemsPerPage()
+    
+    const handleResize = () => {
+      calculateItemsPerPage()
     }
-    loadHomeSections()
+    
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
   }, [])
 
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        console.log("🔄 Iniciando carga de productos destacados...")
-        setIsLoadingProducts(true)
-        const data = await FirebaseService.getProductosDestacados()
-        console.log("📦 Productos destacados obtenidos:", data)
-        console.log("📊 Cantidad de productos:", data.length)
-        setProductosDestacados(data)
-      } catch (error) {
-        console.error("❌ Error fetching productos destacados:", error)
-      } finally {
-        setIsLoadingProducts(false)
-      }
-    }
-    loadProducts()
-  }, [])
+  // Memoizar datos calculados
+  const productosLimitados = useMemo(() => {
+    return productosDestacados.slice(0, 6)
+  }, [productosDestacados])
 
-  // useEffect para cargar reseñas destacadas y aprobadas
-  useEffect(() => {
-    async function loadReviewsDestacadas() {
-      try {
-        console.log("🔄 Iniciando carga de reseñas destacadas...")
-        setIsLoadingReviews(true)
-        const allReviews = await FirebaseService.getAllReviews()
-        
-        // Filtrar solo reseñas aprobadas y destacadas
-        const reviewsFiltradas = allReviews.filter(review => 
-          review.aprobada === true && review.destacada === true
-        )
-        
-        console.log("⭐ Reseñas destacadas obtenidas:", reviewsFiltradas)
-        console.log("📊 Cantidad de reseñas destacadas:", reviewsFiltradas.length)
-        
-        // Si no hay reseñas destacadas, usar las estáticas como fallback
-        if (reviewsFiltradas.length === 0) {
-          console.log("⚠️ No hay reseñas destacadas, usando fallback estático")
-          setReviewsDestacadas(reviews)
-        } else {
-          setReviewsDestacadas(reviewsFiltradas)
-        }
-      } catch (error) {
-        console.error("❌ Error fetching reseñas destacadas:", error)
-        // En caso de error, usar las estáticas como fallback
-        setReviewsDestacadas(reviews)
-      } finally {
-        setIsLoadingReviews(false)
-      }
-    }
-    loadReviewsDestacadas()
-  }, [])
+  const reviewsLimitadas = useMemo(() => {
+    return reviewsDestacadas.slice(0, 6)
+  }, [reviewsDestacadas])
 
-  const nextReview = () => {
-    setCurrentReviewIndex((prevIndex) => (prevIndex + 1) % reviewsDestacadas.length)
-  }
+  const currentReviews = useMemo(() => {
+    const start = currentReviewIndex
+    const end = start + itemsPerPage
+    return reviewsLimitadas.slice(start, end)
+  }, [currentReviewIndex, itemsPerPage, reviewsLimitadas])
 
-  const prevReview = () => {
-    setCurrentReviewIndex((prevIndex) => (prevIndex - 1 + reviewsDestacadas.length) % reviewsDestacadas.length)
-  }
+  const totalReviewPages = useMemo(() => {
+    return Math.ceil(reviewsLimitadas.length / itemsPerPage)
+  }, [reviewsLimitadas.length, itemsPerPage])
 
-  // Funciones para controlar la expansión de reseñas
-  const toggleReviewExpansion = (reviewId: string) => {
+  // Funciones memoizadas para navegación
+  const nextReviews = useCallback(() => {
+    setCurrentReviewIndex(prev => 
+      prev + itemsPerPage >= reviewsLimitadas.length ? 0 : prev + itemsPerPage
+    )
+  }, [itemsPerPage, reviewsLimitadas.length])
+
+  const prevReviews = useCallback(() => {
+    setCurrentReviewIndex(prev => 
+      prev - itemsPerPage < 0 ? Math.max(0, reviewsLimitadas.length - itemsPerPage) : prev - itemsPerPage
+    )
+  }, [itemsPerPage, reviewsLimitadas.length])
+
+  const toggleReviewExpansion = useCallback((reviewId: string) => {
     setExpandedReviews(prev => {
       const newSet = new Set(prev)
       if (newSet.has(reviewId)) {
@@ -217,43 +198,42 @@ export default function HomePage() {
       }
       return newSet
     })
-  }
+  }, [])
 
-  const isReviewExpanded = (reviewId: string) => expandedReviews.has(reviewId)
+    // Funciones para controlar la expansión de reseñas
+  const isReviewExpanded = useCallback((reviewId: string) => expandedReviews.has(reviewId), [expandedReviews])
 
-  // Funciones para manejar cantidades de productos
-  const getQuantity = (productId: string) => quantities[productId] || 1
-  
-  const handleQuantityChange = (productId: string, amount: number) => {
-    setQuantities(prev => ({
-      ...prev,
-      [productId]: Math.max(1, (prev[productId] || 1) + amount)
-    }))
-  }
-
-  const handleAddToCart = (producto: any) => {
-    console.log("🛒 handleAddToCart ejecutado para:", producto.nombre)
-    const quantity = getQuantity(producto.id)
-    console.log("🛒 Cantidad a agregar:", quantity)
-    addItem(producto, quantity)
-    // Resetear cantidad a 1 después de agregar
-    setQuantities(prev => ({
-      ...prev,
-      [producto.id]: 1
-    }))
-    console.log("🛒 Producto agregado al carrito")
-  }
-
-  // Obtener imágenes dinámicas
+  // Obtener imágenes dinámicas optimizadas
   const heroImage =
     homeSections.find((s) => s.id === "hero-main-image")?.imageUrl ||
-    "/placeholder.svg?height=800&width=1200&text=Hero Image" // Fallback más genérico
+    "/placeholder.svg?height=800&width=1200&text=Hero Image"
+  
   const dishesGalleryImages = homeSections
     .filter((s) => s.sectionId === "dishes-gallery")
     .sort((a, b) => a.order - b.order)
+  
   const qualityAssuredImage =
     homeSections.find((s) => s.id === "quality-assured-image")?.imageUrl ||
     "/placeholder.svg?height=400&width=600&text=Quality Assured Image"
+
+  // Imágenes para precargar (solo las más importantes)
+  const imagesToPreload = useMemo(() => {
+    const images = []
+    
+    // Hero image siempre es prioritaria
+    if (heroImage && !heroImage.includes('placeholder')) {
+      images.push(heroImage)
+    }
+    
+    // Primeras 3 imágenes de productos destacados
+    productosDestacados.slice(0, 3).forEach(producto => {
+      if (producto.imagen && !producto.imagen.includes('placeholder')) {
+        images.push(producto.imagen)
+      }
+    })
+    
+    return images
+  }, [heroImage, productosDestacados])
 
   // Mapear las categorías del home a partir de los datos dinámicos
   const categoriasHome = [
@@ -309,7 +289,7 @@ export default function HomePage() {
       ratingValue: "4.9", // Valor promedio de tus reseñas
       reviewCount: "250", // Número total de reseñas
     },
-    review: reviews.map((review) => ({
+    review: STATIC_REVIEWS.map((review) => ({
       "@type": "Review",
       author: {
         "@type": "Person",
@@ -327,7 +307,7 @@ export default function HomePage() {
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
+    mainEntity: STATIC_FAQS.map((faq) => ({
       "@type": "Question",
       name: faq.question,
       acceptedAnswer: {
@@ -342,6 +322,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
+      {/* Preloader de imágenes importantes */}
+      <ImagePreloader images={imagesToPreload} priority={true} />
+      
       {/* JSON-LD para reseñas y FAQ */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewsJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
@@ -388,7 +371,8 @@ export default function HomePage() {
             fill
             className="object-cover w-full h-full"
             fallback="/placeholder.svg?height=800&width=1200&text=Hero+Image"
-            priority={true} // Hero siempre carga primero
+            priority={true}
+            loading="eager"
             placeholder={<HeroPlaceholder className="object-cover w-full h-full" />}
           />
         </div>
@@ -416,7 +400,7 @@ export default function HomePage() {
             </div>
           ) : productosDestacados.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {productosDestacados.slice(0, 6).map((producto: any) => {
+                {productosLimitados.map((producto: any) => {
                   console.log("🔍 Renderizando producto:", producto)
                   const productUrl = `/pastas/${producto.categoria}/${producto.subcategoria}/${producto.slug}`
                   const quantity = getQuantity(producto.id)
@@ -425,17 +409,18 @@ export default function HomePage() {
                     <article key={producto.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover-lift group flex flex-col h-full">
                       {/* Imagen más grande */}
                       <div className="relative h-64">
-                        <Link href={productUrl}>
-                          <ImageWrapper
-                            src={producto.imagen}
-                            alt={`${producto.nombre} caseros artesanales`}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            fallback="/placeholder.svg?height=300&width=400&text=Producto"
-                            placeholder={<ProductPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
-                            lazyThreshold={0.2} // Cargar cuando 20% sea visible
-                          />
-                        </Link>
+                                                 <Link href={productUrl}>
+                           <ImageWrapper
+                             src={producto.imagen}
+                             alt={`${producto.nombre} caseros artesanales`}
+                             fill
+                             className="object-cover group-hover:scale-105 transition-transform duration-300"
+                             fallback="/placeholder.svg?height=300&width=400&text=Producto"
+                             placeholder={<ProductPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
+                             lazyThreshold={0.1} // Cargar más temprano
+                             loading="lazy"
+                           />
+                         </Link>
                         {producto.destacado && (
                           <div className="absolute top-4 left-4 bg-primary-600 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center">
                             <Star className="w-3 h-3 mr-1" />
@@ -473,7 +458,7 @@ export default function HomePage() {
                             <button
                               onClick={() => handleQuantityChange(producto.id, -1)}
                               className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
-                              disabled={quantity <= 1}
+                              disabled={quantity <= 0}
                             >
                               <Minus className="w-4 h-4 text-neutral-700" />
                             </button>
@@ -701,7 +686,7 @@ export default function HomePage() {
                     transform: `translateX(-${currentReviewIndex * (100 / itemsPerPage)}%)`,
                   }}
                 >
-                  {reviewsDestacadas.map((review) => (
+                  {currentReviews.map((review) => (
                     <div
                       key={review.id}
                       className="flex-shrink-0 w-full md:w-1/2 lg:w-1/3 px-4" // Adjust width for responsive cards
@@ -759,14 +744,14 @@ export default function HomePage() {
 
             {/* Navigation Buttons */}
             <button
-              onClick={prevReview}
+              onClick={prevReviews}
               className="absolute top-1/2 left-0 -translate-y-1/2 bg-white p-2 rounded-full shadow-md hover:bg-neutral-100 transition-colors z-10 hidden md:block"
               aria-label="Reseña anterior"
             >
               <ChevronLeft className="w-6 h-6 text-neutral-700" />
             </button>
             <button
-              onClick={nextReview}
+              onClick={nextReviews}
               className="absolute top-1/2 right-0 -translate-y-1/2 bg-white p-2 rounded-full shadow-md hover:bg-neutral-100 transition-colors z-10 hidden md:block"
               aria-label="Siguiente reseña"
             >
@@ -819,7 +804,7 @@ export default function HomePage() {
           </div>
 
           <div className="space-y-4">
-            {faqs.map((faq, index) => (
+            {STATIC_FAQS.map((faq, index) => (
               <details
                 key={index}
                 className="bg-neutral-50 rounded-lg shadow-sm p-5 cursor-pointer group"

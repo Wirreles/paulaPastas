@@ -3,110 +3,113 @@
  * Reduce el consumo de Image Optimization de Vercel
  */
 
-// Función para validar URLs de imágenes
-export function isValidImageUrl(url: string | undefined): boolean {
-  if (!url || url === '') return false
+// Utilidades para manejo de imágenes
+
+export interface ImageConfig {
+  src: string
+  alt: string
+  fallback?: string
+  priority?: boolean
+  loading?: 'lazy' | 'eager'
+  quality?: number
+  sizes?: string
+}
+
+// Dominios que SÍ queremos optimizar con next/image
+export const OPTIMIZABLE_DOMAINS = [
+  'images.unsplash.com',
+  'assets.elgourmet.com'
+]
+
+// Dominios que NO queremos optimizar (usar <img> directamente)
+export const NON_OPTIMIZABLE_DOMAINS = [
+  'firebasestorage.googleapis.com'
+]
+
+/**
+ * Determina si una imagen debe usar next/image o <img> HTML
+ */
+export function shouldUseNextImage(url: string): boolean {
+  if (!url || url.trim() === '') return false
+  
+  // URLs locales siempre usar <img>
+  if (url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) {
+    return false
+  }
+  
+  // Placeholders usar <img>
+  if (url.includes('placeholder.svg')) {
+    return false
+  }
   
   try {
     const parsedUrl = new URL(url)
-    return ['http:', 'https:'].includes(parsedUrl.protocol)
-  } catch {
-    return false
-  }
-}
-
-// Función para determinar si una imagen es de Firebase Storage
-export function isFirebaseImage(url: string): boolean {
-  return url.includes('firebasestorage.googleapis.com')
-}
-
-// Función para determinar si una imagen debe ser optimizada por Vercel
-export function shouldOptimizeImage(url: string): boolean {
-  // Solo optimizar imágenes de dominios específicos, NO Firebase
-  const optimizableDomains = [
-    'images.unsplash.com',
-    'tudominio.com', // Agregar tu dominio si quieres optimización
-  ]
-  
-  try {
-    const parsedUrl = new URL(url)
-    return optimizableDomains.some(domain => parsedUrl.hostname === domain)
-  } catch {
-    return false
-  }
-}
-
-// Función para generar fallbacks optimizados
-export function getOptimizedFallback(
-  text: string, 
-  width: number = 400, 
-  height: number = 300
-): string {
-  const encodedText = encodeURIComponent(text)
-  return `/placeholder.svg?width=${width}&height=${height}&text=${encodedText}`
-}
-
-// Función para obtener dimensiones de imagen basadas en el contexto
-export function getImageDimensions(context: 'hero' | 'product' | 'category' | 'gallery' | 'banner') {
-  const dimensions = {
-    hero: { width: 1200, height: 800 },
-    product: { width: 400, height: 300 },
-    category: { width: 400, height: 300 },
-    gallery: { width: 400, height: 300 },
-    banner: { width: 600, height: 400 }
-  }
-  
-  return dimensions[context] || dimensions.product
-}
-
-// Función para generar alt text descriptivo
-export function generateAltText(
-  baseText: string, 
-  context?: string, 
-  additionalInfo?: string
-): string {
-  let altText = baseText
-  
-  if (context) {
-    altText += ` ${context}`
-  }
-  
-  if (additionalInfo) {
-    altText += ` - ${additionalInfo}`
-  }
-  
-  return altText
-}
-
-// Función para pre-cargar imágenes críticas
-export function preloadCriticalImages(urls: string[]): void {
-  urls.forEach(url => {
-    if (isValidImageUrl(url)) {
-      const link = document.createElement('link')
-      link.rel = 'preload'
-      link.as = 'image'
-      link.href = url
-      document.head.appendChild(link)
+    const hostname = parsedUrl.hostname
+    
+    // Si está en la lista de NO optimizables, usar <img>
+    if (NON_OPTIMIZABLE_DOMAINS.includes(hostname)) {
+      return false
     }
-  })
+    
+    // Si está en la lista de optimizables, usar next/image
+    if (OPTIMIZABLE_DOMAINS.includes(hostname)) {
+      return true
+    }
+    
+    // Para cualquier otro dominio, usar <img> por defecto
+    return false
+  } catch {
+    // Si no es una URL válida, usar <img>
+    return false
+  }
 }
 
-// Función para generar srcset para imágenes responsivas
-export function generateSrcSet(
-  baseUrl: string, 
-  widths: number[] = [400, 800, 1200]
-): string {
-  return widths
-    .map(width => `${baseUrl}?w=${width} ${width}w`)
-    .join(', ')
-}
-
-// Función para comprimir URLs de Firebase Storage (si es necesario)
-export function optimizeFirebaseUrl(url: string): string {
-  if (!isFirebaseImage(url)) return url
+/**
+ * Valida y limpia una URL de imagen
+ */
+export function validateImageUrl(url: string | undefined, fallback: string = '/placeholder.svg'): string {
+  if (!url || url.trim() === '') {
+    return fallback
+  }
   
-  // Firebase Storage permite parámetros de optimización
-  // Agregar parámetros para reducir el tamaño si es necesario
-  const separator = url.includes('?') ? '&' : '?'
-  return `${url}${separator}alt=media`
+  // Si es un placeholder, devolver directamente
+  if (url.includes('placeholder.svg')) {
+    return url
+  }
+  
+  try {
+    new URL(url)
+    return url
+  } catch {
+    return fallback
+  }
+}
+
+/**
+ * Obtiene la configuración optimizada para una imagen
+ */
+export function getOptimizedImageConfig(
+  src: string | undefined,
+  alt: string,
+  options: Partial<ImageConfig> = {}
+): ImageConfig {
+  const validatedSrc = validateImageUrl(src, options.fallback || '/placeholder.svg')
+  const useNextImage = shouldUseNextImage(validatedSrc)
+  
+  return {
+    src: validatedSrc,
+    alt,
+    fallback: options.fallback || '/placeholder.svg',
+    priority: options.priority || false,
+    loading: options.loading || 'lazy',
+    quality: useNextImage ? (options.quality || 75) : undefined,
+    sizes: useNextImage ? (options.sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw') : undefined
+  }
+}
+
+/**
+ * Genera un placeholder SVG simple
+ */
+export function generatePlaceholder(width: number, height: number, text: string = 'Image'): string {
+  return `/placeholder.svg?width=${width}&height=${height}&text=${encodeURIComponent(text)}`
 }
