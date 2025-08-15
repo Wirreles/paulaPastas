@@ -14,6 +14,7 @@ export default function AdminNavigation() {
     { href: "/admin/page-banners", label: "Banners de Páginas", icon: "🖼️" },
     { href: "/admin/blog", label: "Blog", icon: "📝" },
     { href: "/admin/reviews", label: "Reseñas", icon: "⭐" },
+    { href: "/admin/newsletter", label: "Newsletter", icon: "📧" },
   ]
 
   return (
