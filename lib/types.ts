@@ -234,3 +234,48 @@ export interface Order {
   paymentStatus?: "pending" | "approved" | "rejected" | "cancelled"
   paymentId?: string
 }
+
+export interface Direccion {
+  id: string
+  calle: string
+  numero: string
+  piso?: string
+  codigoPostal: string
+  ciudad: string
+  provincia: string
+  indicaciones?: string
+  fechaCreacion: any
+}
+
+export interface Suscripcion {
+  id?: string
+  email: string
+  fechaSuscripcion: Date
+  estado: "activo" | "inactivo" | "dado-de-baja"
+  origen: "web" | "admin" | "csv"
+  fechaBaja?: Date
+  motivoBaja?: string
+  activo: boolean
+  fechaCreacion?: Date
+  fechaActualizacion?: Date
+}
+
+export interface NewsletterCampaign {
+  id?: string
+  titulo: string
+  contenido: string
+  asunto: string
+  destinatarios: "todos" | "activos" | "nuevos"
+  estado: "borrador" | "programada" | "enviada" | "cancelada"
+  fechaProgramada?: Date
+  fechaEnvio?: Date
+  estadisticas?: {
+    enviados: number
+    entregados: number
+    abiertos: number
+    clicks: number
+    rebotes: number
+  }
+  fechaCreacion?: Date
+  fechaActualizacion?: Date
+}

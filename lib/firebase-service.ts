@@ -26,6 +26,8 @@ import type {
   BlogArticle,
   Usuario, // Importar Usuario
   Review, // Importar Review
+  Suscripcion, // Importar Suscripcion
+  NewsletterCampaign, // Importar NewsletterCampaign
 } from "./types"
 
 // Cache para optimizar consultas
@@ -977,6 +979,209 @@ export class FirebaseService {
     } catch (error) {
       console.error("❌ Error obteniendo secciones del home:", error)
       return []
+    }
+  }
+
+  // ===== FUNCIONES PARA NEWSLETTER Y SUSCRIPCIONES =====
+
+  /**
+   * Crear una nueva suscripción
+   */
+  static async createSuscripcion(email: string, origen: "web" | "admin" | "csv" = "web"): Promise<string> {
+    try {
+      // Verificar si ya existe una suscripción con ese email
+      const existingSubscription = await this.getSuscripcionByEmail(email)
+      if (existingSubscription) {
+        throw new Error("Ya existe una suscripción con este email")
+      }
+
+      const suscripcionData = {
+        email: email.toLowerCase().trim(),
+        fechaSuscripcion: new Date(),
+        estado: "activo" as const,
+        origen,
+        activo: true,
+        fechaCreacion: new Date(),
+        fechaActualizacion: new Date()
+      }
+
+      const docRef = await addDoc(collection(db, "suscripciones"), suscripcionData)
+      console.log("✅ Suscripción creada exitosamente:", docRef.id)
+      return docRef.id
+    } catch (error) {
+      console.error("❌ Error al crear suscripción:", error)
+      throw error
+    }
+  }
+
+  /**
+   * Obtener suscripción por email
+   */
+  static async getSuscripcionByEmail(email: string): Promise<Suscripcion | null> {
+    try {
+      const q = query(
+        collection(db, "suscripciones"),
+        where("email", "==", email.toLowerCase().trim())
+      )
+      const querySnapshot = await getDocs(q)
+      
+      if (querySnapshot.empty) {
+        return null
+      }
+
+      const doc = querySnapshot.docs[0]
+      return { id: doc.id, ...doc.data() } as Suscripcion
+    } catch (error) {
+      console.error("❌ Error al obtener suscripción por email:", error)
+      return null
+    }
+  }
+
+  /**
+   * Obtener todas las suscripciones
+   */
+  static async getAllSuscripciones(): Promise<Suscripcion[]> {
+    try {
+      const querySnapshot = await getDocs(collection(db, "suscripciones"))
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Suscripcion[]
+    } catch (error) {
+      console.error("❌ Error al obtener suscripciones:", error)
+      return []
+    }
+  }
+
+  /**
+   * Obtener suscripciones activas
+   */
+  static async getSuscripcionesActivas(): Promise<Suscripcion[]> {
+    try {
+      const q = query(
+        collection(db, "suscripciones"),
+        where("activo", "==", true),
+        where("estado", "==", "activo")
+      )
+      const querySnapshot = await getDocs(q)
+      
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Suscripcion[]
+    } catch (error) {
+      console.error("❌ Error al obtener suscripciones activas:", error)
+      return []
+    }
+  }
+
+  /**
+   * Actualizar estado de suscripción
+   */
+  static async updateSuscripcionEstado(
+    id: string, 
+    estado: "activo" | "inactivo" | "dado-de-baja",
+    motivoBaja?: string
+  ): Promise<boolean> {
+    try {
+      const updateData: any = {
+        estado,
+        activo: estado === "activo",
+        fechaActualizacion: new Date()
+      }
+
+      if (estado === "dado-de-baja") {
+        updateData.fechaBaja = new Date()
+        updateData.motivoBaja = motivoBaja || "Baja voluntaria"
+      }
+
+      await updateDoc(doc(db, "suscripciones", id), updateData)
+      console.log("✅ Estado de suscripción actualizado:", id, estado)
+      return true
+    } catch (error) {
+      console.error("❌ Error al actualizar estado de suscripción:", error)
+      return false
+    }
+  }
+
+  /**
+   * Eliminar suscripción
+   */
+  static async deleteSuscripcion(id: string): Promise<boolean> {
+    try {
+      await deleteDoc(doc(db, "suscripciones", id))
+      console.log("✅ Suscripción eliminada:", id)
+      return true
+    } catch (error) {
+      console.error("❌ Error al eliminar suscripción:", error)
+      return false
+    }
+  }
+
+  /**
+   * Crear campaña de newsletter
+   */
+  static async createNewsletterCampaign(campaignData: Omit<NewsletterCampaign, "id" | "fechaCreacion" | "fechaActualizacion">): Promise<string> {
+    try {
+      const campaign = {
+        ...campaignData,
+        fechaCreacion: new Date(),
+        fechaActualizacion: new Date()
+      }
+
+      const docRef = await addDoc(collection(db, "newsletter_campaigns"), campaign)
+      console.log("✅ Campaña de newsletter creada:", docRef.id)
+      return docRef.id
+    } catch (error) {
+      console.error("❌ Error al crear campaña de newsletter:", error)
+      throw error
+    }
+  }
+
+  /**
+   * Obtener todas las campañas de newsletter
+   */
+  static async getAllNewsletterCampaigns(): Promise<NewsletterCampaign[]> {
+    try {
+      const querySnapshot = await getDocs(collection(db, "newsletter_campaigns"))
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as NewsletterCampaign[]
+    } catch (error) {
+      console.error("❌ Error al obtener campañas de newsletter:", error)
+      return []
+    }
+  }
+
+  /**
+   * Actualizar campaña de newsletter
+   */
+  static async updateNewsletterCampaign(id: string, updateData: Partial<NewsletterCampaign>): Promise<boolean> {
+    try {
+      await updateDoc(doc(db, "newsletter_campaigns", id), {
+        ...updateData,
+        fechaActualizacion: new Date()
+      })
+      console.log("✅ Campaña de newsletter actualizada:", id)
+      return true
+    } catch (error) {
+      console.error("❌ Error al actualizar campaña de newsletter:", error)
+      return false
+    }
+  }
+
+  /**
+   * Eliminar campaña de newsletter
+   */
+  static async deleteNewsletterCampaign(id: string): Promise<boolean> {
+    try {
+      await deleteDoc(doc(db, "newsletter_campaigns", id))
+      console.log("✅ Campaña de newsletter eliminada:", id)
+      return true
+    } catch (error) {
+      console.error("❌ Error al eliminar campaña de newsletter:", error)
+      return false
     }
   }
 }

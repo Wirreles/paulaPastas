@@ -10,6 +10,7 @@ import { HeroImage, ProductImage, ImageWrapper } from "@/components/ui/ImageWrap
 import { ImageDebugInfo } from "@/components/ui/ImageDebugInfo"
 import { HeroPlaceholder, ProductPlaceholder, CategoryPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { ImagePreloader } from "@/components/ui/ImagePreloader"
+import { NewsletterForm } from "@/components/ui/NewsletterForm"
 
 // Datos estáticos para evitar consultas innecesarias
 const STATIC_REVIEWS = [
@@ -841,32 +842,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 11. 📬 [NUEVA] – Sección “Mantente informado” */}
+      {/* 11. 📬 [NUEVA] – Sección "Mantente informado" */}
       <section className="py-16 bg-primary-100">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-4">Mantente informado</h2>
-          <p className="text-lg text-neutral-700 mb-8">
-            Suscribite a nuestro newsletter y recibí un 10% de descuento en tu primer pedido.
-          </p>
-          <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <label htmlFor="email-newsletter" className="sr-only">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email-newsletter"
-              name="email"
-              placeholder="Tu email"
-              required
-              className="flex-1 px-5 py-3 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-600 text-neutral-900"
-            />
-            <button
-              type="submit"
-              className="px-8 py-3 bg-primary-900 text-white font-semibold rounded-lg hover:bg-primary-800 transition-colors"
-            >
-              Suscribirme
-            </button>
-          </form>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <NewsletterForm />
         </div>
       </section>
 
