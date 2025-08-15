@@ -2,12 +2,14 @@
 
 import { Suspense, useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { ArrowRight, Star, Clock, Truck, Leaf, Award, MessageCircle, ChevronLeft, ChevronRight, Minus, Plus, Eye, ShoppingBag } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import { useCart } from "@/lib/cart-context"
 import { formatPrice } from "@/lib/utils"
 import type { HomeSection } from "@/lib/types" // Importar el nuevo tipo
+import { HeroImage, ProductImage, ImageWrapper } from "@/components/ui/ImageWrapper"
+import { ImageDebugInfo } from "@/components/ui/ImageDebugInfo"
+import { HeroPlaceholder, ProductPlaceholder, CategoryPlaceholder } from "@/components/ui/ImagePlaceholder"
 
 // Datos de ejemplo para reseñas
 const reviews = [
@@ -380,12 +382,14 @@ export default function HomePage() {
           </div>
         </div>
         <div className="relative w-full lg:w-1/2 aspect-video lg:h-full order-2 lg:order-1">
-          <Image
-            src={heroImage || "/placeholder.svg"} // Usando imagen dinámica
+          <ImageWrapper
+            src={heroImage}
             alt="Pasta artesanal en Rosario, plato de ravioles con salsa"
             fill
             className="object-cover w-full h-full"
-            priority
+            fallback="/placeholder.svg?height=800&width=1200&text=Hero+Image"
+            priority={true} // Hero siempre carga primero
+            placeholder={<HeroPlaceholder className="object-cover w-full h-full" />}
           />
         </div>
       </section>
@@ -422,11 +426,14 @@ export default function HomePage() {
                       {/* Imagen más grande */}
                       <div className="relative h-64">
                         <Link href={productUrl}>
-                          <Image
-                            src={producto.imagen || "/placeholder.svg"}
+                          <ImageWrapper
+                            src={producto.imagen}
                             alt={`${producto.nombre} caseros artesanales`}
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            fallback="/placeholder.svg?height=300&width=400&text=Producto"
+                            placeholder={<ProductPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
+                            lazyThreshold={0.2} // Cargar cuando 20% sea visible
                           />
                         </Link>
                         {producto.destacado && (
@@ -541,11 +548,14 @@ export default function HomePage() {
               <Link key={categoria.slug} href={`/pastas/${categoria.slug}`} className="group">
                 <article className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift">
                   <div className="relative h-48">
-                    <Image
-                      src={categoria.imagen || "/placeholder.svg"} // Usando imagen dinámica
+                    <ImageWrapper
+                      src={categoria.imagen}
                       alt={`${categoria.nombre} caseras artesanales`}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      fallback="/placeholder.svg?height=300&width=400&text=Categoria"
+                      placeholder={<CategoryPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
+                      lazyThreshold={0.3} // Cargar cuando 30% sea visible
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-6 left-6 text-white">
@@ -594,7 +604,13 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-4">
             {dishesGalleryImages.map((img, index) => (
               <div key={index} className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
-                <Image src={img.imageUrl || "/placeholder.svg"} alt={img.name} fill className="object-cover" />
+                <ImageWrapper 
+                  src={img.imageUrl} 
+                  alt={img.name || `Plato ${index + 1}`} 
+                  fill 
+                  className="object-cover"
+                  fallback="/placeholder.svg?height=300&width=400&text=Plato"
+                />
               </div>
             ))}
           </div>
@@ -773,11 +789,12 @@ export default function HomePage() {
       <section className="py-16 bg-neutral-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-12">
           <figure className="relative w-full lg:w-1/2 aspect-video rounded-2xl overflow-hidden shadow-lg">
-            <Image
-              src={qualityAssuredImage || "/placeholder.svg"} // Usando imagen dinámica
+            <ImageWrapper
+              src={qualityAssuredImage}
               alt="Elaboración artesanal de pastas Paula Pastas"
               fill
               className="object-cover"
+              fallback="/placeholder.svg?height=400&width=600&text=Calidad+Asegurada"
             />
           </figure>
           <div className="w-full lg:w-1/2 text-center lg:text-left">
@@ -867,6 +884,13 @@ export default function HomePage() {
           </form>
         </div>
       </section>
+
+      {/* Componente de Debug para Imágenes (solo en desarrollo) */}
+      <ImageDebugInfo 
+        src={heroImage}
+        alt="Imagen principal del home"
+        componentName="Home Hero"
+      />
     </div>
   )
 }

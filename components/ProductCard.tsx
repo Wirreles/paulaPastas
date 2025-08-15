@@ -1,12 +1,12 @@
 "use client" // Asegurarse de que es un Client Component
 
-import Image from "next/image"
 import Link from "next/link"
 import { Eye, Star, Minus, Plus } from "lucide-react" // Cambiar ShoppingBag por Eye
 import type { Producto } from "@/lib/types"
 import { useState } from "react" // Importar useState
 import { useCart } from "@/lib/cart-context" // Importar useCart
 import { formatPrice } from "@/lib/utils" // Importar formatPrice
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
 
 interface ProductCardProps {
   producto: Producto
@@ -36,11 +36,12 @@ export default function ProductCard({ producto, baseUrl }: ProductCardProps) {
       {/* Imagen más grande como en el home */}
       <div className="relative h-64">
         <Link href={productUrl}>
-          <Image
-            src={producto.imagen || "/placeholder.svg"}
+          <ImageWrapper
+            src={producto.imagen}
             alt={`${producto.nombre} caseros artesanales`}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
+            fallback="/placeholder.svg?height=300&width=400&text=Producto"
           />
         </Link>
         {producto.destacado && (

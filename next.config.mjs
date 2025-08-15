@@ -7,14 +7,21 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    domains: ['placeholder.svg', 'images.unsplash.com', 'firebasestorage.googleapis.com'],
+    // Solo optimizar imágenes de dominios específicos, NO Firebase Storage
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
       },
+      // Agregar otros dominios que SÍ quieras optimizar
     ],
-    unoptimized: true,
+    // Configuración de optimización para mejor rendimiento
+    formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // NO incluir firebasestorage.googleapis.com para evitar optimización innecesaria
   },
   experimental: {
     serverActions: {
