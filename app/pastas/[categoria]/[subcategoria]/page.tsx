@@ -2,7 +2,8 @@ import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import Link from "next/link"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { ArrowLeft, ChevronRight, MessageCircle } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import ProductCard from "@/components/ProductCard"
@@ -253,12 +254,14 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
         {/* Hero Section */}
         <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <Image
+            <ImageWrapper
               src={banner?.imageUrl || data.imagen || "/placeholder.svg"}
               alt={banner?.title || `${data.nombre} caseros artesanales`}
               fill
               className="object-cover"
-              priority
+              priority={true}
+              fallback="/placeholder.svg?height=500&width=1200&text=Subcategoria"
+              placeholder={<HeroPlaceholder className="object-cover" />}
             />
             <div className="absolute inset-0 bg-black/40" />
           </div>

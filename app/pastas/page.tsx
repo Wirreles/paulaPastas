@@ -1,5 +1,6 @@
 import Link from "next/link"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { ArrowRight } from "lucide-react"
 import type { Metadata } from "next"
 
@@ -99,12 +100,14 @@ export default function PastasPage() {
         {/* Hero Section */}
         <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <Image
+            <ImageWrapper
               src="https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop"
               alt="Pastas artesanales caseras"
               fill
               className="object-cover"
-              priority
+              priority={true}
+              fallback="/placeholder.svg?height=800&width=1200&text=Pastas+Artesanales"
+              placeholder={<HeroPlaceholder className="object-cover" />}
             />
             <div className="absolute inset-0 bg-black/40" />
           </div>
@@ -133,11 +136,13 @@ export default function PastasPage() {
                 <Link key={categoria.slug} href={`/pastas/${categoria.slug}`} className="group">
                   <article className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift">
                     <div className="relative h-64">
-                      <Image
+                      <ImageWrapper
                         src={categoria.imagen || "/placeholder.svg"}
                         alt={`${categoria.nombre} caseras artesanales`}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        fallback="/placeholder.svg?height=256&width=400&text=Categoria"
+                        placeholder={<HeroPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <div className="absolute bottom-6 left-6 text-white">

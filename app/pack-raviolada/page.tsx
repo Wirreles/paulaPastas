@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { ChevronDown, MessageCircle, ArrowRight, ShoppingBag, Minus, Plus, Package, Gift, Clock, Users } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import { PageBanner } from "@/lib/types"
@@ -218,12 +219,14 @@ export default function PackRavioladaPage() {
             // Banner dinámico
             <>
               <div className="absolute inset-0 z-0">
-                <Image
+                <ImageWrapper
                   src={banner.imageUrl}
                   alt={banner.description}
                   fill
                   className="object-cover"
-                  priority
+                  priority={true}
+                  fallback="/placeholder.svg?height=800&width=1200&text=Pack+Raviolada"
+                  placeholder={<HeroPlaceholder className="object-cover" />}
                 />
                 <div className="absolute inset-0 bg-black/60" />
               </div>
@@ -265,11 +268,13 @@ export default function PackRavioladaPage() {
               {packs.map((pack) => (
                 <article key={pack.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift group border border-neutral-200">
                   <div className="relative h-64">
-                    <Image
+                    <ImageWrapper
                       src={pack.imagen}
                       alt={`${pack.nombre} artesanal`}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      fallback="/placeholder.svg?height=256&width=400&text=Pack"
+                      placeholder={<HeroPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
                     />
                     {!pack.disponible && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">

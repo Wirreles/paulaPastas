@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { FirebaseService } from "@/lib/firebase-service";
 import { BlogArticle } from "@/lib/types";
-import Image from "next/image";
+import { ImageWrapper } from "@/components/ui/ImageWrapper";
+import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder";
 
 type Props = {
   params: { slug: string }
@@ -68,13 +69,15 @@ export default async function BlogArticlePage({ params }: Props) {
         </div>
         {article.featuredImage && (
           <div className="mb-8 rounded-lg overflow-hidden">
-            <Image
+            <ImageWrapper
               src={article.featuredImage}
               alt={article.title}
               width={800}
               height={400}
               className="w-full h-auto object-cover"
-              priority
+              priority={true}
+              fallback="/placeholder.svg?height=400&width=800&text=Articulo"
+              placeholder={<ProductPlaceholder className="w-full h-auto object-cover" />}
             />
           </div>
         )}

@@ -279,3 +279,20 @@ export interface NewsletterCampaign {
   fechaCreacion?: Date
   fechaActualizacion?: Date
 }
+
+export interface Cupon {
+  id?: string
+  codigo: string // Código único del cupón (ej: SUMMER2024)
+  descripcion: string // Descripción del cupón
+  descuento: number // Valor del descuento
+  tipoDescuento: "porcentaje" | "monto" // Porcentaje o monto fijo
+  montoMinimo: number // Monto mínimo de compra para aplicar el cupón
+  fechaInicio: Date // Fecha desde cuando es válido
+  fechaFin: Date // Fecha hasta cuando es válido
+  maxUsos: number // Máximo número de veces que se puede usar
+  usosActuales: number // Número de veces que ya se ha usado
+  usado: boolean // Si ya no se puede usar más
+  activo: boolean // Si el cupón está activo
+  fechaCreacion?: Date
+  fechaActualizacion?: Date
+}

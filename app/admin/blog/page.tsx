@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { Edit, FileText, Plus, Eye, Trash2, Calendar, Clock } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import { BlogArticle } from "@/lib/types"
@@ -228,16 +229,16 @@ export default function AdminBlogPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="w-16 h-12 relative rounded-lg overflow-hidden bg-neutral-100">
                           {article.featuredImage ? (
-                            <Image
-                              src={article.featuredImage}
-                              alt={article.title}
-                              fill
+                            <ImageWrapper 
+                              src={article.featuredImage} 
+                              alt={article.title} 
+                              fill 
                               className="object-cover"
+                              fallback="/placeholder.svg?height=48&width=64&text=Articulo"
+                              placeholder={<ProductPlaceholder className="object-cover" />}
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <FileText className="w-6 h-6 text-neutral-400" />
-                            </div>
+                            <ProductPlaceholder className="w-full h-full" />
                           )}
                         </div>
                       </td>

@@ -1,12 +1,13 @@
 "use client"
 
-import Image from "next/image"
+import { useState } from "react"
 import Link from "next/link"
-import { Eye, Minus, Plus } from "lucide-react" // Cambiar ShoppingBag por Eye
-import type { Producto } from "@/lib/types"
-import { useCart } from "@/lib/cart-context" // Importar useCart
-import { formatPrice } from "@/lib/utils" // Importar formatPrice
-import { useState } from "react" // Importar useState
+import { Minus, Plus, Eye } from "lucide-react"
+import { useCart } from "@/lib/cart-context"
+import { formatPrice } from "@/lib/utils"
+import { Producto } from "@/lib/types"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
 
 interface ComplementaryProductCardProps {
   producto: Producto
@@ -31,11 +32,13 @@ export default function ComplementaryProductCard({ producto }: ComplementaryProd
       {/* Imagen más grande como en el home */}
       <div className="relative h-48 w-full">
         <Link href={productUrl}>
-          <Image
+          <ImageWrapper
             src={producto.imagen || "/placeholder.svg"}
             alt={`${producto.nombre} caseros artesanales`}
             fill
             className="object-cover"
+            fallback="/placeholder.svg?height=192&width=400&text=Producto"
+            placeholder={<ProductPlaceholder className="object-cover" />}
           />
         </Link>
         {!producto.disponible && (

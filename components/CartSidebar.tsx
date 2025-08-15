@@ -1,12 +1,13 @@
 "use client"
 
-import { ShoppingBag, Minus, Plus, MapPin, CheckCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useState } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { ShoppingBag, Minus, Plus, MapPin, CheckCircle } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
-import Image from "next/image"
-import Link from "next/link"
 import { formatPrice } from "@/lib/utils"
+import Link from "next/link"
+import Image from "next/image"
 
 export default function CartSidebar() {
   const { items, removeItem, updateItemQuantity, totalPrice, totalItems, isCartOpen, closeCart } = useCart()
@@ -36,7 +37,17 @@ export default function CartSidebar() {
               {items.map((item) => (
                 <div key={item.productId} className="flex items-center gap-4 py-3 border-b last:border-b-0">
                   <div className="relative w-20 h-20 flex-shrink-0 rounded-md overflow-hidden">
-                    <Image src={item.imageUrl || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
+                    <Image
+                      src={item.imageUrl && item.imageUrl.startsWith('http') ? item.imageUrl : "/placeholder.svg"}
+                      alt={item.name}
+                      fill
+                      className="object-cover"
+                      onError={(e) => {
+                        // Si la imagen falla, cambiar a placeholder
+                        const target = e.target as HTMLImageElement;
+                        target.src = "/placeholder.svg";
+                      }}
+                    />
                   </div>
                   <div className="flex-1">
                     <Link href={`/pastas/${item.categoria}/${item.subcategoria}/${item.slug}`} onClick={closeCart}>

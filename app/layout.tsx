@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
+import CartSidebar from "@/components/CartSidebar"
 import { AuthProvider } from "@/lib/auth-context"
 import { ToastProvider } from "@/lib/toast-context"
 import { CartProvider } from "@/lib/cart-context" // Importar CartProvider
@@ -30,6 +31,7 @@ export default function RootLayout({
               {" "}
               {/* Envolver con CartProvider */}
               <Header />
+              <CartSidebar />
               <main className="flex-grow">{children}</main>
               <Footer />
             </CartProvider>

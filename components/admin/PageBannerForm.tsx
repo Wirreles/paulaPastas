@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { X, Upload, Trash2 } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import { PageBanner } from "@/lib/types"
@@ -303,11 +304,13 @@ export default function PageBannerForm({ banner, onClose, onSave }: PageBannerFo
               {imagePreview && (
                 <div className="mb-4 relative">
                   <div className="w-full h-48 relative rounded-lg overflow-hidden bg-neutral-100">
-                    <Image
-                      src={imagePreview}
-                      alt="Preview"
-                      fill
+                    <ImageWrapper 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      fill 
                       className="object-cover"
+                      fallback="/placeholder.svg?height=192&width=400&text=Preview"
+                      placeholder={<ProductPlaceholder className="object-cover" />}
                     />
                   </div>
                   <button

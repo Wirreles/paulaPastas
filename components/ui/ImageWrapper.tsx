@@ -116,7 +116,7 @@ export function ImageWrapper({
         <img 
           src={imageUrl}
           alt={alt}
-          loading={loading}
+          loading={priority ? "eager" : loading}
           className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
           style={{ 
             maxWidth: "100%", 
@@ -146,7 +146,7 @@ export function ImageWrapper({
         priority={priority}
         sizes={sizes}
         quality={quality}
-        loading={loading}
+        loading={priority ? "eager" : loading}
         className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
         onLoad={handleImageLoad}
         onError={handleImageError}

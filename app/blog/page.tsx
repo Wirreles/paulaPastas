@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { ArrowRight, BookOpen, ChefHat, Heart, Clock, Users } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 
@@ -148,11 +149,13 @@ export default async function BlogPage() {
               {articulos.map((articulo) => (
                 <article key={articulo.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift group border border-neutral-200">
                   <div className="relative h-48">
-                    <Image
+                    <ImageWrapper
                       src={articulo.featuredImage}
                       alt={`${articulo.title} - Blog Paula Pastas`}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      fallback="/placeholder.svg?height=192&width=400&text=Articulo"
+                      placeholder={<ProductPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
                     />
                     <div className="absolute top-4 left-4">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(articulo.category)}`}>

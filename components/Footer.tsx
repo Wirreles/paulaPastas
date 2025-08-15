@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { MapPin, Phone, Mail, Clock } from "lucide-react"
 
 export default function Footer() {
@@ -9,11 +10,17 @@ export default function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">🍝</span>
+              <div className="w-10 h-10 flex items-center justify-center">
+                <Image
+                  src="/pplog2.png"
+                  alt="Paula Pastas Logo"
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
-                <h3 className="font-display text-xl font-bold">Comida Casera</h3>
+                <h3 className="font-display text-xl font-bold">Paula Pastas</h3>
                 <p className="text-sm text-neutral-400">Pastas Artesanales</p>
               </div>
             </div>

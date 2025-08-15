@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
 import Link from "next/link"
 import { ArrowLeft, Clock, Users, ShoppingBag, Star } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
@@ -178,12 +179,14 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
             {/* Imagen */}
             <div className="relative">
               <div className="aspect-square rounded-2xl overflow-hidden">
-                <Image
+                <ImageWrapper
                   src={producto.imagen || "/placeholder.svg"}
                   alt={`${producto.nombre} caseros artesanales`}
                   fill
                   className="object-cover"
-                  priority
+                  priority={true}
+                  fallback="/placeholder.svg?height=400&width=400&text=Producto"
+                  placeholder={<ProductPlaceholder className="object-cover" />}
                 />
               </div>
               {producto.destacado && (
@@ -293,7 +296,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
                   >
                     <article className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift">
                       <div className="relative h-48">
-                        <Image
+                        <ImageWrapper
                           src={productoRel.imagen || "/placeholder.svg"}
                           alt={productoRel.nombre}
                           fill

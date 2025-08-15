@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { ChevronDown, MessageCircle, ArrowRight, ShoppingBag } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 
@@ -144,12 +145,14 @@ export default async function SalsasPage() {
         {/* 1. Banner Principal */}
         <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <Image
+            <ImageWrapper
               src={banner?.imageUrl || "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop"}
               alt={banner?.title || "Salsas caseras artesanales en frascos"}
               fill
               className="object-cover"
-              priority
+              priority={true}
+              fallback="/placeholder.svg?height=800&width=1200&text=Salsas+Caseras"
+              placeholder={<HeroPlaceholder className="object-cover" />}
             />
             <div className="absolute inset-0 bg-black/50" />
           </div>
@@ -182,11 +185,13 @@ export default async function SalsasPage() {
               {salsas.map((salsa) => (
                 <article key={salsa.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift group">
                   <div className="relative h-48">
-                    <Image
+                    <ImageWrapper
                       src={salsa.imagen}
                       alt={`${salsa.nombre} casera artesanal`}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      fallback="/placeholder.svg?height=192&width=400&text=Salsa"
+                      placeholder={<HeroPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
                     />
                     {!salsa.disponible && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">

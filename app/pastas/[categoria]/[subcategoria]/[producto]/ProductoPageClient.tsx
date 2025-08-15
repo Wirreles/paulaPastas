@@ -1,7 +1,8 @@
 "use client" // Marcar como Client Component para el carrusel y acordeones
 
 import { notFound } from "next/navigation"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
 import Link from "next/link"
 import {
   ArrowLeft,
@@ -243,12 +244,14 @@ export default function ProductoPageClient({
             {/* 1. Encabezado del producto (ya existente) */}
             <div className="relative">
               <div className="aspect-square rounded-2xl overflow-hidden">
-                <Image
+                <ImageWrapper
                   src={producto.imagen || "/placeholder.svg"}
                   alt={`${producto.nombre} caseros artesanales`}
                   fill
                   className="object-cover"
-                  priority
+                  priority={true}
+                  fallback="/placeholder.svg?height=400&width=400&text=Producto"
+                  placeholder={<ProductPlaceholder className="object-cover" />}
                 />
               </div>
               {producto.destacado && (

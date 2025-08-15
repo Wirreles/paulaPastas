@@ -1184,4 +1184,171 @@ export class FirebaseService {
       return false
     }
   }
+
+  // ===== GESTIÓN DE CUPONES =====
+
+  /**
+   * Crear cupón de descuento
+   */
+  static async createCoupon(couponData: any): Promise<string> {
+    try {
+      const coupon = {
+        ...couponData,
+        fechaCreacion: new Date(),
+        fechaActualizacion: new Date()
+      }
+
+      const docRef = await addDoc(collection(db, "cupones"), coupon)
+      console.log("✅ Cupón creado:", docRef.id)
+      return docRef.id
+    } catch (error) {
+      console.error("❌ Error al crear cupón:", error)
+      throw error
+    }
+  }
+
+  /**
+   * Obtener todos los cupones
+   */
+  static async getAllCoupons(): Promise<any[]> {
+    try {
+      const querySnapshot = await getDocs(collection(db, "cupones"))
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+    } catch (error) {
+      console.error("❌ Error al obtener cupones:", error)
+      return []
+    }
+  }
+
+  /**
+   * Obtener cupón por código
+   */
+  static async getCouponByCode(codigo: string): Promise<any | null> {
+    try {
+      const q = query(collection(db, "cupones"), where("codigo", "==", codigo.toUpperCase()))
+      const querySnapshot = await getDocs(q)
+      
+      if (querySnapshot.empty) {
+        return null
+      }
+      
+      const doc = querySnapshot.docs[0]
+      return {
+        id: doc.id,
+        ...doc.data()
+      }
+    } catch (error) {
+      console.error("❌ Error al obtener cupón por código:", error)
+      return null
+    }
+  }
+
+  /**
+   * Actualizar cupón
+   */
+  static async updateCoupon(id: string, updateData: any): Promise<boolean> {
+    try {
+      await updateDoc(doc(db, "cupones", id), {
+        ...updateData,
+        fechaActualizacion: new Date()
+      })
+      console.log("✅ Cupón actualizado:", id)
+      return true
+    } catch (error) {
+      console.error("❌ Error al actualizar cupón:", error)
+      return false
+    }
+  }
+
+  /**
+   * Eliminar cupón
+   */
+  static async deleteCoupon(id: string): Promise<boolean> {
+    try {
+      await deleteDoc(doc(db, "cupones", id))
+      console.log("✅ Cupón eliminado:", id)
+      return true
+    } catch (error) {
+      console.error("❌ Error al eliminar cupón:", error)
+      return false
+    }
+  }
+
+  /**
+   * Marcar cupón como usado
+   */
+  static async markCouponAsUsed(id: string): Promise<boolean> {
+    try {
+      const cuponRef = doc(db, "cupones", id)
+      const cuponDoc = await getDoc(cuponRef)
+      
+      if (!cuponDoc.exists()) {
+        throw new Error("Cupón no encontrado")
+      }
+      
+      const cuponData = cuponDoc.data()
+      const usosActuales = (cuponData.usosActuales || 0) + 1
+      
+      await updateDoc(cuponRef, {
+        usosActuales,
+        usado: usosActuales >= cuponData.maxUsos,
+        fechaActualizacion: new Date()
+      })
+      
+      console.log("✅ Cupón marcado como usado:", id, "Usos:", usosActuales)
+      return true
+    } catch (error) {
+      console.error("❌ Error al marcar cupón como usado:", error)
+      return false
+    }
+  }
+
+  /**
+   * Validar cupón (verificar si es válido para usar)
+   */
+  static async validateCoupon(codigo: string, montoCompra: number): Promise<{ valid: boolean; cupon?: any; error?: string }> {
+    try {
+      const cupon = await this.getCouponByCode(codigo)
+      
+      if (!cupon) {
+        return { valid: false, error: "Cupón no encontrado" }
+      }
+      
+      if (!cupon.activo) {
+        return { valid: false, error: "Cupón inactivo" }
+      }
+      
+      if (cupon.usado) {
+        return { valid: false, error: "Cupón ya utilizado" }
+      }
+      
+      const now = new Date()
+      const fechaInicio = new Date(cupon.fechaInicio.seconds * 1000)
+      const fechaFin = new Date(cupon.fechaFin.seconds * 1000)
+      
+      if (now < fechaInicio) {
+        return { valid: false, error: "Cupón aún no válido" }
+      }
+      
+      if (now > fechaFin) {
+        return { valid: false, error: "Cupón expirado" }
+      }
+      
+      if (cupon.usosActuales >= cupon.maxUsos) {
+        return { valid: false, error: "Cupón agotado" }
+      }
+      
+      if (cupon.montoMinimo > 0 && montoCompra < cupon.montoMinimo) {
+        return { valid: false, error: `Monto mínimo requerido: $${cupon.montoMinimo}` }
+      }
+      
+      return { valid: true, cupon }
+    } catch (error) {
+      console.error("❌ Error validando cupón:", error)
+      return { valid: false, error: "Error validando cupón" }
+    }
+  }
 }

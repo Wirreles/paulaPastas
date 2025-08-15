@@ -1,7 +1,8 @@
 import { Suspense } from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { ArrowRight, CheckCircle, ShoppingBag } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import ProductCard from "@/components/ProductCard"
@@ -141,12 +142,14 @@ export default async function RaviolesFritosPage() {
         {/* 1. 🧱 SECCIÓN HERO / BANNER PRINCIPAL */}
         <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <Image
+            <ImageWrapper
               src={banner?.imageUrl || "/placeholder.svg?height=800&width=1200"}
               alt={banner?.title || "Ravioles fritos dorados y crocantes"}
               fill
               className="object-cover"
-              priority
+              priority={true}
+              fallback="/placeholder.svg?height=800&width=1200&text=Ravioles+Fritos"
+              placeholder={<HeroPlaceholder className="object-cover" />}
             />
             <div className="absolute inset-0 bg-black/40" />
           </div>
@@ -187,35 +190,43 @@ export default async function RaviolesFritosPage() {
             <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">Galería de Imágenes</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
-                <Image
+                <ImageWrapper
                   src="/placeholder.svg?height=300&width=400"
                   alt="Ravioles fritos servidos en un plato"
                   fill
                   className="object-cover"
+                  fallback="/placeholder.svg?height=300&width=400&text=Ravioles+1"
+                  placeholder={<HeroPlaceholder className="object-cover" />}
                 />
               </div>
               <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
-                <Image
+                <ImageWrapper
                   src="/placeholder.svg?height=300&width=400"
                   alt="Ravioles fritos cocinándose en una sartén"
                   fill
                   className="object-cover"
+                  fallback="/placeholder.svg?height=300&width=400&text=Ravioles+2"
+                  placeholder={<HeroPlaceholder className="object-cover" />}
                 />
               </div>
               <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
-                <Image
+                <ImageWrapper
                   src="/placeholder.svg?height=300&width=400"
                   alt="Ravioles fritos como aperitivo en una picada"
                   fill
                   className="object-cover"
+                  fallback="/placeholder.svg?height=300&width=400&text=Ravioles+3"
+                  placeholder={<HeroPlaceholder className="object-cover" />}
                 />
               </div>
               <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
-                <Image
+                <ImageWrapper
                   src="/placeholder.svg?height=300&width=400"
                   alt="Primer plano de ravioles fritos con textura crocante"
                   fill
                   className="object-cover"
+                  fallback="/placeholder.svg?height=300&width=400&text=Ravioles+4"
+                  placeholder={<HeroPlaceholder className="object-cover" />}
                 />
               </div>
             </div>

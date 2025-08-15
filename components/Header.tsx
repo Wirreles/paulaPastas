@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation"
 import { Menu, X, ShoppingBag, User, LogOut, ArrowLeft, ArrowRight } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useCart } from "@/lib/cart-context"
-import CartSidebar from "@/components/CartSidebar"
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -106,21 +105,21 @@ export default function Header() {
           {/* Logo - Responsive */}
           <Link href="/" className="flex items-center space-x-2 sm:space-x-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
-              <Image 
-                src="/pplog2.png" 
-                alt="Paula Pastas Logo" 
-                width={40} 
+              <Image
+                src="/pplog2.png"
+                alt="Paula Pastas Logo"
+                width={40}
                 height={40}
                 className="w-full h-full object-contain"
               />
             </div>
             <div className="hidden sm:block">
-              <h1 className="font-display text-lg sm:text-xl font-bold text-neutral-900">Paula Pastas</h1>
+              <span className="font-display text-lg sm:text-xl font-bold text-neutral-900">Paula Pastas</span>
               <p className="text-xs text-neutral-600">Pastas Artesanales</p>
             </div>
             {/* Logo text for mobile */}
             <div className="sm:hidden">
-              <h1 className="font-display text-base font-bold text-neutral-900">Paula</h1>
+              <span className="font-display text-base font-bold text-neutral-900">Paula</span>
               <p className="text-xs text-neutral-600">Pastas</p>
             </div>
           </Link>
@@ -252,8 +251,8 @@ export default function Header() {
             <div className="bg-primary-900 text-white p-4 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 {isSubMenu && (
-                  <button 
-                    onClick={handleBackClick} 
+                  <button
+                    onClick={handleBackClick}
                     className="p-2 text-white hover:text-primary-100 transition-colors"
                     aria-label="Volver"
                   >
@@ -262,8 +261,8 @@ export default function Header() {
                 )}
                 <h2 className="font-display text-lg sm:text-xl font-bold">{currentMenuTitle}</h2>
               </div>
-              <button 
-                onClick={() => setIsMenuOpen(false)} 
+              <button
+                onClick={() => setIsMenuOpen(false)}
                 className="p-2 text-white hover:text-primary-100 transition-colors"
                 aria-label="Cerrar menú"
               >
@@ -310,7 +309,6 @@ export default function Header() {
           </div>
         )}
       </div>
-      <CartSidebar />
     </header>
   )
 }

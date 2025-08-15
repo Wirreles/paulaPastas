@@ -4,7 +4,21 @@ import { MercadoPagoService } from "@/lib/mercadopago-service"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { items, userData, deliveryOption, deliverySlot, comments, isUserLoggedIn, userId, addressId, addressData } = body
+    const { 
+      items, 
+      userData, 
+      deliveryOption, 
+      deliverySlot, 
+      comments, 
+      isUserLoggedIn, 
+      userId, 
+      addressId, 
+      addressData,
+      couponApplied // Agregar el campo del cupón
+    } = body
+
+    console.log("🔍 DEBUG API: Body completo recibido:", JSON.stringify(body, null, 2))
+    console.log("🔍 DEBUG API: couponApplied extraído:", couponApplied)
 
     // Validaciones básicas
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -25,7 +39,8 @@ export async function POST(request: NextRequest) {
       isUserLoggedIn,
       userId,
       addressId,
-      addressData
+      addressData,
+      couponApplied // Pasar el cupón al servicio
     })
 
     return NextResponse.json({

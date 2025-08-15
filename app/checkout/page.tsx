@@ -16,8 +16,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Loader2, CheckCircle, CreditCard, Wallet, MapPin, ChevronDown } from "lucide-react"
-import Image from "next/image"
+import { Loader2, CheckCircle, CreditCard, Wallet, MapPin, ChevronDown, X } from "lucide-react"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { useToast } from "@/lib/toast-context"
 import {
   Select,
@@ -32,6 +33,18 @@ export default function CheckoutPage() {
   const { user, userData } = useAuth()
   const router = useRouter()
   const { success, error } = useToast()
+
+  /*
+   * SISTEMA DE CUPONES:
+   * 
+   * 1. VALIDACIÓN: El cupón se valida al aplicarlo (fechas, monto mínimo, límite de usos)
+   * 2. APLICACIÓN: Se calcula el descuento y se actualiza el precio final
+   * 3. PERSISTENCIA: La información del cupón se incluye en todos los métodos de pago
+   * 4. MARCADO COMO USADO: 
+   *    - Para otros métodos: Se marca inmediatamente al confirmar la orden
+   *    - Para MercadoPago: Se marca cuando se confirme el pago (webhook o callback)
+   * 5. PREVENCIÓN: Se evita marcar el mismo cupón múltiples veces
+   */
 
   const [step, setStep] = useState(1)
   const [purchaseOption, setPurchaseOption] = useState<"guest" | "logged">(user ? "logged" : "guest")
@@ -53,6 +66,14 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string>("")
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false)
   const [errors, setErrors] = useState<{[key: string]: string}>({})
+  
+  // Estado para cupones
+  const [couponCode, setCouponCode] = useState("")
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null)
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false)
+  const [couponError, setCouponError] = useState("")
+  const [couponSuccess, setCouponSuccess] = useState("")
+  const [couponMarkedAsUsed, setCouponMarkedAsUsed] = useState(false)
 
   // Horarios de entrega fijos (ejemplo, idealmente vendrían de Firebase)
   const deliverySlots = [
@@ -98,18 +119,106 @@ export default function CheckoutPage() {
       // Si hay direcciones, seleccionar la primera por defecto
       if (addresses.length > 0) {
         setSelectedAddressId(addresses[0].id)
-        const firstAddress = addresses[0]
-        const formattedAddress = `${firstAddress.calle} ${firstAddress.numero}, ${firstAddress.ciudad}, ${firstAddress.provincia}`
         setFormData(prev => ({
           ...prev,
-          address: formattedAddress
+          address: `${addresses[0].calle} ${addresses[0].numero}, ${addresses[0].ciudad}`
         }))
       }
-    } catch (err: unknown) {
-      console.error("❌ Error cargando direcciones:", err)
-      error("Error", "No se pudieron cargar las direcciones guardadas")
+    } catch (error) {
+      console.error("❌ Error al cargar direcciones:", error)
     } finally {
       setIsLoadingAddresses(false)
+    }
+  }
+
+  // Función para validar y aplicar cupón
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError("Por favor ingresa un código de cupón")
+      return
+    }
+
+    if (appliedCoupon) {
+      setCouponError("Ya tienes un cupón aplicado")
+      return
+    }
+
+    setIsValidatingCoupon(true)
+    setCouponError("")
+    setCouponSuccess("")
+
+    try {
+      const result = await FirebaseService.validateCoupon(couponCode.trim(), totalPrice)
+      
+      if (result.valid && result.cupon) {
+        // Validaciones adicionales
+        if (result.cupon.montoMinimo > 0 && totalPrice < result.cupon.montoMinimo) {
+          setCouponError(`Monto mínimo requerido: $${result.cupon.montoMinimo}`)
+          return
+        }
+
+        if (result.cupon.usosActuales >= result.cupon.maxUsos) {
+          setCouponError("Este cupón ya no está disponible (límite de usos alcanzado)")
+          return
+        }
+
+        if (result.cupon.usado) {
+          setCouponError("Este cupón ya no está disponible")
+          return
+        }
+
+        // Aplicar cupón
+        setAppliedCoupon(result.cupon)
+        setCouponSuccess(`¡Cupón aplicado! Descuento: ${result.cupon.tipoDescuento === 'porcentaje' ? `${result.cupon.descuento}%` : `$${result.cupon.descuento}`}`)
+        setCouponCode("")
+      } else {
+        setCouponError(result.error || "Cupón inválido")
+      }
+    } catch (error) {
+      console.error("❌ Error al validar cupón:", error)
+      setCouponError("Error al validar el cupón. Intenta nuevamente.")
+    } finally {
+      setIsValidatingCoupon(false)
+    }
+  }
+
+  // Función para remover cupón
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null)
+    setCouponSuccess("")
+    setCouponError("")
+    setCouponMarkedAsUsed(false) // Resetear el estado del cupón usado
+  }
+
+  // Calcular descuento del cupón
+  const calculateCouponDiscount = () => {
+    if (!appliedCoupon) return 0
+    
+    if (appliedCoupon.tipoDescuento === 'porcentaje') {
+      return (totalPrice * appliedCoupon.descuento) / 100
+    } else {
+      return appliedCoupon.descuento
+    }
+  }
+
+  // Calcular precio final con descuento
+  const finalPrice = totalPrice - calculateCouponDiscount()
+
+  // Función helper para formatear información del cupón
+  const getCouponInfo = () => {
+    if (!appliedCoupon) return null
+    
+    const discountAmount = calculateCouponDiscount()
+    const discountPercentage = appliedCoupon.tipoDescuento === 'porcentaje' 
+      ? `${appliedCoupon.descuento}%` 
+      : `$${appliedCoupon.descuento}`
+    
+    return {
+      code: appliedCoupon.codigo,
+      discountType: appliedCoupon.tipoDescuento === 'porcentaje' ? 'Porcentaje' : 'Monto fijo',
+      discountValue: discountPercentage,
+      discountAmount,
+      savings: discountAmount > 0 ? `Ahorraste $${discountAmount}` : ''
     }
   }
 
@@ -322,9 +431,26 @@ export default function CheckoutPage() {
         userId: user?.uid || null,
         addressData: addressData, // Datos completos de la dirección (si existe)
         addressId: selectedAddressId || null, // ID de la dirección (si existe)
+        // Agregar información del cupón para MercadoPago
+        couponApplied: appliedCoupon ? {
+          id: appliedCoupon.id,
+          codigo: appliedCoupon.codigo,
+          descuento: appliedCoupon.descuento,
+          tipoDescuento: appliedCoupon.tipoDescuento,
+          descuentoAplicado: calculateCouponDiscount(),
+          totalAmount: finalPrice, // Precio final con descuento
+          originalAmount: totalPrice // Precio original sin descuento
+        } : null,
       }
 
       console.log("📦 Datos del pago:", paymentData)
+      console.log("🔍 DEBUG: Verificación del cupón antes del envío:")
+      console.log("  - appliedCoupon existe?", !!appliedCoupon)
+      console.log("  - appliedCoupon completo:", appliedCoupon)
+      console.log("  - calculateCouponDiscount():", calculateCouponDiscount())
+      console.log("  - totalPrice:", totalPrice)
+      console.log("  - finalPrice:", finalPrice)
+      console.log("  - paymentData.couponApplied:", paymentData.couponApplied)
 
       // Crear pago usando el servicio integrado
       const response = await fetch("/api/mercadopago/create-preference", {
@@ -392,7 +518,15 @@ export default function CheckoutPage() {
         deliveryOption: deliveryOption,
         deliverySlot: deliveryOption === "delivery" ? selectedDeliverySlot : undefined,
         paymentMethod: paymentMethod,
-        totalAmount: totalPrice,
+        totalAmount: finalPrice, // Usar el precio final con descuento
+        originalAmount: totalPrice, // Mantener el precio original
+        couponApplied: appliedCoupon ? {
+          id: appliedCoupon.id,
+          codigo: appliedCoupon.codigo,
+          descuento: appliedCoupon.descuento,
+          tipoDescuento: appliedCoupon.tipoDescuento,
+          descuentoAplicado: calculateCouponDiscount()
+        } : null,
         items: items.map((item) => ({
           productId: item.productId,
           name: item.name,
@@ -407,6 +541,19 @@ export default function CheckoutPage() {
       }
 
       const newOrderId = await FirebaseService.addOrder(orderData)
+      
+      // Si se aplicó un cupón, actualizar su estado en Firebase (solo una vez)
+      if (appliedCoupon && !couponMarkedAsUsed) {
+        try {
+          await FirebaseService.markCouponAsUsed(appliedCoupon.id)
+          setCouponMarkedAsUsed(true) // Marcar como usado localmente
+          console.log("✅ Cupón marcado como usado:", appliedCoupon.codigo)
+        } catch (error) {
+          console.error("❌ Error al marcar cupón como usado:", error)
+          // No fallar la orden si hay error con el cupón
+        }
+      }
+      
       setOrderId(newOrderId)
       setOrderConfirmed(true)
       clearCart()
@@ -428,6 +575,18 @@ export default function CheckoutPage() {
           <p className="text-neutral-700 mb-4">
             Tu pedido ha sido recibido con éxito. Número de pedido: <span className="font-semibold">{orderId}</span>
           </p>
+          
+          {appliedCoupon && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-green-800">
+                <span className="font-semibold">Cupón aplicado:</span> {appliedCoupon.codigo}
+              </p>
+              <p className="text-xs text-green-600">
+                Ahorraste: {formatPrice(calculateCouponDiscount())}
+              </p>
+            </div>
+          )}
+          
           <p className="text-neutral-600 mb-6">
             En breve nos pondremos en contacto contigo por WhatsApp para coordinar los detalles del envío y el pago.
           </p>
@@ -881,7 +1040,14 @@ export default function CheckoutPage() {
                 {items.map((item) => (
                   <div key={item.productId} className="flex items-center gap-3">
                     <div className="relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden">
-                      <Image src={item.imageUrl || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
+                      <ImageWrapper 
+                        src={item.imageUrl || "/placeholder.svg"} 
+                        alt={item.name} 
+                        fill 
+                        className="object-cover"
+                        fallback="/placeholder.svg?height=64&width=64&text=Producto"
+                        placeholder={<ProductPlaceholder className="object-cover" />}
+                      />
                     </div>
                     <div className="flex-1">
                       <p className="font-medium text-neutral-800">{item.name}</p>
@@ -894,9 +1060,101 @@ export default function CheckoutPage() {
                 ))}
               </div>
               <Separator className="my-6" />
-              <div className="flex justify-between items-center text-lg font-bold text-neutral-900">
-                <span>Total del Pedido:</span>
-                <span>{formatPrice(totalPrice)}</span>
+              
+              {/* Sección de Cupón */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-neutral-900">¿Tenés un cupón?</h4>
+                
+                {!appliedCoupon ? (
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Código del cupón"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        className="flex-1"
+                        disabled={isValidatingCoupon}
+                      />
+                      <Button
+                        onClick={handleApplyCoupon}
+                        disabled={!couponCode.trim() || isValidatingCoupon}
+                        size="sm"
+                        className="whitespace-nowrap"
+                      >
+                        {isValidatingCoupon ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          "Aplicar"
+                        )}
+                      </Button>
+                    </div>
+                    
+                    {couponError && (
+                      <p className="text-sm text-red-600 bg-red-50 p-2 rounded">
+                        {couponError}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <div>
+                          <p className="font-medium text-green-800">
+                            Cupón: {getCouponInfo()?.code}
+                          </p>
+                          <p className="text-sm text-green-600">
+                            {getCouponInfo()?.discountType}: {getCouponInfo()?.discountValue}
+                          </p>
+                          {getCouponInfo()?.savings && (
+                            <p className="text-xs text-green-500 font-medium">
+                              {getCouponInfo()?.savings}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRemoveCoupon}
+                        className="text-green-600 hover:text-green-700 hover:bg-green-100"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {couponSuccess && (
+                  <p className="text-sm text-green-600 bg-green-50 p-2 rounded">
+                    {couponSuccess}
+                  </p>
+                )}
+              </div>
+              
+              <Separator className="my-6" />
+              
+              {/* Resumen de precios */}
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm text-neutral-600">
+                  <span>Subtotal:</span>
+                  <span>{formatPrice(totalPrice)}</span>
+                </div>
+                
+                {appliedCoupon && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Descuento ({appliedCoupon.codigo}):</span>
+                    <span>-{formatPrice(calculateCouponDiscount())}</span>
+                  </div>
+                )}
+                
+                <Separator />
+                <div className="flex justify-between items-center text-lg font-bold text-neutral-900">
+                  <span>Total del Pedido:</span>
+                  <span>{formatPrice(finalPrice)}</span>
+                </div>
               </div>
             </CardContent>
           </Card>

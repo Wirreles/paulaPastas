@@ -2,7 +2,8 @@ import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import Link from "next/link"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { FirebaseService } from "@/lib/firebase-service"
 import ProductCard from "@/components/ProductCard"
 import { ArrowRight } from "lucide-react"
@@ -153,12 +154,14 @@ export default async function CategoriaPage({ params }: CategoriaPageProps) {
         {/* Hero Section */}
         <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <Image
+            <ImageWrapper
               src={data.imagen || "/placeholder.svg"}
               alt={`${data.nombre} caseras artesanales`}
               fill
               className="object-cover"
-              priority
+              priority={true}
+              fallback="/placeholder.svg?height=600&width=1200&text=Categoria"
+              placeholder={<HeroPlaceholder className="object-cover" />}
             />
             <div className="absolute inset-0 bg-black/40" />
           </div>
@@ -179,11 +182,13 @@ export default async function CategoriaPage({ params }: CategoriaPageProps) {
                   <Link key={subcategoria.slug} href={`/categoria/${categoria}/${subcategoria.slug}`} className="group">
                     <article className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift">
                       <div className="relative h-48">
-                        <Image
+                        <ImageWrapper
                           src={subcategoria.imagen || "/placeholder.svg"}
                           alt={`${subcategoria.nombre} caseros artesanales`}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          fallback="/placeholder.svg?height=192&width=400&text=Subcategoria"
+                          placeholder={<HeroPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
                         />
                       </div>
                       <div className="p-6">

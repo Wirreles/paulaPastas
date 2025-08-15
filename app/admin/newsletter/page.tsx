@@ -9,7 +9,6 @@ import {
   Search, 
   Filter, 
   Download,
-  Eye,
   Edit,
   Trash2,
   CheckCircle,
@@ -23,6 +22,7 @@ import { emailService } from "@/lib/email-service"
 import type { Suscripcion, NewsletterCampaign } from "@/lib/types"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import AdminNavigation from "@/components/admin/AdminNavigation"
 
 // Función helper para convertir fechas de Firestore
 const convertFirestoreDate = (date: any): Date => {
@@ -66,15 +66,25 @@ const formatDateSafely = (date: any, formatString: string): string => {
   }
 }
 
-// Componente del formulario de campaña
-function CampaignForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+// Componente del formulario de campaña (para crear y editar)
+function CampaignForm({ 
+  onClose, 
+  onSuccess, 
+  campaign = null 
+}: { 
+  onClose: () => void; 
+  onSuccess: () => void;
+  campaign?: NewsletterCampaign | null;
+}) {
+  const isEditing = !!campaign
+  
   const [formData, setFormData] = useState({
-    titulo: "Nueva Campaña",
-    contenido: "<h2>¡Hola!</h2>\n\n<p>Este es el contenido de tu nueva campaña.</p>\n\n<p>Saludos,<br>Equipo de Paula Pastas</p>",
-    asunto: "Nueva Campaña de Paula Pastas",
-    destinatarios: "todos" as "todos" | "activos" | "nuevos",
-    estado: "borrador" as "borrador" | "programada" | "enviada" | "cancelada",
-    fechaProgramada: ""
+    titulo: campaign?.titulo || "Nueva Campaña",
+    contenido: campaign?.contenido || "<h2>¡Hola!</h2>\n\n<p>Este es el contenido de tu nueva campaña.</p>\n\n<p>Saludos,<br>Equipo de Paula Pastas</p>",
+    asunto: campaign?.asunto || "Nueva Campaña de Paula Pastas",
+    destinatarios: campaign?.destinatarios || "todos" as "todos" | "activos" | "nuevos",
+    estado: campaign?.estado || "borrador" as "borrador" | "programada" | "enviada" | "cancelada",
+    fechaProgramada: campaign?.fechaProgramada ? format(convertFirestoreDate(campaign.fechaProgramada), "yyyy-MM-dd'T'HH:mm") : ""
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -111,14 +121,13 @@ function CampaignForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
     }
 
     try {
-      // Preparar los datos de la campaña, manejando correctamente fechaProgramada
+      // Preparar los datos de la campaña
       const campaignData: any = {
         titulo: formData.titulo.trim(),
         contenido: formData.contenido.trim(),
         asunto: formData.asunto.trim(),
         destinatarios: formData.destinatarios,
         estado: formData.estado,
-        fechaCreacion: new Date(),
         fechaActualizacion: new Date()
       }
 
@@ -127,21 +136,25 @@ function CampaignForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
         campaignData.fechaProgramada = new Date(formData.fechaProgramada)
       }
 
-      // Agregar estadísticas iniciales
-      campaignData.estadisticas = {
-        enviados: 0,
-        abiertos: 0,
-        clicks: 0
+      if (isEditing) {
+        // Actualizar campaña existente
+        await FirebaseService.updateNewsletterCampaign(campaign!.id!, campaignData)
+      } else {
+        // Crear nueva campaña
+        campaignData.fechaCreacion = new Date()
+        campaignData.estadisticas = {
+          enviados: 0,
+          abiertos: 0,
+          clicks: 0
+        }
+        await FirebaseService.createNewsletterCampaign(campaignData)
       }
 
-      console.log("📧 Datos de la campaña a crear:", campaignData)
-
-      await FirebaseService.createNewsletterCampaign(campaignData)
       onSuccess()
       onClose()
     } catch (error: any) {
-      console.error("❌ Error al crear campaña:", error)
-      setError(error.message || "Error al crear la campaña")
+      console.error("❌ Error al guardar campaña:", error)
+      setError(error.message || "Error al guardar la campaña")
     } finally {
       setIsLoading(false)
     }
@@ -151,7 +164,9 @@ function CampaignForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold">Nueva Campaña de Newsletter</h3>
+          <h3 className="text-xl font-bold">
+            {isEditing ? 'Editar Campaña' : 'Nueva Campaña de Newsletter'}
+          </h3>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
@@ -270,7 +285,7 @@ function CampaignForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
               disabled={isLoading}
               className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 transition-colors"
             >
-              {isLoading ? "Creando..." : "Crear Campaña"}
+              {isLoading ? (isEditing ? "Guardando..." : "Creando...") : (isEditing ? "Guardar Cambios" : "Crear Campaña")}
             </button>
           </div>
         </form>
@@ -287,6 +302,7 @@ export default function NewsletterAdminPage() {
   const [filterStatus, setFilterStatus] = useState<"todos" | "activo" | "inactivo" | "dado-de-baja">("todos")
   const [selectedSuscripciones, setSelectedSuscripciones] = useState<Set<string>>(new Set())
   const [showCampaignForm, setShowCampaignForm] = useState(false)
+  const [selectedCampaign, setSelectedCampaign] = useState<NewsletterCampaign | null>(null)
 
   useEffect(() => {
     loadData()
@@ -357,7 +373,6 @@ export default function NewsletterAdminPage() {
       }
 
       console.log(`📬 Iniciando envío de campaña "${campaign.titulo}" a ${suscriptoresActivos.length} suscriptores`)
-      console.log('📧 Suscriptores activos:', suscriptoresActivos)
 
       // Mostrar indicador de progreso
       const progressElement = document.getElementById('send-progress')
@@ -413,88 +428,19 @@ export default function NewsletterAdminPage() {
     }
   }
 
-  // Función para enviar email de prueba
-  const handleSendTestEmail = async () => {
-    if (!emailService.isConfigured()) {
-      alert("⚠️ El servicio de email no está configurado. Configura NEXT_PUBLIC_BREVO_API_KEY en .env.local")
+  // Función para eliminar campaña
+  const handleDeleteCampaign = async (campaign: NewsletterCampaign) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar la campaña "${campaign.titulo}"? Esta acción no se puede deshacer.`)) {
       return
     }
 
-    const testEmail = prompt("Ingresa el email donde quieres recibir la prueba:")
-    if (!testEmail) return
-
     try {
-      console.log('🧪 Enviando email de prueba a:', testEmail)
-      
-      const result = await emailService.sendTestEmail(testEmail)
-      
-      if (result.success) {
-        alert(`✅ Email de prueba enviado exitosamente a ${testEmail}\n\nRevisa tu bandeja de entrada y carpeta de spam.`)
-        console.log('✅ Email de prueba enviado:', result)
-      } else {
-        alert(`❌ Error enviando email de prueba: ${result.error}`)
-        console.error('❌ Error en email de prueba:', result)
-      }
+      await FirebaseService.deleteNewsletterCampaign(campaign.id!)
+      await loadData() // Recargar datos
+      alert("✅ Campaña eliminada exitosamente")
     } catch (error: any) {
-      console.error("❌ Error enviando email de prueba:", error)
-      alert(`Error enviando email de prueba: ${error.message}`)
-    }
-  }
-
-  // Función para enviar email simple
-  const handleSendSimpleTestEmail = async () => {
-    if (!emailService.isConfigured()) {
-      alert("⚠️ El servicio de email no está configurado. Configura NEXT_PUBLIC_BREVO_API_KEY en .env.local")
-      return
-    }
-
-    const testEmail = prompt("Ingresa el email donde quieres recibir la prueba SIMPLE:")
-    if (!testEmail) return
-
-    try {
-      console.log('🧪 Enviando email SIMPLE de prueba a:', testEmail)
-      
-      const result = await emailService.sendSimpleTestEmail(testEmail)
-      
-      if (result.success) {
-        alert(`✅ Email SIMPLE enviado exitosamente a ${testEmail}\n\nRevisa tu bandeja de entrada y carpeta de spam.`)
-        console.log('✅ Email SIMPLE enviado:', result)
-      } else {
-        alert(`❌ Error enviando email SIMPLE: ${result.error}`)
-        console.error('❌ Error en email SIMPLE:', result)
-      }
-    } catch (error: any) {
-      console.error("❌ Error enviando email SIMPLE:", error)
-      alert(`Error enviando email SIMPLE: ${error.message}`)
-    }
-  }
-
-  // Función para verificar configuración
-  const handleTestConfiguration = async () => {
-    try {
-      const config = await emailService.testConfiguration()
-      console.log('🔧 Configuración del servicio:', config)
-      
-      const configText = `
-🔧 CONFIGURACIÓN DEL SERVICIO:
-
-✅ API Key configurada: ${config.apiKeyConfigured ? 'SÍ' : 'NO'}
-📏 Longitud API Key: ${config.apiKeyLength}
-📧 Email remitente: ${config.senderEmail}
-👤 Nombre remitente: ${config.senderName}
-🌐 URL base: ${config.baseUrl}
-🔒 Estado dominios: ${config.domainStatus}
-⏰ Timestamp: ${config.timestamp}
-
-${config.apiKeyConfigured ? '✅ El servicio está configurado correctamente' : '❌ El servicio NO está configurado'}
-
-${config.domainStatus.includes('verificados') ? '✅ Dominios verificados correctamente' : '⚠️ Problema con dominios - Revisa configuración en Brevo'}
-      `.trim()
-      
-      alert(configText)
-    } catch (error: any) {
-      console.error("❌ Error verificando configuración:", error)
-      alert(`Error verificando configuración: ${error.message}`)
+      console.error("❌ Error eliminando campaña:", error)
+      alert(`Error eliminando campaña: ${error.message}`)
     }
   }
 
@@ -568,6 +514,9 @@ ${config.domainStatus.includes('verificados') ? '✅ Dominios verificados correc
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
+        {/* Navegación Administrativa */}
+        <AdminNavigation />
+        
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -671,25 +620,10 @@ ${config.domainStatus.includes('verificados') ? '✅ Dominios verificados correc
                   Exportar CSV
                 </button>
                 <button
-                  onClick={handleSendTestEmail}
-                  className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
-                >
-                   🧪 Test Email
-                 </button>
-                <button
-                  onClick={handleSendSimpleTestEmail}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                   🧪 Test Email Simple
-                 </button>
-                <button
-                  onClick={handleTestConfiguration}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  ⚙️ Configurar
-                 </button>
-                <button
-                  onClick={() => setShowCampaignForm(true)}
+                  onClick={() => {
+                    setSelectedCampaign(null)
+                    setShowCampaignForm(true)
+                  }}
                   className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
@@ -870,6 +804,19 @@ ${config.domainStatus.includes('verificados') ? '✅ Dominios verificados correc
                       <div className="flex gap-2">
                         {campaign.estado === 'borrador' && (
                           <button
+                            onClick={() => {
+                              setSelectedCampaign(campaign)
+                              setShowCampaignForm(true)
+                            }}
+                            className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
+                            title="Editar campaña"
+                          >
+                            <Edit className="w-4 h-4" />
+                            Editar
+                          </button>
+                        )}
+                        {campaign.estado === 'borrador' && (
+                          <button
                             onClick={() => handleSendCampaign(campaign)}
                             className="text-green-600 hover:text-green-900 flex items-center gap-1"
                             title="Enviar campaña"
@@ -883,23 +830,20 @@ ${config.domainStatus.includes('verificados') ? '✅ Dominios verificados correc
                             {campaign.estadisticas.enviados} enviados
                           </span>
                         )}
+                        {campaign.estado !== 'enviada' && (
+                          <button
+                            onClick={() => {
+                              setSelectedCampaign(campaign)
+                              setShowCampaignForm(true)
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Editar"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
-                          onClick={() => {
-                            // TODO: Implementar edición de campaña
-                            alert("Funcionalidad de edición en desarrollo")
-                          }}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="Editar"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm("¿Estás seguro de que quieres eliminar esta campaña?")) {
-                              // TODO: Implementar eliminación de campaña
-                              alert("Funcionalidad de eliminación en desarrollo")
-                            }
-                          }}
+                          onClick={() => handleDeleteCampaign(campaign)}
                           className="text-red-600 hover:text-red-900"
                           title="Eliminar"
                         >
@@ -922,6 +866,22 @@ ${config.domainStatus.includes('verificados') ? '✅ Dominios verificados correc
           )}
         </div>
 
+        {/* Modal del formulario de campaña */}
+        {showCampaignForm && (
+          <CampaignForm
+            onClose={() => {
+              setShowCampaignForm(false)
+              setSelectedCampaign(null)
+            }}
+            onSuccess={() => {
+              loadData() // Recargar datos
+              setShowCampaignForm(false)
+              setSelectedCampaign(null)
+            }}
+            campaign={selectedCampaign}
+          />
+        )}
+
         {/* Indicador de progreso para envío */}
         <div id="send-progress" className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style={{ display: 'none' }}>
           <div className="bg-white rounded-lg p-6 max-w-md">
@@ -931,17 +891,6 @@ ${config.domainStatus.includes('verificados') ? '✅ Dominios verificados correc
             </div>
           </div>
         </div>
-
-        {/* Modal del formulario de campaña */}
-        {showCampaignForm && (
-          <CampaignForm
-            onClose={() => setShowCampaignForm(false)}
-            onSuccess={() => {
-              loadData() // Recargar datos
-              setShowCampaignForm(false)
-            }}
-          />
-        )}
       </div>
     </div>
   )

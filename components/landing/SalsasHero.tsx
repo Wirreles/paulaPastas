@@ -1,14 +1,17 @@
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
 
 export default function SalsasHero() {
   return (
     <section className="relative h-[500px] w-full overflow-hidden">
-      <Image
+      <ImageWrapper
         src="/placeholder.svg?height=500&width=1920"
         alt="Salsas caseras artesanales"
         fill
         className="object-cover object-center"
-        priority
+        priority={true}
+        fallback="/placeholder.svg?height=500&width=1920&text=Salsas"
+        placeholder={<HeroPlaceholder className="object-cover object-center" />}
       />
       <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
         <h1 className="text-5xl md:text-7xl font-bold text-white mb-4 drop-shadow-lg">Salsas Caseras</h1>

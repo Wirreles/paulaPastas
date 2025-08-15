@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { ArrowRight, Leaf, Award, Factory, ChevronRight } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 
@@ -90,12 +91,14 @@ export default async function PastasSinTaccPage() {
         {/* 1. ✅ SECCIÓN HERO / BANNER PRINCIPAL */}
         <section className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-primary-50">
           <div className="absolute inset-0 z-0">
-            <Image
+            <ImageWrapper
               src={banner?.imageUrl || "/placeholder.svg?height=800&width=1200"}
               alt={banner?.title || "Pastas sin TACC artesanales"}
               fill
               className="object-cover opacity-70"
-              priority
+              priority={true}
+              fallback="/placeholder.svg?height=800&width=1200&text=Sin+TACC"
+              placeholder={<HeroPlaceholder className="object-cover opacity-70" />}
             />
           </div>
 

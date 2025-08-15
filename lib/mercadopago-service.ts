@@ -40,6 +40,16 @@ export interface PaymentRequest {
   userId?: string | null
   addressData?: any // Datos completos de la dirección (si existe)
   addressId?: string | null // ID de la dirección (si existe)
+  // Información del cupón aplicado
+  couponApplied?: {
+    id: string
+    codigo: string
+    descuento: number
+    tipoDescuento: "porcentaje" | "monto"
+    descuentoAplicado: number
+    totalAmount: number // Precio final con descuento
+    originalAmount: number // Precio original sin descuento
+  } | null
 }
 
 export interface PaymentResponse {
@@ -57,6 +67,23 @@ export class MercadoPagoService {
     try {
       console.log('=== INICIO DE CREACIÓN DE PREFERENCIA ===')
       console.log('Datos recibidos:', JSON.stringify(data, null, 2))
+      console.log('Cupón aplicado:', data.couponApplied ? 'SÍ' : 'NO')
+      console.log('🔍 DEBUG: Estructura completa de data.couponApplied:', {
+        exists: !!data.couponApplied,
+        type: typeof data.couponApplied,
+        keys: data.couponApplied ? Object.keys(data.couponApplied) : 'N/A',
+        value: data.couponApplied
+      })
+      if (data.couponApplied) {
+        console.log('Detalles del cupón:', {
+          codigo: data.couponApplied.codigo,
+          tipo: data.couponApplied.tipoDescuento,
+          descuento: data.couponApplied.descuento,
+          descuentoAplicado: data.couponApplied.descuentoAplicado,
+          totalOriginal: data.couponApplied.originalAmount,
+          totalFinal: data.couponApplied.totalAmount
+        })
+      }
 
       // Validaciones iniciales
       if (!process.env.NEXT_PUBLIC_MP_ACCESS_TOKEN || !client) {
@@ -131,20 +158,99 @@ export class MercadoPagoService {
         totalAmount += price * item.quantity
       }
 
+      // Aplicar descuento del cupón si existe
+      let finalAmount = totalAmount
+      let discountAmount = 0
+      let productsWithDiscount = []
+      
+      console.log('🔍 DEBUG: Verificando cupón...')
+      console.log('🔍 DEBUG: data.couponApplied existe?', !!data.couponApplied)
+      console.log('🔍 DEBUG: data.couponApplied completo:', JSON.stringify(data.couponApplied, null, 2))
+      console.log('🔍 DEBUG: totalAmount antes del descuento:', totalAmount)
+      
+      if (data.couponApplied) {
+        console.log('✅ DEBUG: Cupón aplicado:', data.couponApplied)
+        console.log('✅ DEBUG: Tipo de descuento:', data.couponApplied.tipoDescuento)
+        console.log('✅ DEBUG: Valor del descuento:', data.couponApplied.descuento)
+        
+        // Calcular descuento por producto
+        productsWithDiscount = validatedProducts.map(product => {
+          let productDiscount = 0
+          let finalPrice = product.price
+          
+          console.log(`🔍 DEBUG: Procesando producto ${product.name}:`)
+          console.log(`  - Precio original: $${product.price}`)
+          console.log(`  - Cantidad: ${product.quantity}`)
+          
+          if (data.couponApplied && data.couponApplied.tipoDescuento === 'porcentaje') {
+            productDiscount = (product.price * data.couponApplied.descuento) / 100
+            finalPrice = product.price - productDiscount
+            console.log(`  - Descuento porcentual (${data.couponApplied.descuento}%): $${productDiscount}`)
+            console.log(`  - Precio final: $${finalPrice}`)
+          } else if (data.couponApplied && data.couponApplied.tipoDescuento === 'monto') {
+            // Para descuento de monto fijo, distribuir proporcionalmente
+            const productTotal = product.price * product.quantity
+            const productProportion = productTotal / totalAmount
+            productDiscount = data.couponApplied.descuento * productProportion
+            finalPrice = Math.max(0, product.price - (productDiscount / product.quantity))
+            console.log(`  - Proporción del producto: ${(productProportion * 100).toFixed(2)}%`)
+            console.log(`  - Descuento de monto fijo: $${productDiscount}`)
+            console.log(`  - Precio final: $${finalPrice}`)
+          }
+          
+          return {
+            ...product,
+            originalPrice: product.price,
+            discountPerUnit: productDiscount / product.quantity,
+            finalPrice: finalPrice
+          }
+        })
+        
+        // Calcular totales
+        discountAmount = productsWithDiscount.reduce((total, product) => {
+          return total + (product.discountPerUnit * product.quantity)
+        }, 0)
+        
+        finalAmount = totalAmount - discountAmount
+        
+        console.log(`✅ DEBUG: RESUMEN DEL DESCUENTO:`)
+        console.log(`  - Total original: $${totalAmount}`)
+        console.log(`  - Descuento aplicado: $${discountAmount}`)
+        console.log(`  - Total final: $${finalAmount}`)
+        console.log('✅ DEBUG: Productos con descuento:', productsWithDiscount.map(p => ({
+          name: p.name,
+          originalPrice: p.originalPrice,
+          finalPrice: p.finalPrice,
+          discount: p.discountPerUnit
+        })))
+      } else {
+        console.log('❌ DEBUG: NO hay cupón aplicado')
+        // Si no hay cupón, usar precios originales
+        productsWithDiscount = validatedProducts.map(product => ({
+          ...product,
+          originalPrice: product.price,
+          discountPerUnit: 0,
+          finalPrice: product.price
+        }))
+      }
+
       // Generar ID de la compra
       const purchaseId = `purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       const preference = new Preference(client)
 
       const preferenceData = {
         body: {
-          items: validatedProducts.map((p) => ({
-            id: p.productId,
-            title: p.name,
-            quantity: p.quantity,
-            unit_price: parseFloat(p.price.toString()),
-            currency_id: "ARS",
-            picture_url: p.imageUrl || undefined
-          })),
+          items: [
+            // Productos con precios ya reducidos (si aplica cupón)
+            ...productsWithDiscount.map((p) => ({
+              id: p.productId,
+              title: p.name,
+              quantity: p.quantity,
+              unit_price: parseFloat(p.finalPrice.toString()),
+              currency_id: "ARS",
+              picture_url: p.imageUrl || undefined
+            }))
+          ],
           back_urls: {
             success: `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/checkout/success`,
             failure: `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/checkout/failure`,
@@ -195,8 +301,22 @@ export class MercadoPagoService {
         buyerName: data.userData.name || '',
         buyerPhone: data.userData.phone || '',
         buyerAddress: data.userData.address || '',
-        products: validatedProducts,
-        totalAmount,
+        products: productsWithDiscount.map(p => ({
+          ...p,
+          originalPrice: p.originalPrice,
+          finalPrice: p.finalPrice,
+          discountPerUnit: p.discountPerUnit
+        })),
+        totalAmount: finalAmount, // Usar el precio final con descuento
+        originalAmount: totalAmount, // Mantener el precio original
+        discountAmount: discountAmount, // Monto del descuento aplicado
+        couponApplied: data.couponApplied ? {
+          id: data.couponApplied.id,
+          codigo: data.couponApplied.codigo,
+          descuento: data.couponApplied.descuento,
+          tipoDescuento: data.couponApplied.tipoDescuento,
+          descuentoAplicado: discountAmount
+        } : null,
         status: 'pending',
         createdAt: new Date(),
         preferenceId: result.id,
@@ -209,6 +329,19 @@ export class MercadoPagoService {
       }
 
       await FirebaseService.addPendingPurchase(purchaseId, pendingPurchaseData)
+
+      console.log('=== RESUMEN DE LA PREFERENCIA CREADA ===')
+      console.log('ID de preferencia:', result.id)
+      console.log('ID de compra:', purchaseId)
+      console.log('Total original (sin descuento):', totalAmount)
+      console.log('Descuento aplicado:', discountAmount)
+      console.log('Total final (con descuento):', finalAmount)
+      console.log('Cupón aplicado:', data.couponApplied ? data.couponApplied.codigo : 'Ninguno')
+      console.log('Items en la preferencia:', preferenceData.body.items.length)
+      console.log('Detalle de precios enviados a MercadoPago:')
+      preferenceData.body.items.forEach((item, index) => {
+        console.log(`  Item ${index + 1}: ${item.title} - Cantidad: ${item.quantity} - Precio unitario: $${item.unit_price}`)
+      })
 
       return {
         id: result.id || '',
@@ -251,6 +384,14 @@ export class MercadoPagoService {
             return
           }
 
+          console.log('=== PROCESANDO WEBHOOK ===')
+          console.log('Referencia externa:', external_reference)
+          console.log('Estado del pago:', status)
+          console.log('Cupón aplicado:', pendingPurchaseData.couponApplied ? pendingPurchaseData.couponApplied.codigo : 'Ninguno')
+          console.log('Total original:', pendingPurchaseData.originalAmount)
+          console.log('Descuento aplicado:', pendingPurchaseData.discountAmount)
+          console.log('Total final:', pendingPurchaseData.totalAmount)
+
           if (status === 'approved') {
             // Actualizar stock
             for (const prod of pendingPurchaseData.products) {
@@ -274,6 +415,17 @@ export class MercadoPagoService {
               }
             }
 
+            // Marcar cupón como usado si se aplicó uno
+            if (pendingPurchaseData.couponApplied) {
+              try {
+                await FirebaseService.markCouponAsUsed(pendingPurchaseData.couponApplied.id)
+                console.log('✅ Cupón marcado como usado en webhook:', pendingPurchaseData.couponApplied.codigo)
+              } catch (couponError) {
+                console.error('❌ Error al marcar cupón como usado en webhook:', couponError)
+                // No fallar la compra si hay error con el cupón
+              }
+            }
+
             // Guardar la compra finalizada
             await FirebaseService.addCompletedPurchase({
               buyerId: pendingPurchaseData.buyerId,
@@ -285,6 +437,9 @@ export class MercadoPagoService {
               paymentId: paymentInfo.id,
               status: paymentInfo.status,
               totalAmount: pendingPurchaseData.totalAmount,
+              originalAmount: pendingPurchaseData.originalAmount,
+              discountAmount: pendingPurchaseData.discountAmount,
+              couponApplied: pendingPurchaseData.couponApplied,
               paidToSellers: false,
               createdAt: new Date(),
               deliveryOption: pendingPurchaseData.deliveryOption,

@@ -21,6 +21,18 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.unileverfoodsolutions.com.mx',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'unileverfoodsolutions.com.mx',
+        port: '',
+        pathname: '/**',
+      },
       // Agregar otros dominios que SÍ quieras optimizar
     ],
     // Configuración de optimización para mejor rendimiento

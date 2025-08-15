@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
+import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { Heart, Clock, MapPin, Star, Instagram, ArrowRight } from "lucide-react"
 
 export const metadata: Metadata = {
@@ -144,11 +145,13 @@ export default function NosotrosPage() {
               </div>
               <div className="relative">
                 <div className="aspect-square rounded-2xl overflow-hidden shadow-xl">
-                  <Image
+                  <ImageWrapper
                     src="https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=600&h=600&fit=crop"
                     alt="Cocina casera con manos trabajando masa fresca"
                     fill
                     className="object-cover"
+                    fallback="/placeholder.svg?height=600&width=600&text=Cocina"
+                    placeholder={<HeroPlaceholder className="object-cover" />}
                   />
                 </div>
               </div>
@@ -255,11 +258,13 @@ export default function NosotrosPage() {
               </div>
               <div className="relative">
                 <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl">
-                  <Image
+                  <ImageWrapper
                     src="https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=600&h=450&fit=crop"
                     alt="Plato de pasta artesanal emplatado"
                     fill
                     className="object-cover"
+                    fallback="/placeholder.svg?height=450&width=600&text=Pasta"
+                    placeholder={<HeroPlaceholder className="object-cover" />}
                   />
                 </div>
               </div>
