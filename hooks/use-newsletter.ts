@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react"
 import { FirebaseService } from "@/lib/firebase-service"
+import { emailService } from "@/lib/email-service"
 
 interface UseNewsletterReturn {
   email: string
@@ -43,10 +44,36 @@ export const useNewsletter = (): UseNewsletterReturn => {
     setIsSuccess(false)
 
     try {
-      await FirebaseService.createSuscripcion(email.trim(), "web")
-      setIsSuccess(true)
-      setEmail("")
-      console.log("✅ Suscripción exitosa al newsletter")
+      // 1. Crear la suscripción en Firebase
+      const suscripcionId = await FirebaseService.createSuscripcion(email.trim(), "web")
+      console.log("✅ Suscripción creada exitosamente:", suscripcionId)
+
+      // 2. Generar cupón de bienvenida automático
+      const cuponId = await FirebaseService.generateWelcomeCoupon(email.trim())
+      console.log("✅ Cupón de bienvenida generado:", cuponId)
+
+      // 3. Obtener el cupón generado por su ID
+      const cupon = await FirebaseService.getCouponById(cuponId)
+      if (cupon) {
+        // 4. Enviar email de bienvenida con el cupón
+        const emailResult = await emailService.sendWelcomeEmail(email.trim(), cupon.codigo)
+        
+        if (emailResult.success) {
+          console.log("✅ Email de bienvenida enviado exitosamente")
+          setIsSuccess(true)
+          setEmail("")
+        } else {
+          console.warn("⚠️ Suscripción creada pero error enviando email:", emailResult.error)
+          // Aún marcamos como éxito porque la suscripción se creó
+          setIsSuccess(true)
+          setEmail("")
+        }
+      } else {
+        console.warn("⚠️ Suscripción creada pero no se pudo obtener el cupón")
+        setIsSuccess(true)
+        setEmail("")
+      }
+
     } catch (err: any) {
       const errorMessage = err.message || "Error al suscribirse. Intenta nuevamente."
       setError(errorMessage)

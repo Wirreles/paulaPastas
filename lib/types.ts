@@ -293,6 +293,8 @@ export interface Cupon {
   usosActuales: number // Número de veces que ya se ha usado
   usado: boolean // Si ya no se puede usar más
   activo: boolean // Si el cupón está activo
+  origen?: "admin" | "newsletter-welcome" | "promocion" // Origen del cupón
+  emailDestinatario?: string // Email específico para cupones personales
   fechaCreacion?: Date
   fechaActualizacion?: Date
 }

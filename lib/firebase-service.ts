@@ -1188,6 +1188,44 @@ export class FirebaseService {
   // ===== GESTIÓN DE CUPONES =====
 
   /**
+   * Generar cupón automático para nuevos suscriptores del newsletter
+   */
+  static async generateWelcomeCoupon(email: string): Promise<string> {
+    try {
+      // Generar código único para el cupón
+      const timestamp = Date.now().toString(36)
+      const randomStr = Math.random().toString(36).substring(2, 8)
+      const codigo = `WELCOME${timestamp}${randomStr}`.toUpperCase()
+      
+      // Configurar cupón de bienvenida
+      const welcomeCoupon = {
+        codigo,
+        descripcion: `Cupón de bienvenida para ${email}`,
+        descuento: 10, // 10% de descuento
+        tipoDescuento: "porcentaje" as const,
+        montoMinimo: 0, // Sin monto mínimo
+        fechaInicio: new Date(),
+        fechaFin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Válido por 30 días
+        maxUsos: 1, // Solo una vez
+        usosActuales: 0,
+        usado: false,
+        activo: true,
+        origen: "newsletter-welcome" as const, // Nuevo campo para identificar origen
+        emailDestinatario: email, // Email del suscriptor
+        fechaCreacion: new Date(),
+        fechaActualizacion: new Date()
+      }
+
+      const docRef = await addDoc(collection(db, "cupones"), welcomeCoupon)
+      console.log("✅ Cupón de bienvenida generado:", docRef.id, "para:", email)
+      return docRef.id
+    } catch (error) {
+      console.error("❌ Error generando cupón de bienvenida:", error)
+      throw error
+    }
+  }
+
+  /**
    * Crear cupón de descuento
    */
   static async createCoupon(couponData: any): Promise<string> {
@@ -1242,6 +1280,28 @@ export class FirebaseService {
       }
     } catch (error) {
       console.error("❌ Error al obtener cupón por código:", error)
+      return null
+    }
+  }
+
+  /**
+   * Obtener cupón por ID
+   */
+  static async getCouponById(id: string): Promise<any | null> {
+    try {
+      const docRef = doc(db, "cupones", id)
+      const docSnap = await getDoc(docRef)
+      
+      if (!docSnap.exists()) {
+        return null
+      }
+      
+      return {
+        id: docSnap.id,
+        ...docSnap.data()
+      }
+    } catch (error) {
+      console.error("❌ Error al obtener cupón por ID:", error)
       return null
     }
   }

@@ -51,8 +51,13 @@ export function NewsletterForm({
           ¡Suscripción exitosa!
         </h3>
         <p className="text-green-700 mb-4">
-          Gracias por suscribirte. Pronto recibirás nuestras mejores ofertas y novedades.
+          Gracias por suscribirte. Te hemos enviado un email con tu cupón de bienvenida del 10% de descuento.
         </p>
+        <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-4">
+          <p className="text-green-800 text-sm">
+            <strong>🎁 Regalo especial:</strong> Tu cupón de bienvenida está en tu bandeja de entrada
+          </p>
+        </div>
         <button
           onClick={handleSuccess}
           className="text-green-600 hover:text-green-700 font-medium underline"
