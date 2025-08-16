@@ -969,15 +969,45 @@ export class FirebaseService {
     }
 
     try {
+      console.log("🔍 FirebaseService: Iniciando getHomeSections...")
       const sectionsRef = collection(db, "homeSections")
-      const q = query(sectionsRef, orderBy("orden", "asc"))
-      const snapshot = await getDocs(q)
-      const sections = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as HomeSection)
+      console.log("🔍 FirebaseService: Referencia a colección creada")
       
-      cache.set(cacheKey, sections)
-      return sections
+      // Primero intentar sin ordenamiento para ver si hay datos
+      console.log("🔍 FirebaseService: Obteniendo todas las secciones sin ordenamiento...")
+      const snapshot = await getDocs(sectionsRef)
+      console.log("🔍 FirebaseService: Snapshot obtenido, documentos encontrados:", snapshot.docs.length)
+      
+      if (snapshot.empty) {
+        console.log("⚠️ FirebaseService: No se encontraron secciones del home")
+        return []
+      }
+
+      // Mapear los documentos
+      const sections = snapshot.docs.map((doc) => {
+        const data = doc.data()
+        console.log("🔍 FirebaseService: Documento mapeado:", { id: doc.id, ...data })
+        return { id: doc.id, ...data } as HomeSection
+      })
+      
+      console.log("✅ FirebaseService: Secciones del home obtenidas exitosamente:", sections.length)
+      console.log("📋 FirebaseService: Secciones:", sections.map(s => ({ id: s.id, name: s.name, sectionId: s.sectionId })))
+      
+      // Ordenar por orden si existe, sino por nombre
+      const sortedSections = sections.sort((a, b) => {
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order
+        }
+        return (a.name || '').localeCompare(b.name || '')
+      })
+      
+      console.log("✅ FirebaseService: Secciones ordenadas:", sortedSections.length)
+      
+      cache.set(cacheKey, sortedSections)
+      return sortedSections
     } catch (error) {
-      console.error("❌ Error obteniendo secciones del home:", error)
+      console.error("❌ FirebaseService: Error obteniendo secciones del home:", error)
+      console.error("❌ FirebaseService: Stack trace:", error instanceof Error ? error.stack : "No stack trace")
       return []
     }
   }

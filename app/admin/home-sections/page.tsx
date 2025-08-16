@@ -21,14 +21,18 @@ export default function AdminHomeSectionsPage() {
   const loadHomeSections = async () => {
     try {
       setLoadingSections(true)
-      console.log("🔄 Cargando secciones del home...")
+      console.log("🔄 Admin: Iniciando carga de secciones del home...")
       const data = await FirebaseService.getHomeSections()
-      console.log("📋 Secciones cargadas:", data)
+      console.log("📋 Admin: Secciones recibidas de FirebaseService:", data)
+      console.log("📊 Admin: Cantidad de secciones:", data.length)
+      console.log("🔍 Admin: Detalle de secciones:", data.map(s => ({ id: s.id, name: s.name, sectionId: s.sectionId, order: s.order })))
       setHomeSections(data)
     } catch (error) {
-      console.error("Error loading home sections:", error)
+      console.error("❌ Admin: Error cargando secciones del home:", error)
+      console.error("❌ Admin: Stack trace:", error instanceof Error ? error.stack : "No stack trace")
     } finally {
       setLoadingSections(false)
+      console.log("✅ Admin: Carga de secciones completada")
     }
   }
 
@@ -62,25 +66,53 @@ export default function AdminHomeSectionsPage() {
 
         {/* Filter Section */}
         <div className="mb-6">
-          <div className="flex items-center space-x-4">
-            <label className="text-sm font-medium text-neutral-700">Filtrar por sección:</label>
-            <select
-              value={selectedSection}
-              onChange={(e) => setSelectedSection(e.target.value)}
-              className="border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="todas">Todas las secciones ({homeSections.length})</option>
-              {uniqueSections.map((sectionId) => (
-                <option key={sectionId} value={sectionId}>
-                  {sectionId === "hero" && "Hero Principal"}
-                  {sectionId === "dishes-gallery" && "Galería de Platos"}
-                  {sectionId === "home-categories" && "Categorías del Home"}
-                  {sectionId === "quality-assured" && "Calidad Asegurada"}
-                  {sectionId !== "hero" && sectionId !== "dishes-gallery" && sectionId !== "home-categories" && sectionId !== "quality-assured" && sectionId}
-                  {" "}({groupedSections[sectionId]?.length || 0})
-                </option>
-              ))}
-            </select>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <label className="text-sm font-medium text-neutral-700">Filtrar por sección:</label>
+              <select
+                value={selectedSection}
+                onChange={(e) => setSelectedSection(e.target.value)}
+                className="border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="todas">Todas las secciones ({homeSections.length})</option>
+                {uniqueSections.map((sectionId) => (
+                  <option key={sectionId} value={sectionId}>
+                    {sectionId === "hero" && "Hero Principal"}
+                    {sectionId === "dishes-gallery" && "Galería de Platos"}
+                    {sectionId === "home-categories" && "Categorías del Home"}
+                    {sectionId === "quality-assured" && "Calidad Asegurada"}
+                    {sectionId !== "hero" && sectionId !== "dishes-gallery" && sectionId !== "home-categories" && sectionId !== "quality-assured" && sectionId}
+                    {" "}({groupedSections[sectionId]?.length || 0})
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={loadHomeSections}
+                disabled={loadingSections}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loadingSections ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Cargando...
+                  </>
+                ) : (
+                  <>
+                    🔄 Refresh
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={() => setShowForm(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                ➕ Nueva Sección
+              </button>
+            </div>
           </div>
         </div>
 
