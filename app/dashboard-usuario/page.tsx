@@ -21,7 +21,8 @@ import {
   LogOut,
   ArrowRight,
   Package,
-  Star
+  Star,
+  RefreshCw
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -62,21 +63,23 @@ export default function DashboardUsuarioPage() {
 
   // Últimos pedidos
   const [lastPurchases, setLastPurchases] = useState<Purchase[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   // Cargar estadísticas del usuario
-  const loadUserStats = async () => {
+  const loadUserStats = async (forceRefresh: boolean = false) => {
     if (user?.uid) {
-      console.log(`📊 Dashboard: Cargando estadísticas para userId: ${user.uid}`)
+      console.log(`📊 Dashboard: Cargando estadísticas para userId: ${user.uid}${forceRefresh ? ' (FORZANDO RECARGA)' : ''}`)
+      setIsLoading(true)
       try {
         // Cargar pedidos del usuario (orders collection)
-        const pedidos = await FirebaseService.getPedidosByUser(user.uid)
+        const pedidos = await FirebaseService.getPedidosByUser(user.uid, forceRefresh)
         const totalPedidos = pedidos.length
         const pedidosPendientes = pedidos.filter(p => 
           p.estado === 'pendiente' || p.estado === 'confirmado'
         ).length
 
         // Cargar compras completadas (purchases collection)
-        const comprasCompletadas = await FirebaseService.getCompletedPurchasesByUser(user.uid)
+        const comprasCompletadas = await FirebaseService.getCompletedPurchasesByUser(user.uid, forceRefresh)
         const totalCompras = comprasCompletadas.length
         const comprasPendientes = comprasCompletadas.filter(p => 
           p.orderStatus === 'en_preparacion' || p.orderStatus === 'listo_para_entrega' || p.orderStatus === 'en_camino'
@@ -136,8 +139,11 @@ export default function DashboardUsuarioPage() {
         .slice(0, 5) // Solo los últimos 5
 
         setLastPurchases(allPurchases)
+        console.log(`✅ Dashboard: Estadísticas cargadas exitosamente`)
       } catch (error) {
-        console.error('Error cargando estadísticas:', error)
+        console.error('❌ Error cargando estadísticas:', error)
+      } finally {
+        setIsLoading(false)
       }
     }
   }
@@ -146,10 +152,14 @@ export default function DashboardUsuarioPage() {
     loadUserStats()
   }, [user?.uid])
 
-  const recargarEstadisticas = () => {
+
+
+  const recargarEstadisticas = async () => {
     if (user?.uid) {
       console.log(`🔄 Dashboard: Recargando estadísticas para userId: ${user.uid}`)
-      loadUserStats()
+      // Limpiar cache y forzar recarga
+      FirebaseService.clearCache()
+      await loadUserStats(true)
     }
   }
 
@@ -375,14 +385,32 @@ export default function DashboardUsuarioPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="w-5 h-5" />
-                  Últimos Pedidos
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Star className="w-5 h-5" />
+                    Últimos Pedidos
+                  </CardTitle>
+                  <Button
+                    onClick={recargarEstadisticas}
+                    disabled={isLoading}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                    title="Actualizar pedidos"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                    <span className="hidden sm:inline">Actualizar</span>
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {lastPurchases.length > 0 ? (
+                  {isLoading ? (
+                    <div className="text-center py-4">
+                      <div className="inline-block w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+                      <p className="text-sm text-neutral-600">Actualizando pedidos...</p>
+                    </div>
+                  ) : lastPurchases.length > 0 ? (
                     lastPurchases.map((purchase) => (
                       <div key={purchase.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                         <div className="flex-1">

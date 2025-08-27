@@ -67,8 +67,14 @@ class Cache {
     for (const key of this.cache.keys()) {
       if (key.includes(pattern)) {
         this.cache.delete(key)
+        console.log(`🗑️ Cache invalidado: ${key}`)
       }
     }
+  }
+
+  invalidateAll(): void {
+    this.cache.clear()
+    console.log("🗑️ Cache completamente limpiado")
   }
 }
 
@@ -528,7 +534,22 @@ export class FirebaseService {
   }
 
   // Métodos para el dashboard de usuario
-  static async getPedidosByUser(userId: string): Promise<Order[]> {
+  static async getPedidosByUser(userId: string, forceRefresh: boolean = false): Promise<Order[]> {
+    const cacheKey = `pedidos_${userId}`
+    
+    // Si no se fuerza la recarga, verificar cache
+    if (!forceRefresh) {
+      const cached = cache.get<Order[]>(cacheKey)
+      if (cached) {
+        console.log(`📦 Cache hit: getPedidosByUser(${userId})`)
+        return cached
+      }
+    } else {
+      console.log(`🔄 Forzando recarga: getPedidosByUser(${userId})`)
+      // Limpiar cache específico
+      cache.invalidate(cacheKey)
+    }
+
     try {
       const q = query(
         collection(db, "orders"),
@@ -536,7 +557,11 @@ export class FirebaseService {
         orderBy("fechaCreacion", "desc")
       )
       const snapshot = await getDocs(q)
-      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Order)
+      const pedidos = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Order)
+      
+      cache.set(cacheKey, pedidos)
+      console.log(`📦 Pedidos cargados para usuario ${userId}:`, pedidos.length)
+      return pedidos
     } catch (error) {
       console.error("Error en getPedidosByUser:", error)
       return []
@@ -637,6 +662,11 @@ export class FirebaseService {
     try {
       const orderRef = doc(db, "orders", orderId)
       await updateDoc(orderRef, { estado: status })
+      
+      // Invalidar cache específico de pedidos
+      cache.invalidate('pedidos')
+      
+      console.log("✅ Estado de pedido actualizado y cache invalidado:", orderId, "->", status)
     } catch (error) {
       console.error("Error actualizando estado del pedido:", error)
       throw error
@@ -733,7 +763,22 @@ export class FirebaseService {
   }
 
   // Método para obtener compras completadas por usuario
-  static async getCompletedPurchasesByUser(userId: string): Promise<any[]> {
+  static async getCompletedPurchasesByUser(userId: string, forceRefresh: boolean = false): Promise<any[]> {
+    const cacheKey = `compras_${userId}`
+    
+    // Si no se fuerza la recarga, verificar cache
+    if (!forceRefresh) {
+      const cached = cache.get<any[]>(cacheKey)
+      if (cached) {
+        console.log(`📦 Cache hit: getCompletedPurchasesByUser(${userId})`)
+        return cached
+      }
+    } else {
+      console.log(`🔄 Forzando recarga: getCompletedPurchasesByUser(${userId})`)
+      // Limpiar cache específico
+      cache.invalidate(cacheKey)
+    }
+
     try {
       const q = query(
         collection(db, "purchases"),
@@ -742,7 +787,11 @@ export class FirebaseService {
         limit(10) // Limitar a los últimos 10 pedidos
       )
       const snapshot = await getDocs(q)
-      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      const compras = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      
+      cache.set(cacheKey, compras)
+      console.log(`📦 Compras cargadas para usuario ${userId}:`, compras.length)
+      return compras
     } catch (error) {
       console.error("Error en getCompletedPurchasesByUser:", error)
       return []
@@ -757,6 +806,11 @@ export class FirebaseService {
         orderStatus: status,
         updatedAt: new Date()
       })
+      
+      // Invalidar cache específico de compras
+      cache.invalidate('compras')
+      
+      console.log("✅ Estado de compra actualizado y cache invalidado:", purchaseId, "->", status)
     } catch (error) {
       console.error("Error actualizando estado de la compra:", error)
       throw error
@@ -901,6 +955,11 @@ export class FirebaseService {
         fechaAprobacion: aprobada ? serverTimestamp() : null,
         aprobadaPor: aprobada ? aprobadaPor : null,
       })
+      
+      // Invalidar cache de reseñas
+      cache.invalidate('reviews')
+      cache.invalidate('all_reviews')
+      console.log("✅ Estado de reseña actualizado y cache invalidado:", reviewId)
     } catch (error) {
       console.error("Error al actualizar estado de reseña:", error)
       throw error
@@ -913,6 +972,11 @@ export class FirebaseService {
       await updateDoc(reviewRef, {
         destacada,
       })
+      
+      // Invalidar cache de reseñas
+      cache.invalidate('reviews')
+      cache.invalidate('all_reviews')
+      console.log("✅ Estado destacado de reseña actualizado y cache invalidado:", reviewId)
     } catch (error) {
       console.error("Error al cambiar estado destacado de reseña:", error)
       throw error
@@ -922,6 +986,11 @@ export class FirebaseService {
   static async deleteReview(reviewId: string): Promise<void> {
     try {
       await deleteDoc(doc(db, "reviews", reviewId))
+      
+      // Invalidar cache de reseñas
+      cache.invalidate('reviews')
+      cache.invalidate('all_reviews')
+      console.log("✅ Reseña eliminada y cache invalidado:", reviewId)
     } catch (error) {
       console.error("Error al eliminar reseña:", error)
       throw error
@@ -1440,5 +1509,12 @@ export class FirebaseService {
       console.error("❌ Error validando cupón:", error)
       return { valid: false, error: "Error validando cupón" }
     }
+  }
+
+  /**
+   * Limpiar cache completamente
+   */
+  static clearCache(): void {
+    cache.invalidateAll()
   }
 }

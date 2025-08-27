@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Star, Check, X, ThumbsUp, Filter, ChevronLeft, ChevronRight, Trash2 } from "lucide-react"
+import { Star, Check, X, ThumbsUp, Filter, ChevronLeft, ChevronRight, Trash2, RefreshCw } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import { Review } from "@/lib/types"
 import AdminNavigation from "@/components/admin/AdminNavigation"
@@ -26,10 +26,13 @@ export default function ReviewsPage() {
   const loadReviews = async () => {
     try {
       setIsLoading(true)
+      console.log("🔄 Cargando reseñas...")
       const allReviews = await FirebaseService.getAllReviews()
+      console.log("✅ Reseñas cargadas:", allReviews.length)
       setReviews(allReviews)
     } catch (error) {
-      console.error("Error cargando reseñas:", error)
+      console.error("❌ Error cargando reseñas:", error)
+      // En caso de error, mantener las reseñas actuales
     } finally {
       setIsLoading(false)
     }
@@ -39,14 +42,27 @@ export default function ReviewsPage() {
     try {
       setUpdatingReviews(prev => new Set(prev).add(reviewId))
       
+      // Actualización optimista del estado local
+      setReviews(prevReviews => 
+        prevReviews.map(review => 
+          review.id === reviewId 
+            ? { ...review, aprobada: !currentStatus }
+            : review
+        )
+      )
+      
       // Obtener el ID del administrador actual
       const adminId = user?.uid || "admin-desconocido"
       
-      // Pasar el ID del administrador al actualizar el estado
+      // Actualizar en Firebase
       await FirebaseService.updateReviewStatus(reviewId, !currentStatus, adminId)
+      
+      // Recargar para asegurar sincronización
       await loadReviews()
     } catch (error) {
       console.error("Error actualizando estado de aprobación:", error)
+      // Revertir cambio optimista en caso de error
+      await loadReviews()
     } finally {
       setUpdatingReviews(prev => {
         const newSet = new Set(prev)
@@ -59,10 +75,25 @@ export default function ReviewsPage() {
   const handleToggleDestacada = async (reviewId: string, currentStatus: boolean) => {
     try {
       setUpdatingReviews(prev => new Set(prev).add(reviewId))
+      
+      // Actualización optimista del estado local
+      setReviews(prevReviews => 
+        prevReviews.map(review => 
+          review.id === reviewId 
+            ? { ...review, destacada: !currentStatus }
+            : review
+        )
+      )
+      
+      // Actualizar en Firebase
       await FirebaseService.toggleReviewDestacada(reviewId, !currentStatus)
+      
+      // Recargar para asegurar sincronización
       await loadReviews()
     } catch (error) {
       console.error("Error actualizando estado destacado:", error)
+      // Revertir cambio optimista en caso de error
+      await loadReviews()
     } finally {
       setUpdatingReviews(prev => {
         const newSet = new Set(prev)
@@ -77,10 +108,21 @@ export default function ReviewsPage() {
     
     try {
       setUpdatingReviews(prev => new Set(prev).add(reviewId))
+      
+      // Actualización optimista del estado local
+      setReviews(prevReviews => 
+        prevReviews.filter(review => review.id !== reviewId)
+      )
+      
+      // Eliminar en Firebase
       await FirebaseService.deleteReview(reviewId)
+      
+      // Recargar para asegurar sincronización
       await loadReviews()
     } catch (error) {
       console.error("Error eliminando reseña:", error)
+      // Revertir cambio optimista en caso de error
+      await loadReviews()
     } finally {
       setUpdatingReviews(prev => {
         const newSet = new Set(prev)
@@ -96,6 +138,10 @@ export default function ReviewsPage() {
     setFilterProducto("")
     setFilterUsuario("")
     setCurrentPage(1)
+  }
+
+  const handleRefreshReviews = async () => {
+    await loadReviews()
   }
 
   const goToPage = (page: number) => {
@@ -276,10 +322,19 @@ export default function ReviewsPage() {
 
         {/* Lista de Reseñas */}
         <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-neutral-200">
+          <div className="px-6 py-4 border-b border-neutral-200 flex justify-between items-center">
             <h3 className="text-lg font-semibold text-neutral-900">
               Reseñas ({totalReviews})
             </h3>
+            <button
+              onClick={handleRefreshReviews}
+              disabled={isLoading}
+              className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-800 hover:bg-neutral-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Actualizar reseñas"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span>Actualizar</span>
+            </button>
           </div>
 
           {isLoading ? (
@@ -402,10 +457,14 @@ export default function ReviewsPage() {
                               review.aprobada
                                 ? "bg-red-100 text-red-600 hover:bg-red-200"
                                 : "bg-green-100 text-green-600 hover:bg-green-200"
-                            }`}
+                            } ${updatingReviews.has(review.id || "") ? "opacity-50 cursor-not-allowed" : ""}`}
                             title={review.aprobada ? "Rechazar reseña" : "Aprobar reseña"}
                           >
-                            {review.aprobada ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                            {updatingReviews.has(review.id || "") ? (
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                              review.aprobada ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />
+                            )}
                           </button>
                           
                           <button
@@ -415,7 +474,7 @@ export default function ReviewsPage() {
                               review.destacada
                                 ? "bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
                                 : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
-                            }`}
+                            } ${updatingReviews.has(review.id || "") ? "opacity-50 cursor-not-allowed" : ""}`}
                             title={review.destacada ? "Quitar destacada" : "Marcar como destacada"}
                           >
                             <ThumbsUp className="w-4 h-4" />
@@ -424,7 +483,7 @@ export default function ReviewsPage() {
                           <button
                             onClick={() => handleDeleteReview(review.id || "")}
                             disabled={updatingReviews.has(review.id || "")}
-                            className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                            className={`p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors ${updatingReviews.has(review.id || "") ? "opacity-50 cursor-not-allowed" : ""}`}
                             title="Eliminar reseña"
                           >
                             <Trash2 className="w-4 h-4" />

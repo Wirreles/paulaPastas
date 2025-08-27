@@ -66,11 +66,25 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-neutral-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mx-auto w-16 h-16 gradient-primary rounded-full flex items-center justify-center mb-4">
-            <Lock className="w-8 h-8 text-white" />
+          {/* Logo de Paula Pastas */}
+          <div className="flex justify-center mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-20 h-20 flex items-center justify-center">
+                <img
+                  src="/pplog2.png"
+                  alt="Paula Pastas Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              {/* <div className="text-left">
+                <span className="font-display text-2xl font-bold text-neutral-900">Paula Pastas</span>
+                <p className="text-sm text-neutral-600">Pastas Artesanales</p>
+              </div> */}
+            </div>
           </div>
-          <h2 className="font-display text-3xl font-bold text-neutral-900">Panel de Administración</h2>
-          <p className="mt-2 text-sm text-neutral-600">Acceso exclusivo para administradores</p>
+          
+          <h2 className="font-display text-3xl font-bold text-neutral-900">¡Bienvenido!</h2>
+          <p className="mt-2 text-sm text-neutral-600">Inicia sesión para acceder a tu cuenta</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -92,7 +106,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full pl-10 pr-3 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="admin@comidacasera.com"
+                  placeholder="tu@email.com"
                 />
               </div>
             </div>
@@ -163,15 +177,6 @@ export default function LoginPage() {
             </Link>
           </div>
         </form>
-
-        <div className="mt-6 p-4 bg-primary-50 rounded-lg">
-          <h3 className="text-sm font-medium text-primary-800 mb-2">Credenciales de prueba:</h3>
-          <p className="text-xs text-primary-700">
-            Email: admin@comidacasera.com
-            <br />
-            Contraseña: admin123
-          </p>
-        </div>
       </div>
     </div>
   )

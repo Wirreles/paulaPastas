@@ -166,3 +166,279 @@
   overflow-wrap: break-word;
   word-break: break-word;
 }
+
+/* ===== ESTILOS PARA EL CONTENIDO DEL BLOG ===== */
+
+.blog-content {
+  @apply text-neutral-800 leading-relaxed;
+  font-size: 1.125rem;
+  line-height: 1.75;
+}
+
+/* Encabezados */
+.blog-content h1 {
+  @apply text-4xl font-bold text-neutral-900 mb-6 mt-8;
+  font-family: var(--font-playfair);
+}
+
+.blog-content h2 {
+  @apply text-3xl font-bold text-neutral-900 mb-5 mt-8;
+  font-family: var(--font-playfair);
+}
+
+.blog-content h3 {
+  @apply text-2xl font-bold text-neutral-900 mb-4 mt-6;
+  font-family: var(--font-playfair);
+}
+
+.blog-content h4 {
+  @apply text-xl font-bold text-neutral-900 mb-3 mt-5;
+  font-family: var(--font-playfair);
+}
+
+.blog-content h5 {
+  @apply text-lg font-bold text-neutral-900 mb-3 mt-4;
+  font-family: var(--font-playfair);
+}
+
+.blog-content h6 {
+  @apply text-base font-bold text-neutral-900 mb-2 mt-3;
+  font-family: var(--font-playfair);
+}
+
+/* Párrafos */
+.blog-content p {
+  @apply mb-6 text-neutral-700;
+  font-size: 1.125rem;
+  line-height: 1.75;
+}
+
+.blog-content p:last-child {
+  @apply mb-0;
+}
+
+/* Listas */
+.blog-content ul,
+.blog-content ol {
+  @apply mb-6 ml-6;
+}
+
+.blog-content li {
+  @apply mb-2 text-neutral-700;
+  font-size: 1.125rem;
+  line-height: 1.75;
+}
+
+.blog-content ul li {
+  @apply list-disc;
+}
+
+.blog-content ol li {
+  @apply list-decimal;
+}
+
+/* Enlaces */
+.blog-content a {
+  @apply text-primary-600 underline decoration-2 underline-offset-2;
+  transition: all 0.2s ease;
+}
+
+.blog-content a:hover {
+  @apply text-primary-700 decoration-primary-700;
+}
+
+/* Texto en negrita e itálica */
+.blog-content strong,
+.blog-content b {
+  @apply font-bold text-neutral-900;
+}
+
+.blog-content em,
+.blog-content i {
+  @apply italic text-neutral-800;
+}
+
+/* Citas */
+.blog-content blockquote {
+  @apply border-l-4 border-primary-300 bg-primary-50 pl-6 py-4 my-8 italic text-neutral-700;
+  font-size: 1.25rem;
+  line-height: 1.6;
+}
+
+.blog-content blockquote p {
+  @apply mb-0;
+}
+
+/* Código */
+.blog-content code {
+  @apply bg-neutral-100 text-neutral-800 px-2 py-1 rounded text-sm font-mono;
+}
+
+.blog-content pre {
+  @apply bg-neutral-100 text-neutral-800 p-4 rounded-lg overflow-x-auto my-6;
+}
+
+.blog-content pre code {
+  @apply bg-transparent p-0;
+}
+
+/* Imágenes */
+.blog-content img {
+  @apply max-w-full h-auto rounded-lg shadow-md my-8;
+}
+
+/* Tablas */
+.blog-content table {
+  @apply w-full border-collapse border border-neutral-300 my-8;
+}
+
+.blog-content th,
+.blog-content td {
+  @apply border border-neutral-300 px-4 py-3 text-left;
+}
+
+.blog-content th {
+  @apply bg-neutral-50 font-bold text-neutral-900;
+}
+
+.blog-content tr:nth-child(even) {
+  @apply bg-neutral-50;
+}
+
+/* Separadores */
+.blog-content hr {
+  @apply border-neutral-300 my-8;
+}
+
+/* Listas de definición */
+.blog-content dl {
+  @apply my-6;
+}
+
+.blog-content dt {
+  @apply font-bold text-neutral-900 mb-2;
+}
+
+.blog-content dd {
+  @apply ml-6 mb-4 text-neutral-700;
+}
+
+/* Elementos de formulario */
+.blog-content input,
+.blog-content textarea,
+.blog-content select {
+  @apply border border-neutral-300 rounded px-3 py-2 text-neutral-900;
+}
+
+/* Botones */
+.blog-content button {
+  @apply bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .blog-content {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  .blog-content h1 {
+    @apply text-3xl;
+  }
+  
+  .blog-content h2 {
+    @apply text-2xl;
+  }
+  
+  .blog-content h3 {
+    @apply text-xl;
+  }
+  
+  .blog-content p,
+  .blog-content li {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  .blog-content blockquote {
+    @apply pl-4 py-3;
+    font-size: 1.125rem;
+  }
+}
+
+/* Estilos adicionales para elementos específicos del blog */
+.blog-content .highlight {
+  @apply bg-yellow-100 px-2 py-1 rounded;
+}
+
+.blog-content .tip {
+  @apply bg-blue-50 border-l-4 border-blue-400 pl-4 py-3 my-6 rounded-r-lg;
+}
+
+.blog-content .warning {
+  @apply bg-orange-50 border-l-4 border-orange-400 pl-4 py-3 my-6 rounded-r-lg;
+}
+
+.blog-content .recipe-step {
+  @apply bg-green-50 border-l-4 border-green-400 pl-4 py-3 my-4 rounded-r-lg;
+}
+
+.blog-content .ingredient-list {
+  @apply bg-neutral-50 border border-neutral-200 rounded-lg p-4 my-6;
+}
+
+.blog-content .ingredient-list h4 {
+  @apply text-lg font-semibold text-neutral-900 mb-3;
+}
+
+.blog-content .ingredient-list ul {
+  @apply ml-0;
+}
+
+.blog-content .ingredient-list li {
+  @apply mb-1 text-neutral-700;
+}
+
+.blog-content .cooking-time {
+  @apply inline-flex items-center px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium;
+}
+
+.blog-content .difficulty {
+  @apply inline-flex items-center px-3 py-1 bg-neutral-100 text-neutral-800 rounded-full text-sm font-medium;
+}
+
+/* Estilos para listas de pasos numerados */
+.blog-content .steps-list {
+  @apply space-y-4;
+}
+
+.blog-content .steps-list li {
+  @apply flex items-start space-x-3;
+}
+
+.blog-content .steps-list li::before {
+  @apply flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-bold;
+  content: counter(step-counter);
+  counter-increment: step-counter;
+}
+
+.blog-content .steps-list {
+  counter-reset: step-counter;
+}
+
+/* Estilos para tablas de nutrición */
+.blog-content .nutrition-table {
+  @apply w-full border-collapse border border-neutral-300 my-8;
+}
+
+.blog-content .nutrition-table th {
+  @apply bg-primary-50 border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900;
+}
+
+.blog-content .nutrition-table td {
+  @apply border border-neutral-300 px-4 py-3 text-left text-neutral-700;
+}
+
+.blog-content .nutrition-table tr:nth-child(even) {
+  @apply bg-neutral-50;
+}

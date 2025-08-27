@@ -100,32 +100,27 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-primary-350 shadow-sm">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-        <div className="flex justify-between items-center h-14 sm:h-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16 sm:h-18 lg:h-20 py-2">
           {/* Logo - Responsive */}
           <Link href="/" className="flex items-center space-x-2 sm:space-x-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex items-center justify-center">
               <Image
                 src="/pplog2.png"
                 alt="Paula Pastas Logo"
-                width={40}
-                height={40}
+                width={56}
+                height={56}
                 className="w-full h-full object-contain"
               />
             </div>
-            <div className="hidden sm:block">
-              <span className="font-display text-lg sm:text-xl font-bold text-neutral-900">Paula Pastas</span>
+            <div className="block">
+              <span className="font-display text-base sm:text-lg lg:text-xl font-bold text-neutral-900">Paula Pastas</span>
               <p className="text-xs text-neutral-600">Pastas Artesanales</p>
-            </div>
-            {/* Logo text for mobile */}
-            <div className="sm:hidden">
-              <span className="font-display text-base font-bold text-neutral-900">Paula</span>
-              <p className="text-xs text-neutral-600">Pastas</p>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
+          <nav className="hidden lg:flex items-center space-x-8 xl:space-x-10">
             {navigation.map((item) => (
               <div key={item.name} className="relative group">
                 <Link
@@ -171,15 +166,15 @@ export default function Header() {
           </nav>
 
           {/* Right side actions - Responsive */}
-          <div className="flex items-center space-x-2 sm:space-x-4">
+          <div className="flex items-center space-x-3 sm:space-x-5">
             {/* Cart - Responsive */}
             <button
               onClick={toggleCart}
-              className="p-1.5 sm:p-2 text-neutral-900 hover:text-primary-600 transition-colors relative"
+              className="p-2 sm:p-3 text-neutral-900 hover:text-primary-600 transition-colors relative"
             >
-              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
+              <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {totalItems}
                 </span>
               )}
@@ -188,8 +183,8 @@ export default function Header() {
             {/* User menu - Responsive */}
             {user ? (
               <div className="relative group">
-                <button className="flex items-center space-x-1 sm:space-x-2 p-1.5 sm:p-2 text-neutral-900 hover:text-primary-600 transition-colors">
-                  <User className="w-4 h-4 sm:w-5 sm:h-5" />
+                <button className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 text-neutral-900 hover:text-primary-600 transition-colors">
+                  <User className="w-5 h-5 sm:w-6 sm:h-6" />
                   {isAdmin && (
                     <span className="hidden sm:inline text-xs bg-primary-100 text-primary-800 px-2 py-1 rounded-full">Admin</span>
                   )}
@@ -236,17 +231,17 @@ export default function Header() {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="lg:hidden p-1.5 sm:p-2 text-neutral-900 hover:text-primary-600 transition-colors"
+              className="lg:hidden p-2 sm:p-3 text-neutral-900 hover:text-primary-600 transition-colors"
               aria-label="Abrir menú"
             >
-              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
 
         {/* Mobile Navigation - Improved */}
         {isMenuOpen && (
-          <div className="fixed top-14 sm:top-16 left-0 right-0 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] bg-primary-350 lg:hidden z-[999] flex flex-col overflow-y-auto">
+          <div className="fixed top-16 sm:top-18 lg:top-20 left-0 right-0 h-[calc(100vh-4rem)] sm:h-[calc(100vh-4.5rem)] lg:h-[calc(100vh-5rem)] bg-primary-350 lg:hidden z-[999] flex flex-col overflow-y-auto">
             {/* Top bar of mobile menu */}
             <div className="bg-primary-900 text-white p-4 flex items-center justify-between">
               <div className="flex items-center space-x-2">

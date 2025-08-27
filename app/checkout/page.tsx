@@ -121,7 +121,7 @@ export default function CheckoutPage() {
         setSelectedAddressId(addresses[0].id)
         setFormData(prev => ({
           ...prev,
-          address: `${addresses[0].calle} ${addresses[0].numero}, ${addresses[0].ciudad}`
+          address: `${formatText(addresses[0].calle)} ${addresses[0].numero}, ${formatText(addresses[0].ciudad)}`
         }))
       }
     } catch (error) {
@@ -222,12 +222,18 @@ export default function CheckoutPage() {
     }
   }
 
+  // Función para formatear texto con primera letra en mayúscula
+  const formatText = (text: string): string => {
+    if (!text) return text
+    return text.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase())
+  }
+
   const handleAddressChange = (addressId: string) => {
     setSelectedAddressId(addressId)
     const selectedAddress = userAddresses.find(addr => addr.id === addressId)
     
     if (selectedAddress) {
-      const formattedAddress = `${selectedAddress.calle} ${selectedAddress.numero}, ${selectedAddress.ciudad}, ${selectedAddress.provincia}`
+      const formattedAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
       setFormData(prev => ({
         ...prev,
         address: formattedAddress
@@ -306,9 +312,9 @@ export default function CheckoutPage() {
       if (!selectedAddressId) {
         newErrors.address = "Selecciona una dirección de entrega"
       }
-    } else if (!formData.address.trim()) {
+    } else if (!formData.address || (typeof formData.address === 'string' && !formData.address.trim())) {
       newErrors.address = "La dirección es requerida"
-    } else if (formData.address.trim().length < 10) {
+    } else if (typeof formData.address === 'string' && formData.address.trim().length < 10) {
       newErrors.address = "La dirección debe ser más específica"
     }
 
@@ -391,7 +397,7 @@ export default function CheckoutPage() {
         const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
         if (selectedAddress) {
           addressData = selectedAddress
-          finalAddress = `${selectedAddress.calle} ${selectedAddress.numero}, ${selectedAddress.ciudad}, ${selectedAddress.provincia}`
+          finalAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
         }
       } else if (!finalAddress) {
         // Usuario invitado o logueado sin direcciones guardadas
@@ -499,7 +505,7 @@ export default function CheckoutPage() {
         const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
         if (selectedAddress) {
           addressData = selectedAddress
-          finalAddress = `${selectedAddress.calle} ${selectedAddress.numero}, ${selectedAddress.ciudad}, ${selectedAddress.provincia}`
+          finalAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
         }
       } else if (!finalAddress) {
         // Usuario invitado o logueado sin direcciones guardadas
@@ -513,7 +519,7 @@ export default function CheckoutPage() {
         userName: formData.name,
         userEmail: formData.email,
         phone: formData.phone,
-        address: finalAddress,
+        address: typeof finalAddress === 'string' ? finalAddress : JSON.stringify(finalAddress),
         comments: formData.comments,
         deliveryOption: deliveryOption,
         deliverySlot: deliveryOption === "delivery" ? selectedDeliverySlot : undefined,
@@ -597,20 +603,20 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-120px)] bg-neutral-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="min-h-[calc(100vh-120px)] bg-neutral-50 py-6 sm:py-8 lg:py-12 px-3 sm:px-4 lg:px-8">
+      <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
         {/* Columna principal del formulario */}
         <div className="lg:col-span-2">
-          <Card className="p-6">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-neutral-900">Finalizar Compra</CardTitle>
+          <Card className="p-4 sm:p-6">
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="text-xl sm:text-2xl font-bold text-neutral-900">Finalizar Compra</CardTitle>
               
               {/* Indicador de progreso */}
-              <div className="mt-4">
-                <div className="flex items-center justify-between mb-2">
+              <div className="mt-3 sm:mt-4">
+                <div className="flex items-center justify-between mb-2 px-1">
                   {[1, 2, 3, 4].map((stepNumber) => (
                     <div key={stepNumber} className="flex items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                      <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${
                         step >= stepNumber 
                           ? 'bg-blue-600 text-white' 
                           : 'bg-neutral-200 text-neutral-600'
@@ -618,29 +624,29 @@ export default function CheckoutPage() {
                         {stepNumber}
                       </div>
                       {stepNumber < 4 && (
-                        <div className={`w-12 h-1 mx-2 ${
+                        <div className={`w-6 sm:w-12 h-1 mx-1 sm:mx-2 ${
                           step > stepNumber ? 'bg-blue-600' : 'bg-neutral-200'
                         }`} />
                       )}
                     </div>
                   ))}
                 </div>
-                <div className="flex justify-between text-xs text-neutral-600">
-                  <span>Modalidad</span>
-                  <span>Datos</span>
-                  <span>Horario</span>
-                  <span>Pago</span>
+                <div className="flex justify-between text-xs text-neutral-600 px-1">
+                  <span className="text-center flex-1">Modalidad</span>
+                  <span className="text-center flex-1">Datos</span>
+                  <span className="text-center flex-1">Horario</span>
+                  <span className="text-center flex-1">Pago</span>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               {/* Paso 1: Elegir modalidad de compra */}
               {step === 1 && (
-                <div className="space-y-6">
-                  <h2 className="text-xl font-semibold mb-4">Paso 1: Elegir modalidad de compra</h2>
+                <div className="space-y-4 sm:space-y-6">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 px-1">Paso 1: Elegir modalidad de compra</h2>
                   
                   {errors.step1 && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 mx-1">
                       <p className="text-sm text-red-700">{errors.step1}</p>
                     </div>
                   )}
@@ -651,15 +657,17 @@ export default function CheckoutPage() {
                       setPurchaseOption(value)
                       clearErrors()
                     }}
-                    className="flex flex-col space-y-2"
+                    className="flex flex-col space-y-2 sm:space-y-3"
                   >
-                    <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-neutral-50">
-                      <RadioGroupItem value="guest" id="guest" />
-                      <Label htmlFor="guest" className="font-medium">Comprar como invitado</Label>
+                    <div className="flex items-center space-x-3 p-3 sm:p-4 border rounded-lg hover:bg-neutral-50 transition-colors">
+                      <RadioGroupItem value="guest" id="guest" className="flex-shrink-0" />
+                      <Label htmlFor="guest" className="font-medium text-sm sm:text-base leading-relaxed cursor-pointer">
+                        Comprar como invitado
+                      </Label>
                     </div>
-                    <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-neutral-50">
-                      <RadioGroupItem value="logged" id="logged" disabled={!!user} />
-                      <Label htmlFor="logged" className="font-medium">
+                    <div className="flex items-start space-x-3 p-3 sm:p-4 border rounded-lg hover:bg-neutral-50 transition-colors">
+                      <RadioGroupItem value="logged" id="logged" disabled={!!user} className="flex-shrink-0 mt-0.5" />
+                      <Label htmlFor="logged" className="font-medium text-sm sm:text-base leading-relaxed cursor-pointer flex-1">
                         {user
                           ? `Iniciar sesión (ya logueado como ${userData?.nombre || user.email})`
                           : "Iniciar sesión para autocompletar los datos"}
@@ -668,36 +676,43 @@ export default function CheckoutPage() {
                   </RadioGroup>
                   
                   {user && purchaseOption === "logged" && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <h4 className="font-semibold text-green-800 mb-2">✅ Usuario logueado</h4>
-                      <p className="text-sm text-green-700 mb-2">
-                        Tus datos se han cargado automáticamente desde tu perfil.
-                      </p>
-                      {userAddresses.length > 0 && (
-                        <div className="flex items-center space-x-2 text-sm text-green-700">
-                          <MapPin className="w-4 h-4" />
-                          <span>{userAddresses.length} dirección{userAddresses.length !== 1 ? 'es' : ''} guardada{userAddresses.length !== 1 ? 's' : ''} disponible{userAddresses.length !== 1 ? 's' : ''}</span>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 mx-1">
+                      <div className="flex items-start space-x-2">
+                        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-green-800 mb-1 sm:mb-2 text-sm sm:text-base">Usuario logueado</h4>
+                          <p className="text-xs sm:text-sm text-green-700 mb-2 leading-relaxed">
+                            Tus datos se han cargado automáticamente desde tu perfil.
+                          </p>
+                          {userAddresses.length > 0 && (
+                            <div className="flex items-center space-x-2 text-xs sm:text-sm text-green-700">
+                              <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                              <span className="leading-relaxed">
+                                {userAddresses.length} dirección{userAddresses.length !== 1 ? 'es' : ''} guardada{userAddresses.length !== 1 ? 's' : ''} disponible{userAddresses.length !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   )}
                   
                   {!user && purchaseOption === "logged" && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-700 mb-3">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mx-1">
+                      <p className="text-xs sm:text-sm text-blue-700 mb-3 leading-relaxed">
                         Para continuar con esta opción, necesitas iniciar sesión.
                       </p>
-                      <Button onClick={() => router.push("/login")} className="w-full">
+                      <Button onClick={() => router.push("/login")} className="w-full text-sm sm:text-base">
                         Ir a Iniciar Sesión
                       </Button>
                     </div>
                   )}
                   
-                  <div className="flex justify-end">
+                  <div className="flex justify-end pt-2 sm:pt-4">
                     <Button 
                       onClick={handleNextStep} 
                       disabled={purchaseOption === "logged" && !user}
-                      className="min-w-[120px]"
+                      className="min-w-[100px] sm:min-w-[120px] text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3"
                     >
                       Siguiente
                     </Button>
@@ -773,10 +788,10 @@ export default function CheckoutPage() {
                                     <MapPin className="w-4 h-4 text-neutral-500" />
                                     <div className="text-left">
                                       <div className="font-medium">
-                                        {address.calle} {address.numero}
+                                        {formatText(address.calle)} {address.numero}
                                       </div>
                                       <div className="text-sm text-neutral-500">
-                                        {address.ciudad}, {address.provincia}
+                                        {formatText(address.ciudad)}, {formatText(address.provincia)}
                                       </div>
                                     </div>
                                   </div>
@@ -795,7 +810,7 @@ export default function CheckoutPage() {
                                 <MapPin className="w-4 h-4 text-green-600 mt-0.5" />
                                 <div className="text-sm">
                                   <div className="font-medium text-green-800">Dirección seleccionada:</div>
-                                  <div className="text-green-700">{formData.address}</div>
+                                  <div className="text-green-700">{typeof formData.address === 'string' ? formData.address : JSON.stringify(formData.address)}</div>
                                 </div>
                               </div>
                             </div>
@@ -812,7 +827,7 @@ export default function CheckoutPage() {
                             <Input
                               id="address"
                               name="address"
-                              value={formData.address}
+                              value={typeof formData.address === 'string' ? formData.address : ''}
                               onChange={handleInputChange}
                               placeholder="Ingresa tu dirección completa"
                               className={errors.address ? "border-red-500 focus:border-red-500" : ""}
@@ -841,7 +856,7 @@ export default function CheckoutPage() {
                           <Input
                             id="address"
                             name="address"
-                            value={formData.address}
+                            value={typeof formData.address === 'string' ? formData.address : ''}
                             onChange={handleInputChange}
                             placeholder="Ingresa tu dirección completa"
                             className={errors.address ? "border-red-500 focus:border-red-500" : ""}
@@ -949,38 +964,39 @@ export default function CheckoutPage() {
                     <p>Los envíos se realizan a partir de los {formatPrice(2500)}.</p>
                   </div>
 
-                  <h3 className="text-lg font-semibold mb-2">Métodos de Pago Disponibles:</h3>
+                  <h3 className="text-base sm:text-lg font-semibold mb-2">Métodos de Pago Disponibles:</h3>
                   <RadioGroup
                     value={paymentMethod}
                     onValueChange={setPaymentMethod}
-                    className="flex flex-col space-y-2"
+                    className="flex flex-col space-y-2 sm:space-y-3"
                   >
-                    <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-neutral-50">
-                      <RadioGroupItem value="mercadopago" id="mercadopago" />
-                      <div className="flex items-center space-x-2">
-                        <CreditCard className="w-5 h-5 text-blue-600" />
-                        <Label htmlFor="mercadopago" className="font-medium">MercadoPago</Label>
+                    <div className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 border rounded-lg hover:bg-neutral-50 transition-colors">
+                      <RadioGroupItem value="mercadopago" id="mercadopago" className="flex-shrink-0" />
+                      <div className="flex items-center space-x-2 flex-1 min-w-0">
+                        <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                        <Label htmlFor="mercadopago" className="font-medium text-sm sm:text-base">MercadoPago</Label>
                       </div>
-                      <div className="ml-auto text-sm text-neutral-600">
-                        Tarjeta, transferencia, efectivo
+                      <div className="ml-auto text-xs sm:text-sm text-neutral-600 flex-shrink-0">
+                        <span className="hidden sm:inline">Tarjeta, transferencia, efectivo</span>
+                        <span className="sm:hidden">Tarjeta, efectivo</span>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-neutral-50">
-                      <RadioGroupItem value="efectivo-local" id="efectivo-local" />
-                      <div className="flex items-center space-x-2">
-                        <Wallet className="w-5 h-5 text-green-600" />
-                        <Label htmlFor="efectivo-local" className="font-medium">Efectivo en el local</Label>
+                    <div className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 border rounded-lg hover:bg-neutral-50 transition-colors">
+                      <RadioGroupItem value="efectivo-local" id="efectivo-local" className="flex-shrink-0" />
+                      <div className="flex items-center space-x-2 flex-1 min-w-0">
+                        <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+                        <Label htmlFor="efectivo-local" className="font-medium text-sm sm:text-base">Efectivo en el local</Label>
                       </div>
-                      <div className="ml-auto text-sm text-neutral-600">
+                      <div className="ml-auto text-xs sm:text-sm text-neutral-600 flex-shrink-0">
                         Al retirar
                       </div>
                     </div>
                   </RadioGroup>
 
                   {paymentMethod === "mercadopago" && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-                      <h4 className="font-semibold text-blue-800 mb-2">💳 Pago seguro con MercadoPago</h4>
-                      <ul className="text-sm text-blue-700 space-y-1">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mt-3 sm:mt-4">
+                      <h4 className="font-semibold text-blue-800 mb-2 text-sm sm:text-base">💳 Pago seguro con MercadoPago</h4>
+                      <ul className="text-xs sm:text-sm text-blue-700 space-y-1">
                         <li>• Pagá con tarjeta de crédito o débito</li>
                         <li>• Transferencia bancaria</li>
                         <li>• Dinero en cuenta de MercadoPago</li>
@@ -990,34 +1006,46 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
-                  <div className="flex justify-between mt-6">
-                    <Button variant="outline" onClick={handlePrevStep}>
+                  <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 mt-4 sm:mt-6">
+                    <Button 
+                      variant="outline" 
+                      onClick={handlePrevStep}
+                      className="w-full sm:w-auto text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3"
+                    >
                       Anterior
                     </Button>
                     <Button 
                       onClick={handleSubmitOrder} 
                       disabled={isSubmitting || isCreatingPayment}
-                      className={paymentMethod === "mercadopago" ? "bg-blue-600 hover:bg-blue-700" : ""}
+                      className={`w-full sm:w-auto text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3 ${
+                        paymentMethod === "mercadopago" ? "bg-blue-600 hover:bg-blue-700" : ""
+                      }`}
                     >
                       {isCreatingPayment ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Conectando con MercadoPago...
+                          <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                          <span className="hidden sm:inline">Conectando con MercadoPago...</span>
+                          <span className="sm:hidden">Conectando...</span>
                         </>
                       ) : isSubmitting ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Finalizando...
+                          <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                          <span className="hidden sm:inline">Finalizando...</span>
+                          <span className="sm:hidden">Finalizando...</span>
                         </>
                       ) : (
                         <>
                           {paymentMethod === "mercadopago" ? (
                             <>
-                              <CreditCard className="mr-2 h-4 w-4" />
-                              Pagar con MercadoPago
+                              <CreditCard className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="hidden sm:inline">Pagar con MercadoPago</span>
+                              <span className="sm:hidden">Pagar con MP</span>
                             </>
                           ) : (
-                            "Finalizar compra"
+                            <>
+                              <span className="hidden sm:inline">Finalizar compra</span>
+                              <span className="sm:hidden">Finalizar</span>
+                            </>
                           )}
                         </>
                       )}
@@ -1031,15 +1059,15 @@ export default function CheckoutPage() {
 
         {/* Columna del resumen del pedido */}
         <div className="lg:col-span-1">
-          <Card className="p-6 sticky top-24">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-neutral-900">Resumen del Pedido</CardTitle>
+          <Card className="p-4 sm:p-6 sticky top-20 sm:top-24">
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="text-lg sm:text-xl font-bold text-neutral-900">Resumen del Pedido</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {items.map((item) => (
-                  <div key={item.productId} className="flex items-center gap-3">
-                    <div className="relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden">
+                  <div key={item.productId} className="flex items-center gap-2 sm:gap-3">
+                    <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 rounded-md overflow-hidden">
                       <ImageWrapper 
                         src={item.imageUrl || "/placeholder.svg"} 
                         alt={item.name} 
@@ -1049,41 +1077,41 @@ export default function CheckoutPage() {
                         placeholder={<ProductPlaceholder className="object-cover" />}
                       />
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-neutral-800">{item.name}</p>
-                      <p className="text-sm text-neutral-500">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-neutral-800 text-xs sm:text-sm leading-tight">{item.name}</p>
+                      <p className="text-xs sm:text-sm text-neutral-500 mt-1">
                         {item.quantity} x {formatPrice(item.price)}
                       </p>
                     </div>
-                    <span className="font-semibold text-neutral-900">{formatPrice(item.quantity * item.price)}</span>
+                    <span className="font-semibold text-neutral-900 text-xs sm:text-sm flex-shrink-0">{formatPrice(item.quantity * item.price)}</span>
                   </div>
                 ))}
               </div>
               <Separator className="my-6" />
               
               {/* Sección de Cupón */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-neutral-900">¿Tenés un cupón?</h4>
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="font-semibold text-neutral-900 text-sm sm:text-base">¿Tenés un cupón?</h4>
                 
                 {!appliedCoupon ? (
-                  <div className="space-y-3">
-                    <div className="flex gap-2">
+                  <div className="space-y-2 sm:space-y-3">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Input
                         type="text"
                         placeholder="Código del cupón"
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        className="flex-1"
+                        className="flex-1 text-sm sm:text-base"
                         disabled={isValidatingCoupon}
                       />
                       <Button
                         onClick={handleApplyCoupon}
                         disabled={!couponCode.trim() || isValidatingCoupon}
                         size="sm"
-                        className="whitespace-nowrap"
+                        className="whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4"
                       >
                         {isValidatingCoupon ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
                         ) : (
                           "Aplicar"
                         )}
@@ -1091,25 +1119,25 @@ export default function CheckoutPage() {
                     </div>
                     
                     {couponError && (
-                      <p className="text-sm text-red-600 bg-red-50 p-2 rounded">
+                      <p className="text-xs sm:text-sm text-red-600 bg-red-50 p-2 rounded">
                         {couponError}
                       </p>
                     )}
                   </div>
                 ) : (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                        <div>
-                          <p className="font-medium text-green-800">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2 flex-1 min-w-0">
+                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-green-800 text-xs sm:text-sm break-all">
                             Cupón: {getCouponInfo()?.code}
                           </p>
-                          <p className="text-sm text-green-600">
+                          <p className="text-xs sm:text-sm text-green-600 mt-1">
                             {getCouponInfo()?.discountType}: {getCouponInfo()?.discountValue}
                           </p>
                           {getCouponInfo()?.savings && (
-                            <p className="text-xs text-green-500 font-medium">
+                            <p className="text-xs text-green-500 font-medium mt-1">
                               {getCouponInfo()?.savings}
                             </p>
                           )}
@@ -1119,16 +1147,16 @@ export default function CheckoutPage() {
                         variant="ghost"
                         size="sm"
                         onClick={handleRemoveCoupon}
-                        className="text-green-600 hover:text-green-700 hover:bg-green-100"
+                        className="text-green-600 hover:text-green-700 hover:bg-green-100 flex-shrink-0 p-1 sm:p-2"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
                     </div>
                   </div>
                 )}
                 
                 {couponSuccess && (
-                  <p className="text-sm text-green-600 bg-green-50 p-2 rounded">
+                  <p className="text-xs sm:text-sm text-green-600 bg-green-50 p-2 rounded">
                     {couponSuccess}
                   </p>
                 )}
@@ -1137,21 +1165,21 @@ export default function CheckoutPage() {
               <Separator className="my-6" />
               
               {/* Resumen de precios */}
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm text-neutral-600">
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex justify-between text-xs sm:text-sm text-neutral-600">
                   <span>Subtotal:</span>
                   <span>{formatPrice(totalPrice)}</span>
                 </div>
                 
                 {appliedCoupon && (
-                  <div className="flex justify-between text-sm text-green-600">
-                    <span>Descuento ({appliedCoupon.codigo}):</span>
-                    <span>-{formatPrice(calculateCouponDiscount())}</span>
+                  <div className="flex justify-between text-xs sm:text-sm text-green-600">
+                    <span className="truncate pr-2">Descuento ({appliedCoupon.codigo}):</span>
+                    <span className="flex-shrink-0">-{formatPrice(calculateCouponDiscount())}</span>
                   </div>
                 )}
                 
                 <Separator />
-                <div className="flex justify-between items-center text-lg font-bold text-neutral-900">
+                <div className="flex justify-between items-center text-base sm:text-lg font-bold text-neutral-900">
                   <span>Total del Pedido:</span>
                   <span>{formatPrice(finalPrice)}</span>
                 </div>
