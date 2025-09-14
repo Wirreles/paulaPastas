@@ -321,7 +321,7 @@ export class MercadoPagoService {
         createdAt: new Date(),
         preferenceId: result.id,
         deliveryOption: data.deliveryOption,
-        deliverySlot: data.deliverySlot,
+        deliverySlot: data.deliverySlot || null,
         comments: data.comments,
         isUserLoggedIn: data.isUserLoggedIn,
         addressId: data.addressId || null,
@@ -445,7 +445,9 @@ export class MercadoPagoService {
               comments: pendingPurchaseData.comments,
               isUserLoggedIn: pendingPurchaseData.isUserLoggedIn,
               addressId: pendingPurchaseData.addressId || null,
-              addressData: pendingPurchaseData.addressData || null
+              addressData: pendingPurchaseData.addressData || null,
+              orderStatus: 'en_preparacion', // Estado inicial para MercadoPago
+              paymentMethod: 'mercadopago' // Agregar método de pago
             })
 
             // Eliminar la compra pendiente

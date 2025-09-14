@@ -114,13 +114,13 @@ const homeSectionsData = [
     elementId: "ravioles",
   },
   {
-    id: "home-category-lasana",
-    name: "Categoría Home: Lasañas",
-    description: "Imagen para la tarjeta de Lasañas en la sección '¿Qué pasta casera te gustaría comer hoy?'.",
+    id: "home-category-lasagna",
+    name: "Categoría Home: Lasagna",
+    description: "Imagen para la tarjeta de Lasagna en la sección '¿Qué pasta casera te gustaría comer hoy?'.",
     imageUrl: "/placeholder.svg?height=300&width=400",
     order: 4,
     sectionId: "home-categories",
-    elementId: "lasana",
+    elementId: "lasagna",
   },
   {
     id: "home-category-fideos",

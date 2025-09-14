@@ -39,7 +39,7 @@ async function fixExistingProducts() {
           } else if (producto.nombre.toLowerCase().includes("sorrentin")) {
             subcategoria = "sorrentinos"
           } else if (producto.nombre.toLowerCase().includes("lasa")) {
-            subcategoria = "lasana"
+            subcategoria = "lasagna"
           } else {
             subcategoria = "ravioles" // default
           }

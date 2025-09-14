@@ -24,7 +24,7 @@ const pageBanners = [
     description: "Banner principal de la página de Pastas Rellenas",
     imageUrl: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=600&fit=crop",
     title: "Pastas rellenas caseras artesanales",
-    subtitle: "Sabores que sorprenden, texturas que enamoran. Ravioles, sorrentinos y lasañas elaboradas con ingredientes frescos, verduras asadas, vegetales frescos y combinaciones que invitan a imaginar una cena inolvidable. Lo difícil ya está hecho — solo tenes que elegir.",
+    subtitle: "Sabores que sorprenden, texturas que enamoran. Ravioles, sorrentinos y lasagna elaboradas con ingredientes frescos, verduras asadas, vegetales frescos y combinaciones que invitan a imaginar una cena inolvidable. Lo difícil ya está hecho — solo tenes que elegir.",
     pageType: "categoria" as const,
     categoria: "rellenas",
     slug: "rellenas",
@@ -57,16 +57,16 @@ const pageBanners = [
 
   // SUBCATEGORÍAS DE RELLENAS
   {
-    id: "banner-lasana",
-    name: "Banner Lasañas",
-    description: "Banner de la página de Lasañas",
+    id: "banner-lasagna",
+    name: "Banner Lasagna",
+    description: "Banner de la página de Lasagna",
     imageUrl: "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=1200&h=600&fit=crop",
-    title: "Lasañas Caseras",
-    subtitle: "Lasañas artesanales con capas perfectas de pasta fresca, rellenos caseros y quesos de primera calidad. Listas para hornear en tu casa.",
+    title: "Lasagna Caseras",
+    subtitle: "Lasagna artesanales con capas perfectas de pasta fresca, rellenos caseros y quesos de primera calidad. Listas para hornear en tu casa.",
     pageType: "subcategoria" as const,
     categoria: "rellenas",
-    subcategoria: "lasana",
-    slug: "rellenas/lasana",
+    subcategoria: "lasagna",
+    slug: "rellenas/lasagna",
     order: 4,
   },
   {

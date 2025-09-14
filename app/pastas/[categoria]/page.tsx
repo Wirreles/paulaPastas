@@ -16,13 +16,13 @@ const categoriaData = {
   rellenas: {
     nombre: "Pastas Rellenas",
     descripcion:
-      "Descubrí nuestras exquisitas pastas rellenas artesanales. Ravioles, sorrentinos y lasañas elaboradas con ingredientes frescos y recetas tradicionales familiares.",
+      "Descubrí nuestras exquisitas pastas rellenas artesanales. Ravioles, sorrentinos y lasagna elaboradas con ingredientes frescos y recetas tradicionales familiares.",
     imagen: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=600&fit=crop",
     subcategorias: [
       {
-        nombre: "Lasañas",
-        slug: "lasana",
-        descripcion: "Lasañas caseras con capas perfectas de pasta, relleno y queso",
+        nombre: "Lasagna",
+        slug: "lasagna",
+        descripcion: "Lasagna caseras con capas perfectas de pasta, relleno y queso",
         imagen: "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400&h=300&fit=crop",
       },
       {

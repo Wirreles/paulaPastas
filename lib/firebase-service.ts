@@ -92,14 +92,25 @@ export class FirebaseService {
 
     try {
       const productosRef = collection(db, "productos")
-      let q = query(productosRef, orderBy("orden", "asc"))
+      let q = query(productosRef)
 
       if (categoria) {
-        q = query(productosRef, where("categoria", "==", categoria), orderBy("orden", "asc"))
+        q = query(productosRef, where("categoria", "==", categoria))
       }
 
       const snapshot = await getDocs(q)
       const productos = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Producto)
+
+      // Ordenar por el campo orden si existe, sino por fecha de creación
+      productos.sort((a, b) => {
+        if (a.orden !== undefined && b.orden !== undefined) {
+          return a.orden - b.orden
+        }
+        if (a.orden !== undefined) return -1
+        if (b.orden !== undefined) return 1
+        // Si ninguno tiene orden, ordenar por nombre
+        return a.nombre.localeCompare(b.nombre)
+      })
 
       console.log(`📦 FirebaseService.getProductos(${categoria}): Encontrados ${productos.length} productos`)
       cache.set(cacheKey, productos)
@@ -376,7 +387,7 @@ export class FirebaseService {
   }
 
   // NUEVO: Método para añadir un pedido
-  static async addOrder(order: Omit<Order, "id" | "fechaCreacion" | "estado">): Promise<string> {
+  static async addOrder(order: Omit<Order, "id" | "fechaCreacion" | "estado"> & { deliverySlot?: string | null }): Promise<string> {
     try {
       const docRef = await addDoc(collection(db, "orders"), {
         ...order,

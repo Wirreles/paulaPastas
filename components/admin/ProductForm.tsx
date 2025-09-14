@@ -371,7 +371,7 @@ export default function ProductForm({ producto, onClose, onSave }: ProductFormPr
                     <option value="">Seleccionar subcategoría</option>
                     {formData.categoria === "rellenas" && (
                       <>
-                        <option value="lasana">Lasaña</option>
+                        <option value="lasagna">Lasagna</option>
                         <option value="ravioles">Ravioles</option>
                         <option value="sorrentinos">Sorrentinos</option>
                       </>

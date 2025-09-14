@@ -1,36 +1,120 @@
-import type { Metadata } from "next"
+"use client"
+
 import Link from "next/link"
+import { useState, useEffect } from "react"
 import { ImageWrapper } from "@/components/ui/ImageWrapper"
-import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
-import { ChevronDown, MessageCircle, ArrowRight, ShoppingBag } from "lucide-react"
+import { HeroPlaceholder, ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
+import { ChevronDown, MessageCircle, ArrowRight, ShoppingBag, Minus, Plus, Eye, Star } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
+import { PageBanner, Producto } from "@/lib/types"
+import { useCart } from "@/lib/cart-context"
 
-export const metadata: Metadata = {
-  title: "Salsas Caseras Artesanales | Paula Pastas - Rosario",
-  description: "Descubrí nuestras salsas caseras pensadas para potenciar el sabor de cada pasta. Hechas en casa, sin conservantes ni apuros. Salsas Pomodoro, Bolognesa, Pesto y más.",
-  keywords: "salsas caseras, salsas artesanales, salsa pomodoro, salsa bolognesa, salsa pesto, rosario, paula pastas, delivery salsas",
-  openGraph: {
-    title: "Salsas Caseras Artesanales | Paula Pastas",
-    description: "Salsas caseras elaboradas con ingredientes frescos y recetas tradicionales. Perfectas para acompañar tus pastas favoritas.",
-    images: [
-      {
-        url: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=630&fit=crop",
-        width: 1200,
-        height: 630,
-        alt: "Salsas caseras artesanales Paula Pastas",
-      },
-    ],
-    type: "website",
-    locale: "es_AR",
-  },
-  alternates: {
-    canonical: "https://paulapastas.com/pastas/salsas",
-  },
-}
+export default function SalsasPage() {
+  const [banner, setBanner] = useState<PageBanner | null>(null)
+  const [isLoadingBanner, setIsLoadingBanner] = useState(true)
+  const [salsas, setSalsas] = useState<Producto[]>([])
+  const [isLoadingSalsas, setIsLoadingSalsas] = useState(true)
+  
+  // Estados para el carrito y cantidades (igual que en el home y packs)
+  const { addItem } = useCart()
+  const [quantities, setQuantities] = useState<Record<string, number>>({})
 
-export default async function SalsasPage() {
-  // Obtener banner dinámico
-  const banner = await FirebaseService.getPageBannerBySlug("salsas")
+  // useEffect para cargar el banner dinámicamente
+  useEffect(() => {
+    async function loadBanner() {
+      try {
+        setIsLoadingBanner(true)
+        console.log("🔄 Cargando banner para salsas...")
+        
+        const bannerData = await FirebaseService.getPageBannerBySlug("salsas")
+        if (bannerData) {
+          console.log("✅ Banner encontrado:", bannerData)
+          setBanner(bannerData)
+        } else {
+          console.log("⚠️ No se encontró banner específico, usando fallback")
+          // Banner fallback con datos estáticos
+          setBanner({
+            id: "fallback",
+            name: "Banner Salsas",
+            description: "Banner principal de la página de Salsas",
+            imageUrl: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop",
+            title: "Salsas caseras",
+            subtitle: "Descubrí nuestras salsas pensadas para potenciar el sabor de cada pasta. Hechas en casa, sin conservantes ni apuros.",
+            pageType: "especial",
+            slug: "salsas",
+            order: 1
+          })
+        }
+      } catch (error) {
+        console.error("❌ Error cargando banner:", error)
+        // En caso de error, usar banner fallback
+        setBanner({
+          id: "fallback",
+          name: "Banner Salsas",
+          description: "Banner principal de la página de Salsas",
+          imageUrl: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop",
+          title: "Salsas caseras",
+          subtitle: "Descubrí nuestras salsas pensadas para potenciar el sabor de cada pasta. Hechas en casa, sin conservantes ni apuros.",
+          pageType: "especial",
+          slug: "salsas",
+          order: 1
+        })
+      } finally {
+        setIsLoadingBanner(false)
+      }
+    }
+    
+    loadBanner()
+  }, [])
+
+  // useEffect para cargar las salsas dinámicamente
+  useEffect(() => {
+    async function loadSalsas() {
+      try {
+        setIsLoadingSalsas(true)
+        console.log("🔄 Cargando salsas desde Firebase...")
+        
+        const salsasData = await FirebaseService.getProductos('salsas')
+        console.log(`📦 Salsas cargadas: ${salsasData.length}`)
+        setSalsas(salsasData)
+      } catch (error) {
+        console.error("❌ Error cargando salsas:", error)
+        setSalsas([])
+      } finally {
+        setIsLoadingSalsas(false)
+      }
+    }
+    
+    loadSalsas()
+  }, [])
+
+  // Funciones del carrito (igual que en el home y packs)
+  const getQuantity = (productId: string) => quantities[productId] || 1
+
+  const handleQuantityChange = (productId: string, delta: number) => {
+    setQuantities(prev => ({
+      ...prev,
+      [productId]: Math.max(1, (prev[productId] || 1) + delta)
+    }))
+  }
+
+  const handleAddToCart = (producto: Producto) => {
+    const quantity = getQuantity(producto.id)
+    if (quantity > 0) {
+      addItem(producto, quantity)
+      // Reset cantidad después de agregar
+      setQuantities(prev => ({ ...prev, [producto.id]: 1 }))
+    }
+  }
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price)
+  }
 
   // JSON-LD para datos estructurados
   const jsonLd = {
@@ -64,41 +148,8 @@ export default async function SalsasPage() {
     },
   }
 
-  // Datos estáticos de productos de salsa
-  const salsas = [
-    {
-      id: "salsa-pomodoro",
-      nombre: "Salsa Pomodoro",
-      descripcion: "Hecha con tomate fresco y albahaca",
-      precio: 2500,
-      imagen: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop",
-      disponible: true
-    },
-    {
-      id: "salsa-bolognesa",
-      nombre: "Salsa Bolognesa",
-      descripcion: "Carne molida con verduras y vino tinto",
-      precio: 3200,
-      imagen: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop",
-      disponible: true
-    },
-    {
-      id: "salsa-pesto",
-      nombre: "Salsa Pesto",
-      descripcion: "Albahaca, piñones y queso parmesano",
-      precio: 2800,
-      imagen: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop",
-      disponible: true
-    },
-    {
-      id: "salsa-cremosa",
-      nombre: "Salsa Cremosa",
-      descripcion: "Crema, champiñones y hierbas finas",
-      precio: 3000,
-      imagen: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop",
-      disponible: true
-    }
-  ]
+  // Datos estáticos de productos de salsa - ELIMINADO, ahora se cargan dinámicamente desde Firebase
+  // const salsas = [...] // Removido
 
   // Datos de FAQ
   const faqs = [
@@ -144,29 +195,49 @@ export default async function SalsasPage() {
 
         {/* 1. Banner Principal */}
         <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 z-0">
-            <ImageWrapper
-              src={banner?.imageUrl || "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop"}
-              alt={banner?.title || "Salsas caseras artesanales en frascos"}
-              fill
-              className="object-cover"
-              priority={true}
-              fallback="/placeholder.svg?height=800&width=1200&text=Salsas+Caseras"
-              placeholder={<HeroPlaceholder className="object-cover" />}
-            />
-            <div className="absolute inset-0 bg-black/50" />
-          </div>
-
-          <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
-            <h1 className="font-display text-5xl md:text-7xl font-bold mb-6">
-              {banner?.title || "Salsas caseras"}
-            </h1>
-            <div className="bg-black/30 backdrop-blur-sm rounded-lg p-6 max-w-2xl mx-auto">
-              <p className="text-xl md:text-2xl text-neutral-100 leading-relaxed">
-                {banner?.subtitle || "Descubrí nuestras salsas pensadas para potenciar el sabor de cada pasta. Hechas en casa, sin conservantes ni apuros."}
-              </p>
+          {isLoadingBanner ? (
+            // Loading state
+            <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-neutral-600">Cargando banner...</p>
+              </div>
             </div>
-          </div>
+          ) : banner ? (
+            // Banner dinámico
+            <>
+              <div className="absolute inset-0 z-0">
+                <ImageWrapper
+                  src={banner.imageUrl}
+                  alt={banner.description}
+                  fill
+                  className="object-cover"
+                  priority={true}
+                  fallback="/placeholder.svg?height=800&width=1200&text=Salsas+Caseras"
+                  placeholder={<HeroPlaceholder className="object-cover" />}
+                />
+                <div className="absolute inset-0 bg-black/50" />
+              </div>
+
+              <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
+                <h1 className="font-display text-5xl md:text-7xl font-bold mb-6">
+                  {banner.title}
+                </h1>
+                <div className="bg-black/30 backdrop-blur-sm rounded-lg p-6 max-w-2xl mx-auto">
+                  <p className="text-xl md:text-2xl text-neutral-100 leading-relaxed">
+                    {banner.subtitle}
+                  </p>
+                </div>
+              </div>
+            </>
+          ) : (
+            // Fallback si no hay banner
+            <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-neutral-600">Banner no disponible</p>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 2. Galería de Productos */}
@@ -181,50 +252,127 @@ export default async function SalsasPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {salsas.map((salsa) => (
-                <article key={salsa.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift group">
-                  <div className="relative h-48">
-                    <ImageWrapper
-                      src={salsa.imagen}
-                      alt={`${salsa.nombre} casera artesanal`}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      fallback="/placeholder.svg?height=192&width=400&text=Salsa"
-                      placeholder={<HeroPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
-                    />
-                    {!salsa.disponible && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold">No Disponible</span>
+            {isLoadingSalsas ? (
+              <div className="text-center py-12">
+                <div className="w-24 h-24 bg-neutral-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">⏳</span>
+                </div>
+                <h3 className="text-xl font-semibold text-neutral-900 mb-2">Cargando salsas...</h3>
+                <p className="text-neutral-600">Esperá un momento mientras cargamos nuestras salsas destacadas</p>
+              </div>
+            ) : salsas.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {salsas.map((salsa) => {
+                  console.log("🔍 Renderizando salsa:", salsa)
+                  const productUrl = `/salsas/${salsa.slug}`
+                  const quantity = getQuantity(salsa.id)
+                  
+                  return (
+                    <article key={salsa.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover-lift group flex flex-col h-full">
+                      {/* Imagen más grande */}
+                      <div className="relative h-64">
+                        <Link href={productUrl}>
+                          <ImageWrapper
+                            src={salsa.imagen}
+                            alt={`${salsa.nombre} caseros artesanales`}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            fallback="/placeholder.svg?height=300&width=400&text=Salsa"
+                            placeholder={<ProductPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
+                            lazyThreshold={0.1} // Cargar más temprano
+                            loading="lazy"
+                          />
+                        </Link>
+                        {salsa.destacado && (
+                          <div className="absolute top-4 left-4 bg-primary-600 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center">
+                            <Star className="w-3 h-3 mr-1" />
+                            Destacado
+                          </div>
+                        )}
+                        {!salsa.disponible && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <span className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold">No Disponible</span>
+                          </div>
+                        )}
+                        {/* Badge de descuento */}
+                        {(salsa as any).precioOriginal && (salsa as any).precioOriginal > salsa.precio && (
+                          <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                            {Math.round((((salsa as any).precioOriginal - salsa.precio) / (salsa as any).precioOriginal) * 100)}% OFF
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
 
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors">
-                      {salsa.nombre}
-                    </h3>
-                    <p className="text-neutral-600 mb-4 line-clamp-2">
-                      {salsa.descripcion}
-                    </p>
+                      {/* Contenido de la card con flex-grow para ocupar el espacio disponible */}
+                      <div className="p-4 flex flex-col flex-grow">
+                        <Link href={productUrl}>
+                          <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors">
+                            {salsa.nombre}
+                          </h3>
+                        </Link>
 
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-2xl font-bold text-primary-600">
-                        ${salsa.precio.toLocaleString()}
-                      </span>
-                    </div>
+                        <p className="text-neutral-600 mb-4 text-sm line-clamp-4 flex-grow">{salsa.descripcionAcortada || salsa.descripcion}</p>
 
-                    <button
-                      className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center justify-center space-x-2"
-                      disabled={!salsa.disponible}
-                    >
-                      <ShoppingBag className="w-5 h-5" />
-                      <span>Agregar al carrito</span>
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
+                        {/* Precio dinámico y selector de cantidad en la misma línea */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <span className="text-xl font-bold text-primary-600">{formatPrice(salsa.precio * quantity)}</span>
+                            {salsa.porciones && (
+                              <span className="text-sm text-neutral-500 ml-2">{salsa.porciones} personas</span>
+                            )}
+                          </div>
+
+                          {/* Selector de cantidad */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleQuantityChange(salsa.id, -1)}
+                              className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+                              disabled={quantity <= 1}
+                            >
+                              <Minus className="w-4 h-4 text-neutral-700" />
+                            </button>
+                            <span className="text-lg font-semibold text-neutral-900 w-8 text-center">{quantity}</span>
+                            <button
+                              onClick={() => handleQuantityChange(salsa.id, 1)}
+                              className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+                            >
+                              <Plus className="w-4 h-4 text-neutral-700" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Botones siempre al fondo de la card */}
+                      <div className="p-4 pt-0 mt-auto">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleAddToCart(salsa)}
+                            className="flex-1 bg-primary-600 text-white text-center px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                            disabled={!salsa.disponible}
+                          >
+                            Agregar al carro
+                          </button>
+                          <Link
+                            href={productUrl}
+                            className="bg-neutral-900 text-white p-2 rounded-lg hover:bg-neutral-800 transition-colors flex items-center justify-center"
+                            title="Ver detalles"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </Link>
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="w-24 h-24 bg-neutral-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">🍝</span>
+                </div>
+                <h3 className="text-xl font-semibold text-neutral-900 mb-2">Próximamente</h3>
+                <p className="text-neutral-600">Estamos preparando deliciosas salsas para esta categoría</p>
+              </div>
+            )}
           </div>
         </section>
 

@@ -439,7 +439,7 @@ class EmailService {
             <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 20px 0;">
               <p style="margin: 0; color: #856404;">
                 <strong>💡 Tip:</strong> Nuestras pastas más populares son los ravioles de ossobuco, 
-                sorrentinos de cordero y la lasaña tradicional. ¡Perfectas para usar con tu cupón!
+                sorrentinos de cordero y la lasagna tradicional. ¡Perfectas para usar con tu cupón!
               </p>
             </div>
           </div>

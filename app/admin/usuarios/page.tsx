@@ -169,38 +169,48 @@ export default function UsuariosPage() {
         </div>
 
         {/* Filters and Search */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Buscar por email, nombre o teléfono..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 w-64"
-              />
+        <div className="bg-white rounded-lg border border-neutral-200 p-4 shadow-sm mb-6">
+          <div className="space-y-4">
+            {/* Search Bar */}
+            <div className="w-full">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Buscar por email, nombre o teléfono..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
             </div>
             
-            <select
-              value={filterRol}
-              onChange={(e) => setFilterRol(e.target.value)}
-              className="border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="todos">Todos los roles</option>
-              <option value="admin">Administradores</option>
-              <option value="cliente">Clientes</option>
-            </select>
+            {/* Filters Row */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 min-w-0">
+                <select
+                  value={filterRol}
+                  onChange={(e) => setFilterRol(e.target.value)}
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="todos">Todos los roles</option>
+                  <option value="admin">Administradores</option>
+                  <option value="cliente">Clientes</option>
+                </select>
+              </div>
 
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="todos">Todos los estados</option>
-              <option value="activos">Solo activos</option>
-              <option value="baneados">Solo baneados</option>
-            </select>
+              <div className="flex-1 min-w-0">
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="todos">Todos los estados</option>
+                  <option value="activos">Solo activos</option>
+                  <option value="baneados">Solo baneados</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 

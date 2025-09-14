@@ -80,7 +80,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     // Subcategorías
     {
-      url: `${baseUrl}/pastas/rellenas/lasana`,
+      url: `${baseUrl}/pastas/rellenas/lasagna`,
       lastModified: new Date(),
       changeFrequency: "weekly" as const,
       priority: 0.8,

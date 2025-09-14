@@ -3,16 +3,23 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { ImageWrapper } from "@/components/ui/ImageWrapper"
-import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
-import { ChevronDown, MessageCircle, ArrowRight, ShoppingBag, Minus, Plus, Package, Gift, Clock, Users } from "lucide-react"
+import { HeroPlaceholder, ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
+import { ChevronDown, MessageCircle, ArrowRight, ShoppingBag, Minus, Plus, Package, Gift, Clock, Users, Eye, Star } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
-import { PageBanner } from "@/lib/types"
+import { PageBanner, Producto } from "@/lib/types"
+import { useCart } from "@/lib/cart-context"
 
 
 
 export default function PackRavioladaPage() {
   const [banner, setBanner] = useState<PageBanner | null>(null)
   const [isLoadingBanner, setIsLoadingBanner] = useState(true)
+  const [packs, setPacks] = useState<Producto[]>([])
+  const [isLoadingPacks, setIsLoadingPacks] = useState(true)
+  
+  // Estados para el carrito y cantidades (igual que en el home)
+  const { addItem } = useCart()
+  const [quantities, setQuantities] = useState<Record<string, number>>({})
 
   // useEffect para cargar el banner dinámicamente
   useEffect(() => {
@@ -73,6 +80,55 @@ export default function PackRavioladaPage() {
     loadBanner()
   }, [])
 
+  // useEffect para cargar los packs dinámicamente
+  useEffect(() => {
+    async function loadPacks() {
+      try {
+        setIsLoadingPacks(true)
+        console.log("🔄 Cargando packs desde Firebase...")
+        
+        const packsData = await FirebaseService.getProductos('packs')
+        console.log(`📦 Packs cargados: ${packsData.length}`)
+        setPacks(packsData)
+      } catch (error) {
+        console.error("❌ Error cargando packs:", error)
+        setPacks([])
+      } finally {
+        setIsLoadingPacks(false)
+      }
+    }
+    
+    loadPacks()
+  }, [])
+
+  // Funciones del carrito (igual que en el home)
+  const getQuantity = (productId: string) => quantities[productId] || 1
+
+  const handleQuantityChange = (productId: string, delta: number) => {
+    setQuantities(prev => ({
+      ...prev,
+      [productId]: Math.max(1, (prev[productId] || 1) + delta)
+    }))
+  }
+
+  const handleAddToCart = (producto: Producto) => {
+    const quantity = getQuantity(producto.id)
+    if (quantity > 0) {
+      addItem(producto, quantity)
+      // Reset cantidad después de agregar
+      setQuantities(prev => ({ ...prev, [producto.id]: 1 }))
+    }
+  }
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price)
+  }
+
   // JSON-LD para datos estructurados
   const jsonLd = {
     "@context": "https://schema.org",
@@ -99,49 +155,8 @@ export default function PackRavioladaPage() {
     },
   }
 
-  // Datos estáticos de packs
-  const packs = [
-    {
-      id: "pack-raviolada-clasica",
-      nombre: "Pack Raviolada Clásica",
-      descripcion: "Ravioles de osobuco, sorrentinos de jamón y queso, salsa pomodoro y bolognesa",
-      precio: 8500,
-      precioOriginal: 10000,
-      imagen: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop",
-      disponible: true,
-      porciones: "4-6 personas"
-    },
-    {
-      id: "pack-romantico",
-      nombre: "Pack Romántico",
-      descripcion: "Sorrentinos de langostinos, ravioles de ricotta, salsa cremosa y pesto",
-      precio: 7200,
-      precioOriginal: 9000,
-      imagen: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop",
-      disponible: true,
-      porciones: "2 personas"
-    },
-    {
-      id: "pack-familiar",
-      nombre: "Pack Familiar",
-      descripcion: "Lasaña, ñoquis, ravioles variados, salsas surtidas y pan casero",
-      precio: 12000,
-      precioOriginal: 15000,
-      imagen: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop",
-      disponible: true,
-      porciones: "6-8 personas"
-    },
-    {
-      id: "pack-gourmet",
-      nombre: "Pack Gourmet",
-      descripcion: "Sorrentinos de cordero, ravioles de hongos, salsas gourmet y vino tinto",
-      precio: 9500,
-      precioOriginal: 12000,
-      imagen: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop",
-      disponible: true,
-      porciones: "4 personas"
-    }
-  ]
+  // Datos estáticos de packs - ELIMINADO, ahora se cargan dinámicamente desde Firebase
+  // const packs = [...] // Removido
 
   // Beneficios de los packs
   const beneficios = [
@@ -264,76 +279,127 @@ export default function PackRavioladaPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {packs.map((pack) => (
-                <article key={pack.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift group border border-neutral-200">
-                  <div className="relative h-64">
-                    <ImageWrapper
-                      src={pack.imagen}
-                      alt={`${pack.nombre} artesanal`}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      fallback="/placeholder.svg?height=256&width=400&text=Pack"
-                      placeholder={<HeroPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
-                    />
-                    {!pack.disponible && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold">No Disponible</span>
-                      </div>
-                    )}
-                    {pack.precioOriginal > pack.precio && (
-                      <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                        {Math.round(((pack.precioOriginal - pack.precio) / pack.precioOriginal) * 100)}% OFF
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-6">
-                    <h3 className="text-2xl font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors">
-                      {pack.nombre}
-                    </h3>
-                    <p className="text-neutral-600 mb-4 line-clamp-2">
-                      {pack.descripcion}
-                    </p>
-
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <span className="text-3xl font-bold text-primary-600">
-                          ${pack.precio.toLocaleString()}
-                        </span>
-                        {pack.precioOriginal > pack.precio && (
-                          <span className="text-lg text-neutral-400 line-through ml-2">
-                            ${pack.precioOriginal.toLocaleString()}
-                          </span>
+            {isLoadingPacks ? (
+              <div className="text-center py-12">
+                <div className="w-24 h-24 bg-neutral-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">⏳</span>
+                </div>
+                <h3 className="text-xl font-semibold text-neutral-900 mb-2">Cargando packs...</h3>
+                <p className="text-neutral-600">Esperá un momento mientras cargamos nuestros packs destacados</p>
+              </div>
+            ) : packs.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {packs.map((pack) => {
+                  console.log("🔍 Renderizando pack:", pack)
+                  const productUrl = `/packs/${pack.slug}`
+                  const quantity = getQuantity(pack.id)
+                  
+                  return (
+                    <article key={pack.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover-lift group flex flex-col h-full">
+                      {/* Imagen más grande */}
+                      <div className="relative h-64">
+                        <Link href={productUrl}>
+                          <ImageWrapper
+                            src={pack.imagen}
+                            alt={`${pack.nombre} caseros artesanales`}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            fallback="/placeholder.svg?height=300&width=400&text=Pack"
+                            placeholder={<ProductPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
+                            lazyThreshold={0.1} // Cargar más temprano
+                            loading="lazy"
+                          />
+                        </Link>
+                        {pack.destacado && (
+                          <div className="absolute top-4 left-4 bg-primary-600 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center">
+                            <Star className="w-3 h-3 mr-1" />
+                            Destacado
+                          </div>
+                        )}
+                        {!pack.disponible && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <span className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold">No Disponible</span>
+                          </div>
+                        )}
+                        {/* Badge de descuento */}
+                        {(pack as any).precioOriginal && (pack as any).precioOriginal > pack.precio && (
+                          <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                            {Math.round((((pack as any).precioOriginal - pack.precio) / (pack as any).precioOriginal) * 100)}% OFF
+                          </div>
                         )}
                       </div>
-                      <span className="text-sm text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full">
-                        {pack.porciones}
-                      </span>
-                    </div>
 
-                    {/* Control de cantidad */}
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                      <button className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors">
-                        <Minus className="w-4 h-4 text-neutral-700" />
-                      </button>
-                      <span className="text-lg font-semibold text-neutral-900 w-8 text-center">1</span>
-                      <button className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors">
-                        <Plus className="w-4 h-4 text-neutral-700" />
-                      </button>
-                    </div>
+                      {/* Contenido de la card con flex-grow para ocupar el espacio disponible */}
+                      <div className="p-4 flex flex-col flex-grow">
+                        <Link href={productUrl}>
+                          <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors">
+                            {pack.nombre}
+                          </h3>
+                        </Link>
 
-                    <button
-                      className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center justify-center space-x-2"
-                      disabled={!pack.disponible}
-                    >
-                      <ShoppingBag className="w-5 h-5" />
-                      <span>Agregar al carrito</span>
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
+                        <p className="text-neutral-600 mb-4 text-sm line-clamp-4 flex-grow">{pack.descripcionAcortada || pack.descripcion}</p>
+
+                        {/* Precio dinámico y selector de cantidad en la misma línea */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <span className="text-xl font-bold text-primary-600">{formatPrice(pack.precio * quantity)}</span>
+                            {pack.porciones && (
+                              <span className="text-sm text-neutral-500 ml-2">{pack.porciones} personas</span>
+                            )}
+                          </div>
+
+                          {/* Selector de cantidad */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleQuantityChange(pack.id, -1)}
+                              className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+                              disabled={quantity <= 1}
+                            >
+                              <Minus className="w-4 h-4 text-neutral-700" />
+                            </button>
+                            <span className="text-lg font-semibold text-neutral-900 w-8 text-center">{quantity}</span>
+                            <button
+                              onClick={() => handleQuantityChange(pack.id, 1)}
+                              className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+                            >
+                              <Plus className="w-4 h-4 text-neutral-700" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Botones siempre al fondo de la card */}
+                      <div className="p-4 pt-0 mt-auto">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleAddToCart(pack)}
+                            className="flex-1 bg-primary-600 text-white text-center px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                            disabled={!pack.disponible}
+                          >
+                            Agregar al carro
+                          </button>
+                          <Link
+                            href={productUrl}
+                            className="bg-neutral-900 text-white p-2 rounded-lg hover:bg-neutral-800 transition-colors flex items-center justify-center"
+                            title="Ver detalles"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </Link>
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="w-24 h-24 bg-neutral-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">🍝</span>
+                </div>
+                <h3 className="text-xl font-semibold text-neutral-900 mb-2">Próximamente</h3>
+                <p className="text-neutral-600">Estamos preparando deliciosos packs para esta categoría</p>
+              </div>
+            )}
           </div>
         </section>
 

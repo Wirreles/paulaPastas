@@ -60,7 +60,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<string>("mercadopago")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [orderConfirmed, setOrderConfirmed] = useState(false)
-  const [orderId, setOrderId] = useState<string | null>(null)
+  const [purchaseId, setPurchaseId] = useState<string | null>(null)
   const [isCreatingPayment, setIsCreatingPayment] = useState(false)
   const [userAddresses, setUserAddresses] = useState<any[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string>("")
@@ -96,7 +96,7 @@ export default function CheckoutPage() {
         name: userData.nombre || "",
         email: userData.email || "",
         phone: userData.telefono || "",
-        address: "", // Se llenará con la dirección seleccionada
+        address: userData.direccion || "", // Usar dirección del perfil como fallback
         comments: "",
       })
       setPurchaseOption("logged")
@@ -123,6 +123,9 @@ export default function CheckoutPage() {
           ...prev,
           address: `${formatText(addresses[0].calle)} ${addresses[0].numero}, ${formatText(addresses[0].ciudad)}`
         }))
+      } else {
+        // Si no hay direcciones guardadas, mantener la dirección del perfil si existe
+        console.log("📍 No hay direcciones guardadas, usando dirección del perfil:", userData?.direccion || "ninguna")
       }
     } catch (error) {
       console.error("❌ Error al cargar direcciones:", error)
@@ -301,21 +304,23 @@ export default function CheckoutPage() {
     }
 
     // Validar teléfono
-    if (!formData.phone.trim()) {
+    if (!formData.phone || !formData.phone.trim()) {
       newErrors.phone = "El teléfono es requerido"
     } else if (formData.phone.trim().length < 8) {
       newErrors.phone = "Ingresa un teléfono válido"
     }
 
-    // Validar dirección
-    if (user && userAddresses.length > 0) {
-      if (!selectedAddressId) {
-        newErrors.address = "Selecciona una dirección de entrega"
+    // Validar dirección (solo si es delivery)
+    if (deliveryOption === "delivery") {
+      if (user && userAddresses.length > 0) {
+        if (!selectedAddressId) {
+          newErrors.address = "Selecciona una dirección de entrega"
+        }
+      } else if (!formData.address || (typeof formData.address === 'string' && !formData.address.trim())) {
+        newErrors.address = "La dirección es requerida"
+      } else if (typeof formData.address === 'string' && formData.address.trim().length < 10) {
+        newErrors.address = "La dirección debe ser más específica"
       }
-    } else if (!formData.address || (typeof formData.address === 'string' && !formData.address.trim())) {
-      newErrors.address = "La dirección es requerida"
-    } else if (typeof formData.address === 'string' && formData.address.trim().length < 10) {
-      newErrors.address = "La dirección debe ser más específica"
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -388,21 +393,26 @@ export default function CheckoutPage() {
         return
       }
 
-      // Validar dirección - unificado para usuarios logueados e invitados
+      // Validar dirección solo si es delivery
       let finalAddress = formData.address
       let addressData = null
       
-      if (user && userAddresses.length > 0 && selectedAddressId) {
-        // Usuario logueado con direcciones guardadas
-        const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
-        if (selectedAddress) {
-          addressData = selectedAddress
-          finalAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
+      if (deliveryOption === "delivery") {
+        if (user && userAddresses.length > 0 && selectedAddressId) {
+          // Usuario logueado con direcciones guardadas
+          const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
+          if (selectedAddress) {
+            addressData = selectedAddress
+            finalAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
+          }
+        } else if (!finalAddress) {
+          // Usuario invitado o logueado sin direcciones guardadas
+          error("Dirección requerida", "Por favor ingresa tu dirección de entrega")
+          return
         }
-      } else if (!finalAddress) {
-        // Usuario invitado o logueado sin direcciones guardadas
-        error("Dirección requerida", "Por favor ingresa tu dirección de entrega")
-        return
+      } else {
+        // Para retiro por el local, usar dirección del local
+        finalAddress = "Retiro por el local - Paula Pastas"
       }
 
       if (deliveryOption === "delivery" && !selectedDeliverySlot) {
@@ -431,7 +441,7 @@ export default function CheckoutPage() {
           address: finalAddress,
         },
         deliveryOption,
-        deliverySlot: deliveryOption === "delivery" ? selectedDeliverySlot : undefined,
+        deliverySlot: deliveryOption === "delivery" ? selectedDeliverySlot : null,
         comments: formData.comments,
         isUserLoggedIn: !!user,
         userId: user?.uid || null,
@@ -496,36 +506,50 @@ export default function CheckoutPage() {
   const handleOtherPaymentMethods = async () => {
     setIsSubmitting(true)
     try {
-      // Obtener la dirección final - misma lógica que MercadoPago
+      // Validar dirección solo si es delivery
       let finalAddress = formData.address
       let addressData = null
       
-      if (user && userAddresses.length > 0 && selectedAddressId) {
-        // Usuario logueado con direcciones guardadas
-        const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
-        if (selectedAddress) {
-          addressData = selectedAddress
-          finalAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
+      if (deliveryOption === "delivery") {
+        if (user && userAddresses.length > 0 && selectedAddressId) {
+          // Usuario logueado con direcciones guardadas
+          const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
+          if (selectedAddress) {
+            addressData = selectedAddress
+            finalAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
+          }
+        } else if (!finalAddress) {
+          // Usuario invitado o logueado sin direcciones guardadas
+          error("Dirección requerida", "Por favor ingresa tu dirección de entrega")
+          return
         }
-      } else if (!finalAddress) {
-        // Usuario invitado o logueado sin direcciones guardadas
-        error("Dirección requerida", "Por favor ingresa tu dirección de entrega")
-        return
+      } else {
+        // Para retiro por el local, usar dirección del local o vacía
+        finalAddress = "Retiro por el local - Paula Pastas"
       }
 
-      // Usar el mismo formato de datos que MercadoPago
-      const orderData = {
-        userId: user?.uid || null,
-        userName: formData.name,
-        userEmail: formData.email,
-        phone: formData.phone,
-        address: typeof finalAddress === 'string' ? finalAddress : JSON.stringify(finalAddress),
-        comments: formData.comments,
-        deliveryOption: deliveryOption,
-        deliverySlot: deliveryOption === "delivery" ? selectedDeliverySlot : undefined,
-        paymentMethod: paymentMethod,
-        totalAmount: finalPrice, // Usar el precio final con descuento
-        originalAmount: totalPrice, // Mantener el precio original
+      // Crear solo la compra en la colección purchases (eliminando orders)
+      const purchaseData = {
+        buyerId: user?.uid || null,
+        buyerEmail: formData.email,
+        buyerName: formData.name,
+        buyerPhone: formData.phone,
+        buyerAddress: finalAddress,
+        products: items.map((item) => ({
+          productId: item.productId,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          imageUrl: item.imageUrl,
+          originalPrice: item.price,
+          finalPrice: item.price,
+          discountPerUnit: 0
+        })),
+        paymentId: `cash-local-${Date.now()}`, // ID único para efectivo local
+        status: 'pending', // Pago pendiente hasta que se confirme físicamente
+        totalAmount: finalPrice,
+        originalAmount: totalPrice,
+        discountAmount: calculateCouponDiscount(),
         couponApplied: appliedCoupon ? {
           id: appliedCoupon.id,
           codigo: appliedCoupon.codigo,
@@ -533,20 +557,21 @@ export default function CheckoutPage() {
           tipoDescuento: appliedCoupon.tipoDescuento,
           descuentoAplicado: calculateCouponDiscount()
         } : null,
-        items: items.map((item) => ({
-          productId: item.productId,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          imageUrl: item.imageUrl,
-        })),
-        // Campos adicionales para mantener consistencia
+        paidToSellers: false,
+        createdAt: new Date(),
+        deliveryOption: deliveryOption,
+        deliverySlot: deliveryOption === "delivery" ? selectedDeliverySlot : null,
+        comments: formData.comments,
         isUserLoggedIn: !!user,
         addressId: selectedAddressId || null,
         addressData: addressData,
+        orderStatus: 'en_preparacion', // Estado inicial para efectivo local (consistente con MercadoPago)
+        paymentMethod: paymentMethod // Agregar método de pago
       }
 
-      const newOrderId = await FirebaseService.addOrder(orderData)
+      const purchaseId = await FirebaseService.addCompletedPurchase(purchaseData)
+      
+      console.log("✅ Compra creada:", purchaseId)
       
       // Si se aplicó un cupón, actualizar su estado en Firebase (solo una vez)
       if (appliedCoupon && !couponMarkedAsUsed) {
@@ -560,7 +585,7 @@ export default function CheckoutPage() {
         }
       }
       
-      setOrderId(newOrderId)
+      setPurchaseId(purchaseId)
       setOrderConfirmed(true)
       clearCart()
       success("Pedido confirmado", "Tu pedido ha sido recibido con éxito")
@@ -579,7 +604,9 @@ export default function CheckoutPage() {
           <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
           <CardTitle className="text-3xl font-bold mb-4">¡Pedido Confirmado!</CardTitle>
           <p className="text-neutral-700 mb-4">
-            Tu pedido ha sido recibido con éxito. Número de pedido: <span className="font-semibold">{orderId}</span>
+            Tu pedido ha sido recibido con éxito. 
+            <br />
+            <span className="font-semibold">Compra: {purchaseId}</span>
           </p>
           
           {appliedCoupon && (

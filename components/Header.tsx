@@ -39,7 +39,7 @@ export default function Header() {
           href: "/pastas/rellenas",
           id: "rellenas",
           subcategorias: [
-            { name: "Lasaña", href: "/pastas/rellenas/lasana" },
+            { name: "Lasagna", href: "/pastas/rellenas/lasagna" },
             { name: "Ravioles", href: "/pastas/rellenas/ravioles" },
             { name: "Sorrentinos", href: "/pastas/rellenas/sorrentinos" },
           ],

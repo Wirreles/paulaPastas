@@ -51,7 +51,7 @@ async function fixProductosIngredientes() {
           ingredientes = ["Masa de huevo", "Jamón cocido", "Queso cremoso", "Ricota", "Nuez moscada"]
         } else if (producto.nombre.toLowerCase().includes("lasa")) {
           ingredientes = [
-            "Pasta de lasaña",
+            "Pasta de lasagna",
             "Carne picada",
             "Salsa de tomate",
             "Queso mozzarella",

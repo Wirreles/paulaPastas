@@ -18,11 +18,13 @@ import {
 } from "lucide-react"
 import ProductCard from "@/components/ProductCard"
 import ComplementaryProductCard from "@/components/ComplementaryProductCard" // Importar el nuevo componente
-import { useState, useEffect } from "react" // Importar useState y useEffect para el carrusel
+import { useState, useEffect, useCallback } from "react" // Importar useState y useEffect para el carrusel
 import { useAuth } from "@/lib/auth-context"
 import { FirebaseService } from "@/lib/firebase-service"
 import ReviewForm from "@/components/ReviewForm"
 import type { Review as ReviewType } from "@/lib/types"
+import { useCart } from "@/lib/cart-context"
+import { Minus, Plus } from "lucide-react"
 
 // Usar la interfaz Review de types.ts en lugar de la local
 
@@ -130,6 +132,26 @@ export default function ProductoPageClient({
   if (!producto) {
     notFound()
   }
+
+  // Estado para el carrito
+  const [quantity, setQuantity] = useState(1)
+  const { addItem } = useCart()
+
+  // Funciones del carrito
+  const handleQuantityChange = useCallback((delta: number) => {
+    setQuantity(prev => Math.max(1, prev + delta))
+  }, [])
+
+  const handleAddToCart = useCallback(() => {
+    if (quantity > 0 && producto.disponible) {
+      addItem(producto, quantity)
+      setQuantity(1) // Resetear cantidad después de agregar
+    }
+  }, [addItem, producto, quantity])
+
+  const formatPrice = useCallback((price: number) => {
+    return price.toLocaleString('es-AR')
+  }, [])
 
   // JSON-LD para datos estructurados del producto
   const jsonLd = {
@@ -293,7 +315,15 @@ export default function ProductoPageClient({
               {/* Precio y detalles */}
               <div className="bg-white rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-3xl font-bold text-primary-600">${producto.precio}</span>
+                  <div>
+                    <span className="text-3xl font-bold text-primary-600">${formatPrice(producto.precio * quantity)}</span>
+                    {producto.porciones && (
+                      <div className="text-sm text-neutral-500 mt-1">
+                        <Users className="w-4 h-4 inline mr-1" />
+                        {producto.porciones} porciones
+                      </div>
+                    )}
+                  </div>
                   {!producto.disponible && (
                     <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
                       No disponible
@@ -301,18 +331,28 @@ export default function ProductoPageClient({
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm text-neutral-600">
-                  {producto.porciones && (
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-2" />
-                      {producto.porciones} porciones
-                    </div>
-                  )}
+                {/* Selector de cantidad */}
+                <div className="flex items-center justify-center gap-4 mb-4">
+                  <button
+                    onClick={() => handleQuantityChange(-1)}
+                    className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+                    disabled={quantity <= 1}
+                  >
+                    <Minus className="w-4 h-4 text-neutral-700" />
+                  </button>
+                  <span className="text-xl font-semibold text-neutral-900 w-12 text-center">{quantity}</span>
+                  <button
+                    onClick={() => handleQuantityChange(1)}
+                    className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+                  >
+                    <Plus className="w-4 h-4 text-neutral-700" />
+                  </button>
                 </div>
               </div>
 
-              {/* Botón de compra (ya existente) */}
+              {/* Botón de compra */}
               <button
+                onClick={handleAddToCart}
                 disabled={!producto.disponible}
                 className="w-full bg-primary-600 text-white py-4 rounded-full font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >

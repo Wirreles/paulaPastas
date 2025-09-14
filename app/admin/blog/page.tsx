@@ -129,29 +129,38 @@ export default function AdminBlogPage() {
                 <AdminNavigation />
 
         {/* Filter Section */}
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <label className="text-sm font-medium text-neutral-700">Filtrar por categoría:</label>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="todas">Todas las categorías ({blogArticles.length})</option>
-              {uniqueCategories.map((category) => (
-                <option key={category} value={category}>
-                  {getCategoryLabel(category)} ({groupedArticles[category]?.length || 0})
-                </option>
-              ))}
-            </select>
+        <div className="bg-white rounded-lg border border-neutral-200 p-4 shadow-sm mb-6">
+          <div className="space-y-4">
+            {/* Filter Row */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Filtrar por categoría:</label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="todas">Todas las categorías ({blogArticles.length})</option>
+                  {uniqueCategories.map((category) => (
+                    <option key={category} value={category}>
+                      {getCategoryLabel(category)} ({groupedArticles[category]?.length || 0})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Acciones:</label>
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Nuevo Artículo</span>
+                </button>
+              </div>
+            </div>
           </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Nuevo Artículo</span>
-          </button>
         </div>
 
         {/* Articles Table */}
@@ -166,7 +175,7 @@ export default function AdminBlogPage() {
               <p className="text-neutral-600">Cargando artículos...</p>
             </div>
           ) : (
-            <>
+            <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-neutral-200">
                 <thead className="bg-neutral-50">
                   <tr>
@@ -276,7 +285,7 @@ export default function AdminBlogPage() {
                   <p className="text-neutral-600">No se encontraron artículos</p>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>

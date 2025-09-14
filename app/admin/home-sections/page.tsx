@@ -65,53 +65,60 @@ export default function AdminHomeSectionsPage() {
         <AdminNavigation />
 
         {/* Filter Section */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <label className="text-sm font-medium text-neutral-700">Filtrar por sección:</label>
-              <select
-                value={selectedSection}
-                onChange={(e) => setSelectedSection(e.target.value)}
-                className="border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="todas">Todas las secciones ({homeSections.length})</option>
-                {uniqueSections.map((sectionId) => (
-                  <option key={sectionId} value={sectionId}>
-                    {sectionId === "hero" && "Hero Principal"}
-                    {sectionId === "dishes-gallery" && "Galería de Platos"}
-                    {sectionId === "home-categories" && "Categorías del Home"}
-                    {sectionId === "quality-assured" && "Calidad Asegurada"}
-                    {sectionId !== "hero" && sectionId !== "dishes-gallery" && sectionId !== "home-categories" && sectionId !== "quality-assured" && sectionId}
-                    {" "}({groupedSections[sectionId]?.length || 0})
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={loadHomeSections}
-                disabled={loadingSections}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loadingSections ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Cargando...
-                  </>
-                ) : (
-                  <>
-                    🔄 Refresh
-                  </>
-                )}
-              </button>
-              
-              <button
-                onClick={() => setShowForm(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                ➕ Nueva Sección
-              </button>
+        <div className="bg-white rounded-lg border border-neutral-200 p-4 shadow-sm mb-6">
+          <div className="space-y-4">
+            {/* Filter Row */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Filtrar por sección:</label>
+                <select
+                  value={selectedSection}
+                  onChange={(e) => setSelectedSection(e.target.value)}
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="todas">Todas las secciones ({homeSections.length})</option>
+                  {uniqueSections.map((sectionId) => (
+                    <option key={sectionId} value={sectionId}>
+                      {sectionId === "hero" && "Hero Principal"}
+                      {sectionId === "dishes-gallery" && "Galería de Platos"}
+                      {sectionId === "home-categories" && "Categorías del Home"}
+                      {sectionId === "quality-assured" && "Calidad Asegurada"}
+                      {sectionId !== "hero" && sectionId !== "dishes-gallery" && sectionId !== "home-categories" && sectionId !== "quality-assured" && sectionId}
+                      {" "}({groupedSections[sectionId]?.length || 0})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Acciones:</label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={loadHomeSections}
+                    disabled={loadingSections}
+                    className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loadingSections ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Cargando...
+                      </>
+                    ) : (
+                      <>
+                        🔄 Refresh
+                      </>
+                    )}
+                  </button>
+                  
+                  {/* Botón comentado temporalmente - Nueva Sección */}
+                  {/* <button
+                    onClick={() => setShowForm(true)}
+                    className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  >
+                    ➕ Nueva Sección
+                  </button> */}
+                </div>
+              </div>
             </div>
           </div>
         </div>

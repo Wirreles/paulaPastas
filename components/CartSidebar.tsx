@@ -7,7 +7,7 @@ import { ShoppingBag, Minus, Plus, MapPin, CheckCircle } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { formatPrice } from "@/lib/utils"
 import Link from "next/link"
-import Image from "next/image"
+import { ImageWrapper } from "@/components/ui/ImageWrapper"
 
 export default function CartSidebar() {
   const { items, removeItem, updateItemQuantity, totalPrice, totalItems, isCartOpen, closeCart } = useCart()
@@ -37,16 +37,12 @@ export default function CartSidebar() {
               {items.map((item) => (
                 <div key={item.productId} className="flex items-center gap-4 py-3 border-b last:border-b-0">
                   <div className="relative w-20 h-20 flex-shrink-0 rounded-md overflow-hidden">
-                    <Image
-                      src={item.imageUrl && item.imageUrl.startsWith('http') ? item.imageUrl : "/placeholder.svg"}
+                    <ImageWrapper
+                      src={item.imageUrl}
                       alt={item.name}
                       fill
                       className="object-cover"
-                      onError={(e) => {
-                        // Si la imagen falla, cambiar a placeholder
-                        const target = e.target as HTMLImageElement;
-                        target.src = "/placeholder.svg";
-                      }}
+                      fallback="/placeholder.svg?height=80&width=80&text=Producto"
                     />
                   </div>
                   <div className="flex-1">

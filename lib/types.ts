@@ -7,7 +7,7 @@ export interface Producto {
   precio: number
   categoria: "rellenas" | "sin-relleno" | "sin-tacc" | "salsas" // Añadido "salsas"
   subcategoria:
-    | "lasana"
+    | "lasagna"
     | "ravioles"
     | "sorrentinos"
     | "noquis"
@@ -222,7 +222,7 @@ export interface Order {
   address: string
   comments?: string
   deliveryOption: "delivery" | "pickup"
-  deliverySlot?: string // Horario elegido si es delivery
+  deliverySlot?: string | null // Horario elegido si es delivery
   paymentMethod: string // 'mercadopago', 'tarjeta', 'efectivo-local'
   totalAmount: number
   items: OrderItem[]

@@ -42,7 +42,7 @@ const STATIC_REVIEWS = [
     id: 5,
     name: "Sofía M.",
     rating: 5,
-    testimonial: "La lasaña es espectacular, como hecha en casa. ¡Totalmente recomendada!",
+    testimonial: "La lasagna es espectacular, como hecha en casa. ¡Totalmente recomendada!",
   },
   {
     id: 6,
@@ -61,7 +61,7 @@ const STATIC_FAQS = [
   {
     question: "¿Qué tipos de pastas ofrecen?",
     answer:
-      "Ofrecemos pastas artesanales congeladas elaboradas 100% con sémola de trigo, sin colorantes, conservantes ni aditivos: ravioles y sorrentinos clásicos y gourmet (ossobuco, cordero, carré), lasaña tradicional italiana, ya armada y lista para hornear, salsa Bolognesa para acompañar y próximamente tendremos nuevos productos. Además, todos los 29 preparamos un especial de ñoquis para celebrar la tradición. Toda nuestra pasta llega congelada, conservando su frescura y calidad, y se cocina en pocos minutos para disfrutar en casa del auténtico sabor artesanal.",
+      "Ofrecemos pastas artesanales congeladas elaboradas 100% con sémola de trigo, sin colorantes, conservantes ni aditivos: ravioles y sorrentinos clásicos y gourmet (ossobuco, cordero, carré), lasagna tradicional italiana, ya armada y lista para hornear, salsa Bolognesa para acompañar y próximamente tendremos nuevos productos. Además, todos los 29 preparamos un especial de ñoquis para celebrar la tradición. Toda nuestra pasta llega congelada, conservando su frescura y calidad, y se cocina en pocos minutos para disfrutar en casa del auténtico sabor artesanal.",
   },
   {
     question: "¿Qué recomiendan para alguien que compra por primera vez?",
@@ -120,13 +120,13 @@ export default function HomePage() {
   
   // Memoizar funciones para evitar re-renders innecesarios
   const getQuantity = useCallback((productId: string) => {
-    return quantities[productId] || 0
+    return quantities[productId] || 1
   }, [quantities])
 
   const handleQuantityChange = useCallback((productId: string, newQuantity: number) => {
     setQuantities(prev => ({
       ...prev,
-      [productId]: Math.max(0, newQuantity)
+      [productId]: Math.max(1, newQuantity)
     }))
   }, [])
 
@@ -134,7 +134,7 @@ export default function HomePage() {
     const quantity = getQuantity(producto.id)
     if (quantity > 0) {
       addItem(producto, quantity)
-      setQuantities(prev => ({ ...prev, [producto.id]: 0 }))
+      setQuantities(prev => ({ ...prev, [producto.id]: 1 }))
     }
   }, [addItem, getQuantity])
 
@@ -263,12 +263,12 @@ export default function HomePage() {
         "/placeholder.svg?height=300&width=400&text=Ravioles",
     },
     {
-      nombre: "Lasañas",
-      slug: "rellenas/lasana", // Ajustado para la ruta correcta
+      nombre: "Lasagna",
+      slug: "rellenas/lasagna", // Ajustado para la ruta correcta
       descripcion: "Capas de sabor",
       imagen:
-        homeSections.find((s) => s.id === "home-category-lasana")?.imageUrl ||
-        "/placeholder.svg?height=300&width=400&text=Lasañas",
+        homeSections.find((s) => s.id === "home-category-lasagna")?.imageUrl ||
+        "/placeholder.svg?height=300&width=400&text=Lasagna",
     },
     {
       nombre: "Fideos",
@@ -459,7 +459,7 @@ export default function HomePage() {
                             <button
                               onClick={() => handleQuantityChange(producto.id, -1)}
                               className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
-                              disabled={quantity <= 0}
+                              disabled={quantity <= 1}
                             >
                               <Minus className="w-4 h-4 text-neutral-700" />
                             </button>

@@ -14,7 +14,12 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Comida Casera - Pastas Artesanales",
   description: "Pastas frescas y salsas caseras hechas con amor y tradición. ¡Pedí online!",
-    generator: 'v0.dev'
+  generator: 'v0.dev',
+  icons: {
+    icon: '/pplog2.png',
+    shortcut: '/pplog2.png',
+    apple: '/pplog2.png',
+  }
 }
 
 export default function RootLayout({

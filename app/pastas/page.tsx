@@ -1,40 +1,20 @@
+"use client"
+
 import Link from "next/link"
+import { useState, useEffect } from "react"
 import { ImageWrapper } from "@/components/ui/ImageWrapper"
 import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { ArrowRight } from "lucide-react"
-import type { Metadata } from "next"
-
-export const metadata: Metadata = {
-  title: "Pastas Artesanales Caseras en Rosario | Comida Casera",
-  description:
-    "Descubrí nuestra variedad de pastas artesanales: rellenas, sin relleno y sin TACC. Elaboradas diariamente con ingredientes frescos. Delivery en Rosario.",
-  keywords: "pastas artesanales, pastas caseras, ravioles, sorrentinos, lasañas, ñoquis, fideos, sin tacc, rosario",
-  openGraph: {
-    title: "Pastas Artesanales | Comida Casera",
-    description: "Pastas caseras elaboradas con amor y tradición familiar",
-    images: [
-      {
-        url: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=600&fit=crop",
-        width: 1200,
-        height: 600,
-        alt: "Pastas artesanales caseras",
-      },
-    ],
-    type: "website",
-    locale: "es_AR",
-  },
-  alternates: {
-    canonical: "https://comidacasera.com/pastas",
-  },
-}
+import { FirebaseService } from "@/lib/firebase-service"
+import { PageBanner } from "@/lib/types"
 
 const categorias = [
   {
     nombre: "Pastas Rellenas",
     slug: "rellenas",
-    descripcion: "Ravioles, sorrentinos y lasañas con rellenos tradicionales",
+    descripcion: "Ravioles, sorrentinos y lasagna con rellenos tradicionales",
     imagen: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=600&h=400&fit=crop",
-    subcategorias: ["Lasañas", "Ravioles", "Sorrentinos"],
+    subcategorias: ["Lasagna", "Ravioles", "Sorrentinos"],
   },
   {
     nombre: "Pastas Sin Relleno",
@@ -53,6 +33,57 @@ const categorias = [
 ]
 
 export default function PastasPage() {
+  const [banner, setBanner] = useState<PageBanner | null>(null)
+  const [isLoadingBanner, setIsLoadingBanner] = useState(true)
+
+  // useEffect para cargar el banner dinámicamente
+  useEffect(() => {
+    async function loadBanner() {
+      try {
+        setIsLoadingBanner(true)
+        console.log("🔄 Cargando banner para pastas...")
+        
+        const bannerData = await FirebaseService.getPageBannerBySlug("pastas")
+        if (bannerData) {
+          console.log("✅ Banner encontrado:", bannerData)
+          setBanner(bannerData)
+        } else {
+          console.log("⚠️ No se encontró banner específico, usando fallback")
+          // Banner fallback con datos estáticos
+          setBanner({
+            id: "fallback",
+            name: "Banner Pastas",
+            description: "Banner principal de la página de Pastas",
+            imageUrl: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop",
+            title: "Nuestras Pastas",
+            subtitle: "Elaboradas diariamente con ingredientes frescos y recetas tradicionales familiares. Cada pasta es un bocado de amor y tradición.",
+            pageType: "categoria",
+            slug: "pastas",
+            order: 0
+          })
+        }
+      } catch (error) {
+        console.error("❌ Error cargando banner:", error)
+        // En caso de error, usar banner fallback
+        setBanner({
+          id: "fallback",
+          name: "Banner Pastas",
+          description: "Banner principal de la página de Pastas",
+          imageUrl: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop",
+          title: "Nuestras Pastas",
+          subtitle: "Elaboradas diariamente con ingredientes frescos y recetas tradicionales familiares. Cada pasta es un bocado de amor y tradición.",
+          pageType: "categoria",
+          slug: "pastas",
+          order: 0
+        })
+      } finally {
+        setIsLoadingBanner(false)
+      }
+    }
+    
+    loadBanner()
+  }, [])
+
   // JSON-LD para datos estructurados
   const jsonLd = {
     "@context": "https://schema.org",
@@ -99,26 +130,47 @@ export default function PastasPage() {
 
         {/* Hero Section */}
         <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 z-0">
-            <ImageWrapper
-              src="https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop"
-              alt="Pastas artesanales caseras"
-              fill
-              className="object-cover"
-              priority={true}
-              fallback="/placeholder.svg?height=800&width=1200&text=Pastas+Artesanales"
-              placeholder={<HeroPlaceholder className="object-cover" />}
-            />
-            <div className="absolute inset-0 bg-black/40" />
-          </div>
+          {isLoadingBanner ? (
+            // Loading state
+            <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-neutral-600">Cargando banner...</p>
+              </div>
+            </div>
+          ) : banner ? (
+            // Banner dinámico
+            <>
+              <div className="absolute inset-0 z-0">
+                <ImageWrapper
+                  src={banner.imageUrl}
+                  alt={banner.description}
+                  fill
+                  className="object-cover"
+                  priority={true}
+                  fallback="/placeholder.svg?height=800&width=1200&text=Pastas+Artesanales"
+                  placeholder={<HeroPlaceholder className="object-cover" />}
+                />
+                <div className="absolute inset-0 bg-black/40" />
+              </div>
 
-          <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
-            <h1 className="font-display text-5xl md:text-7xl font-bold mb-6">Nuestras Pastas</h1>
-            <p className="text-xl md:text-2xl text-neutral-200 max-w-3xl mx-auto">
-              Elaboradas diariamente con ingredientes frescos y recetas tradicionales familiares. Cada pasta es un
-              bocado de amor y tradición.
-            </p>
-          </div>
+              <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
+                <h1 className="font-display text-5xl md:text-7xl font-bold mb-6">
+                  {banner.title}
+                </h1>
+                <p className="text-xl md:text-2xl text-neutral-200 max-w-3xl mx-auto">
+                  {banner.subtitle}
+                </p>
+              </div>
+            </>
+          ) : (
+            // Fallback si no hay banner
+            <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-neutral-600">Banner no disponible</p>
+              </div>
+            </div>
+          )}
         </section>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

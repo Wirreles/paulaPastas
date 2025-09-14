@@ -212,7 +212,7 @@ export default function PageBannerForm({ banner, onClose, onSave }: PageBannerFo
                   className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">Seleccionar subcategoría</option>
-                  <option value="lasana">Lasaña</option>
+                  <option value="lasagna">Lasagna</option>
                   <option value="ravioles">Ravioles</option>
                   <option value="sorrentinos">Sorrentinos</option>
                   <option value="noquis">Ñoquis</option>

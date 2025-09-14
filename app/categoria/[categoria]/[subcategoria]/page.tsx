@@ -17,10 +17,10 @@ interface SubcategoriaPageProps {
 
 const subcategoriaData = {
   rellenas: {
-    lasana: {
-      nombre: "Lasañas Caseras",
+    lasagna: {
+      nombre: "Lasagna Caseras",
       descripcion:
-        "Lasañas artesanales con capas perfectas de pasta fresca, rellenos caseros y quesos de primera calidad. Listas para hornear en tu casa.",
+        "Lasagna artesanales con capas perfectas de pasta fresca, rellenos caseros y quesos de primera calidad. Listas para hornear en tu casa.",
       imagen: "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=1200&h=600&fit=crop",
     },
     ravioles: {
