@@ -432,7 +432,7 @@ export default function SalsasPage() {
               Nuestro equipo está listo para responder todas tus preguntas sobre nuestras salsas
             </p>
             <a
-              href="https://wa.me/5493411234567"
+              href="https://wa.me/5493413557400"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center px-8 py-4 bg-[#25D366] text-white font-semibold rounded-lg hover:bg-[#1DA851] transition-colors"

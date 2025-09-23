@@ -318,11 +318,6 @@ export default async function CategoriaPage({ params }: CategoriaPageProps) {
                   </div>
                   <h3 className="text-xl font-semibold text-neutral-900 mb-2">Próximamente</h3>
                   <p className="text-neutral-600">Estamos preparando deliciosos productos para esta categoría</p>
-                  <div className="mt-4 text-sm text-neutral-500">
-                    <p>
-                      Debug: Encontrados {productos.length} productos para {categoria}
-                    </p>
-                  </div>
                 </div>
               )}
             </Suspense>

@@ -16,10 +16,9 @@
  */
 
 import { useEffect, useState } from "react"
-import { useAuth } from "@/lib/auth-context"
+import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import ProtectedRoute from "@/components/ProtectedRoute"
 import { FirebaseService } from "@/lib/firebase-service"
 import { 
   Package, 
@@ -77,7 +76,6 @@ interface Purchase {
 }
 
 export default function OrdersPage() {
-  const { user, isAdmin, loading } = useAuth()
   const router = useRouter()
   const [purchases, setPurchases] = useState<Purchase[]>([])
   const [loadingPurchases, setLoadingPurchases] = useState(true)
@@ -85,16 +83,8 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("todos")
 
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
-      router.push("/login")
-    }
-  }, [user, isAdmin, loading, router])
-
-  useEffect(() => {
-    if (isAdmin) {
-      loadPurchases()
-    }
-  }, [isAdmin])
+    loadPurchases()
+  }, [])
 
   const loadPurchases = async () => {
     try {
@@ -433,19 +423,8 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
     usuariosInvitados: purchases.filter(p => !p.isUserLoggedIn).length,
   }
 
-  if (loading || !isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Verificando permisos...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <ProtectedRoute requireAuth={true} requireAdmin={true} redirectTo="/login">
+    <AdminProtectedRoute>
       <div className="min-h-screen bg-neutral-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <AdminNavigation />
@@ -804,6 +783,6 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
           </div>
         </div>
       </div>
-    </ProtectedRoute>
+    </AdminProtectedRoute>
   )
 } 

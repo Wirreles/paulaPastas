@@ -77,11 +77,12 @@ export default function CheckoutPage() {
 
   // Horarios de entrega fijos (ejemplo, idealmente vendrían de Firebase)
   const deliverySlots = [
-    "Miércoles 18:00 - 20:00 hs",
-    "Jueves 18:00 - 20:00 hs",
-    "Viernes 18:00 - 20:00 hs",
-    "Sábado 12:00 - 14:00 hs",
-    "Martes 18:00 - 20:00 hs (sujeta a confirmación)",
+    "Miércoles 11:00 - 14:00 hs",
+    "Jueves 11:00 - 14:00 hs",
+    "Viernes 11:00 - 14:00 hs",
+    "Sábado 11:00 - 14:00 hs",
+    "Viernes 17:00 - 19:00 hs",
+    "Martes 17:00 - 19:00 hs",
   ]
 
   useEffect(() => {
@@ -933,7 +934,7 @@ export default function CheckoutPage() {
               {/* Paso 3: Elegir día y horario de entrega preferido */}
               {step === 3 && (
                 <div className="space-y-6">
-                  <h2 className="text-xl font-semibold mb-4">Paso 3: Elegir día y horario de entrega</h2>
+                  <h2 className="text-xl font-semibold mb-4">Elegí tu horario de preferencia para recibir el pedido</h2>
                   
                   {deliveryOption === "delivery" ? (
                     <div className="space-y-4">
@@ -958,11 +959,18 @@ export default function CheckoutPage() {
                           <p className="text-sm text-red-700">{errors.deliverySlot}</p>
                         </div>
                       )}
+                      
+                      {/* Texto informativo sobre confirmación por WhatsApp */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-sm text-blue-700">
+                          <strong>Aviso:</strong> Para confirmar el día y horario definitivo nos vamos a comunicar por WhatsApp.
+                        </p>
+                      </div>
                     </div>
                   ) : (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                       <p className="text-sm text-blue-700">
-                        Has seleccionado retiro por el local. Te contactaremos para coordinar el horario.
+                        <strong>Retiro por el local:</strong> El horario de atención del local es de miércoles a sábado de 10:30 a 14:30. Te enviaremos la confirmación cuando esté listo para retirar.
                       </p>
                     </div>
                   )}

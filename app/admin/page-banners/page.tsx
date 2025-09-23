@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute"
 import { ImageWrapper } from "@/components/ui/ImageWrapper"
 import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
-import { Edit, ImageIcon, Plus } from "lucide-react"
+import { Edit, ImageIcon, Plus, RefreshCcw } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import { PageBanner } from "@/lib/types"
 import PageBannerForm from "@/components/admin/PageBannerForm"
 import AdminNavigation from "@/components/admin/AdminNavigation"
+import { toast } from "sonner"
 
 export default function AdminPageBannersPage() {
   const [pageBanners, setPageBanners] = useState<PageBanner[]>([])
@@ -28,8 +30,10 @@ export default function AdminPageBannersPage() {
       const data = await FirebaseService.getPageBanners()
       console.log("🎨 Banners cargados:", data)
       setPageBanners(data)
+      toast.success("Banners actualizados correctamente")
     } catch (error) {
       console.error("Error loading page banners:", error)
+      toast.error("Error al cargar los banners")
     } finally {
       setLoadingBanners(false)
     }
@@ -59,32 +63,52 @@ export default function AdminPageBannersPage() {
     : pageBanners.filter(banner => banner.pageType === selectedType)
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <AdminNavigation />
+    <AdminProtectedRoute>
+      <div className="min-h-screen bg-neutral-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <AdminNavigation />
 
-        {/* Filter Section */}
-        <div className="mb-6">
-          <div className="flex items-center space-x-4">
-            <label className="text-sm font-medium text-neutral-700">Filtrar por tipo:</label>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="todos">Todos los tipos ({pageBanners.length})</option>
-              {uniqueTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type === "categoria" && "Categorías"}
-                  {type === "subcategoria" && "Subcategorías"}
-                  {type === "especial" && "Páginas Especiales"}
-                  {type !== "categoria" && type !== "subcategoria" && type !== "especial" && type}
-                  {" "}({groupedBanners[type]?.length || 0})
-                </option>
-              ))}
-            </select>
+          {/* Filter Section */}
+          <div className="bg-white rounded-lg border border-neutral-200 p-4 shadow-sm mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Filtrar por tipo:</label>
+                <select
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="todos">Todos los tipos ({pageBanners.length})</option>
+                  {uniqueTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type === "categoria" && "Categorías"}
+                      {type === "subcategoria" && "Subcategorías"}
+                      {type === "especial" && "Páginas Especiales"}
+                      {type !== "categoria" && type !== "subcategoria" && type !== "especial" && type}
+                      {" "}({groupedBanners[type]?.length || 0})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-3 w-full sm:w-auto">
+                <button
+                  onClick={loadPageBanners}
+                  disabled={loadingBanners}
+                  className="flex-1 inline-flex items-center justify-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCcw className={`-ml-1 mr-2 h-5 w-5 text-neutral-500 ${loadingBanners ? 'animate-spin' : ''}`} aria-hidden="true" />
+                  Actualizar
+                </button>
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="flex-1 inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto"
+                >
+                  <Plus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                  Nuevo Banner
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
 
         {/* Banners Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -177,21 +201,22 @@ export default function AdminPageBannersPage() {
         </div>
       </div>
 
-      {/* Form Modal */}
-      {showForm && (
-        <PageBannerForm
-          banner={editingBanner}
-          onClose={() => {
-            setShowForm(false)
-            setEditingBanner(null)
-          }}
-          onSave={() => {
-            loadPageBanners()
-            setShowForm(false)
-            setEditingBanner(null)
-          }}
-        />
-      )}
-    </div>
+        {/* Form Modal */}
+        {showForm && (
+          <PageBannerForm
+            banner={editingBanner}
+            onClose={() => {
+              setShowForm(false)
+              setEditingBanner(null)
+            }}
+            onSave={() => {
+              loadPageBanners()
+              setShowForm(false)
+              setEditingBanner(null)
+            }}
+          />
+        )}
+      </div>
+    </AdminProtectedRoute>
   )
 } 

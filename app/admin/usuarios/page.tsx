@@ -1,10 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useAuth } from "@/lib/auth-context"
+import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import ProtectedRoute from "@/components/ProtectedRoute"
 import { 
   Users, 
   Mail, 
@@ -23,7 +22,6 @@ import type { Usuario } from "@/lib/types"
 import AdminNavigation from "@/components/admin/AdminNavigation"
 
 export default function UsuariosPage() {
-  const { user, isAdmin, loading } = useAuth()
   const router = useRouter()
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [loadingUsuarios, setLoadingUsuarios] = useState(true)
@@ -32,16 +30,8 @@ export default function UsuariosPage() {
   const [filterStatus, setFilterStatus] = useState<string>("todos")
 
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
-      router.push("/login")
-    }
-  }, [user, isAdmin, loading, router])
-
-  useEffect(() => {
-    if (isAdmin) {
-      loadUsuarios()
-    }
-  }, [isAdmin])
+    loadUsuarios()
+  }, [])
 
   const loadUsuarios = async () => {
     try {
@@ -99,23 +89,13 @@ export default function UsuariosPage() {
     activos: usuarios.filter((u) => !u.baneado).length,
   }
 
-  if (loading || !isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Verificando permisos...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <AdminNavigation />
+    <AdminProtectedRoute>
+      <div className="min-h-screen bg-neutral-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <AdminNavigation />
 
-        {/* Stats */}
+          {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <div className="flex items-center">
@@ -357,7 +337,8 @@ export default function UsuariosPage() {
             </div>
           )}
         </div>
+        </div>
       </div>
-    </div>
+    </AdminProtectedRoute>
   )
 }

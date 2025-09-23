@@ -71,7 +71,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = async () => {
-    await signOut(auth)
+    try {
+      // Limpiar datos del estado local
+      setUser(null)
+      setUserData(null)
+      
+      // Cerrar sesión en Firebase
+      await signOut(auth)
+      
+      // Limpiar cualquier dato almacenado en localStorage/sessionStorage
+      if (typeof window !== 'undefined') {
+        localStorage.clear()
+        sessionStorage.clear()
+      }
+      
+      console.log("✅ Sesión cerrada completamente")
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error)
+      // Aún así limpiar los datos locales
+      setUser(null)
+      setUserData(null)
+      if (typeof window !== 'undefined') {
+        localStorage.clear()
+        sessionStorage.clear()
+      }
+    }
   }
 
   const isAdmin = userData?.rol === "admin"

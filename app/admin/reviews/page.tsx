@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute"
 import { Star, Check, X, ThumbsUp, Filter, ChevronLeft, ChevronRight, Trash2, RefreshCw } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import { Review } from "@/lib/types"
@@ -184,11 +185,12 @@ export default function ReviewsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <AdminNavigation />
+    <AdminProtectedRoute>
+      <div className="min-h-screen bg-neutral-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <AdminNavigation />
 
-        {/* Estadísticas */}
+          {/* Estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
@@ -538,7 +540,8 @@ export default function ReviewsPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </AdminProtectedRoute>
   )
 }

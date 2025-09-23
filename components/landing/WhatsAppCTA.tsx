@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { MessageCircle } from "lucide-react"
 
 export default function WhatsAppCTA() {
-  const whatsappNumber = "5493411234567" // Reemplaza con tu número de WhatsApp
+  const whatsappNumber = "5493413557400" // Número de WhatsApp de Paula Pastas
   const whatsappMessage = "Hola, tengo una consulta sobre las salsas de Comida Casera."
 
   return (

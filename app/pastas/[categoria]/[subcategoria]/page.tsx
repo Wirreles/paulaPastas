@@ -314,13 +314,6 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
                   </div>
                   <h3 className="text-xl font-semibold text-neutral-900 mb-2">Próximamente</h3>
                   <p className="text-neutral-600">Estamos preparando deliciosos {data.nombre.toLowerCase()} para vos</p>
-                  <div className="mt-4 p-4 bg-yellow-50 rounded-lg text-sm text-neutral-600">
-                    <p className="font-medium">Debug Info:</p>
-                    <p>Categoría: {categoria}</p>
-                    <p>Subcategoría: {subcategoria}</p>
-                    <p>Productos encontrados: {productos.length}</p>
-                    <p>Revisa la consola del navegador para más detalles</p>
-                  </div>
                 </div>
               )}
             </Suspense>
@@ -403,7 +396,7 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
                   Te ayudamos por WhatsApp. Nuestro equipo está listo para responder todas tus preguntas sobre nuestros ravioles artesanales.
                 </p>
                 <a
-                  href="https://wa.me/5493411234567"
+                  href="https://wa.me/5493413557400"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center px-8 py-4 bg-[#25D366] text-white font-semibold rounded-xl hover:bg-[#1DA851] transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute"
 import { 
   Ticket, 
   Plus, 
@@ -497,10 +498,11 @@ export default function CuponesAdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Navegación Administrativa */}
-        <AdminNavigation />
+    <AdminProtectedRoute>
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Navegación Administrativa */}
+          <AdminNavigation />
         
         {/* Header */}
         <div className="mb-8">
@@ -761,7 +763,8 @@ export default function CuponesAdminPage() {
             coupon={selectedCoupon}
           />
         )}
+        </div>
       </div>
-    </div>
+    </AdminProtectedRoute>
   )
 }

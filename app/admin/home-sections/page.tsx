@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute"
 import { Edit, ImageIcon } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import type { HomeSection } from "@/lib/types"
@@ -60,9 +61,10 @@ export default function AdminHomeSectionsPage() {
     : homeSections.filter(section => section.sectionId === selectedSection)
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <AdminNavigation />
+    <AdminProtectedRoute>
+      <div className="min-h-screen bg-neutral-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <AdminNavigation />
 
         {/* Filter Section */}
         <div className="bg-white rounded-lg border border-neutral-200 p-4 shadow-sm mb-6">
@@ -208,21 +210,22 @@ export default function AdminHomeSectionsPage() {
         </div>
       </div>
 
-      {/* Home Section Form Modal */}
-      {showForm && (
-        <HomeSectionForm
-          section={editingSection}
-          onClose={() => {
-            setShowForm(false)
-            setEditingSection(null)
-          }}
-          onSave={() => {
-            setShowForm(false)
-            setEditingSection(null)
-            loadHomeSections()
-          }}
-        />
-      )}
-    </div>
+        {/* Home Section Form Modal */}
+        {showForm && (
+          <HomeSectionForm
+            section={editingSection}
+            onClose={() => {
+              setShowForm(false)
+              setEditingSection(null)
+            }}
+            onSave={() => {
+              setShowForm(false)
+              setEditingSection(null)
+              loadHomeSections()
+            }}
+          />
+        )}
+      </div>
+    </AdminProtectedRoute>
   )
 }

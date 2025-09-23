@@ -301,10 +301,10 @@ export default function ProductoPageClient({
             </div>
           </div>
 
-          {/* 2. ✅ Sección: "Complémentalo con" */}
+          {/* 2. ✅ Sección: "Complementalo con" */}
           {productosComplementarios.length > 0 && (
             <section className="mt-16">
-              <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">Complémentalo con</h2>
+              <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">Complementalo con</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {productosComplementarios.map((complemento) => (
                   <ComplementaryProductCard key={complemento.id} producto={complemento} />
@@ -354,8 +354,7 @@ export default function ProductoPageClient({
                   para más detalles sobre tiempos y costos de entrega en tu zona.
                 </p>
                 <p>
-                  Nuestras salsas se entregan frescas y se pueden conservar en la heladera por 2-3 días o congelar hasta
-                  por 3 meses para mantener su frescura y calidad.
+                  Nuestras salsas se entregan frescas y se pueden conservar en la heladera por 2-3 días o congelar hasta por 2 meses para mantener su frescura y calidad.
                 </p>
               </div>
             </details>

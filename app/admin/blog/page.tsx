@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute"
 import { ImageWrapper } from "@/components/ui/ImageWrapper"
 import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
-import { Edit, FileText, Plus, Eye, Trash2, Calendar, Clock } from "lucide-react"
+import { Edit, FileText, Plus, Eye, Trash2, Calendar, Clock, RefreshCcw } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import { BlogArticle } from "@/lib/types"
 import BlogArticleForm from "@/components/admin/BlogArticleForm"
 import AdminNavigation from "@/components/admin/AdminNavigation"
+import { toast } from "sonner"
 
 type BlogArticleFormType = Omit<BlogArticle, "publishedAt"> & { publishedAt?: string };
 
@@ -30,8 +32,10 @@ export default function AdminBlogPage() {
       const data = await FirebaseService.getBlogArticles()
       console.log("📝 Artículos cargados:", data)
       setBlogArticles(data)
+      toast.success("Artículos actualizados correctamente")
     } catch (error) {
       console.error("Error loading blog articles:", error)
+      toast.error("Error al cargar los artículos")
     } finally {
       setLoadingArticles(false)
     }
@@ -124,9 +128,10 @@ export default function AdminBlogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <AdminNavigation />
+    <AdminProtectedRoute>
+      <div className="min-h-screen bg-neutral-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <AdminNavigation />
 
         {/* Filter Section */}
         <div className="bg-white rounded-lg border border-neutral-200 p-4 shadow-sm mb-6">
@@ -151,13 +156,23 @@ export default function AdminBlogPage() {
 
               <div className="flex-1 min-w-0">
                 <label className="block text-sm font-medium text-neutral-700 mb-2">Acciones:</label>
-                <button
-                  onClick={() => setShowForm(true)}
-                  className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Nuevo Artículo</span>
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={loadBlogArticles}
+                    disabled={loadingArticles}
+                    className="flex-1 inline-flex items-center justify-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <RefreshCcw className={`-ml-1 mr-2 h-5 w-5 text-neutral-500 ${loadingArticles ? 'animate-spin' : ''}`} aria-hidden="true" />
+                    Actualizar
+                  </button>
+                  <button
+                    onClick={() => setShowForm(true)}
+                    className="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Nuevo Artículo</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -290,21 +305,22 @@ export default function AdminBlogPage() {
         </div>
       </div>
 
-      {/* Form Modal */}
-      {showForm && (
-        <BlogArticleForm
-          article={editingArticle as BlogArticleFormType}
-          onClose={() => {
-            setShowForm(false)
-            setEditingArticle(null)
-          }}
-          onSave={() => {
-            loadBlogArticles()
-            setShowForm(false)
-            setEditingArticle(null)
-          }}
-        />
-      )}
-    </div>
+        {/* Form Modal */}
+        {showForm && (
+          <BlogArticleForm
+            article={editingArticle as BlogArticleFormType}
+            onClose={() => {
+              setShowForm(false)
+              setEditingArticle(null)
+            }}
+            onSave={() => {
+              loadBlogArticles()
+              setShowForm(false)
+              setEditingArticle(null)
+            }}
+          />
+        )}
+      </div>
+    </AdminProtectedRoute>
   )
 }

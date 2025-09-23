@@ -406,7 +406,12 @@ export class FirebaseService {
     try {
       const q = query(collection(db, "pageBanners"), orderBy("order", "asc"))
       const snapshot = await getDocs(q)
-      const banners = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as PageBanner)
+      const banners = snapshot.docs.map((doc) => {
+        const data = doc.data()
+        // Remover el campo 'id' interno si existe para evitar conflictos
+        const { id: _, ...docData } = data
+        return { id: doc.id, ...docData } as PageBanner
+      })
       console.log(`🎨 PageBanners cargados: ${banners.length} banners`)
       return banners
     } catch (error) {
@@ -424,7 +429,11 @@ export class FirebaseService {
         console.log(`❌ No se encontró banner para slug: "${slug}"`)
         return null
       }
-      const banner = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as PageBanner
+      const doc = snapshot.docs[0]
+      const data = doc.data()
+      // Remover el campo 'id' interno si existe para evitar conflictos
+      const { id: _, ...docData } = data
+      const banner = { id: doc.id, ...docData } as PageBanner
       console.log(`✅ Banner encontrado para "${slug}":`, banner.name)
       return banner
     } catch (error) {

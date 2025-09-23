@@ -648,7 +648,7 @@ export default function HomePage() {
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
             <a
-              href="https://wa.me/5493411234567"
+              href="https://wa.me/5493413557400"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center px-8 py-4 bg-[#25D366] text-white font-semibold rounded-lg hover:bg-[#1DA851] transition-colors w-full sm:max-w-xs"
@@ -830,7 +830,7 @@ export default function HomePage() {
             Te ayudamos por WhatsApp. Nuestro equipo está listo para responder todas tus preguntas.
           </p>
           <a
-            href="https://wa.me/5493411234567" // Reemplaza con tu número de WhatsApp
+            href="https://wa.me/5493413557400" // Número de WhatsApp de Paula Pastas
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center px-8 py-4 bg-[#25D366] text-white font-semibold rounded-lg hover:bg-[#1DA851] transition-colors"
