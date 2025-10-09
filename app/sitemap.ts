@@ -1,6 +1,35 @@
 import type { MetadataRoute } from "next"
 import { FirebaseService } from "@/lib/firebase-service"
 
+// Función para convertir cualquier fecha a formato ISO 8601 válido
+function formatDateForSitemap(date: any): Date {
+  if (!date) return new Date()
+  
+  try {
+    // Si es un Timestamp de Firebase, convertir a Date
+    if (date && typeof date === 'object' && 'toDate' in date) {
+      return date.toDate()
+    }
+    // Si ya es un Date, devolverlo
+    if (date instanceof Date) {
+      return date
+    }
+    // Si es string, intentar parsearlo
+    if (typeof date === 'string') {
+      return new Date(date)
+    }
+    // Si es un número (timestamp), convertir
+    if (typeof date === 'number') {
+      return new Date(date)
+    }
+  } catch (error) {
+    console.warn('Error converting date for sitemap:', error)
+  }
+  
+  // Fallback a fecha actual
+  return new Date()
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://paulapastas.com"
 
@@ -171,7 +200,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const productos = await FirebaseService.getProductos()
     const productUrls = productos.map((producto) => ({
       url: `${baseUrl}/pastas/${producto.categoria}/${producto.subcategoria || "productos"}/${producto.slug}`,
-      lastModified: producto.fechaActualizacion || new Date(),
+      lastModified: formatDateForSitemap(producto.fechaActualizacion),
       changeFrequency: "weekly" as const,
       priority: 0.7,
     }))
