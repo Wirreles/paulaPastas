@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin/", "/api/", "/_next/"],
     },
-    sitemap: "https://comidacasera.com/sitemap.xml",
+    sitemap: "https://paulapastas.com/sitemap.xml",
   }
 }

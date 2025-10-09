@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next"
 import { FirebaseService } from "@/lib/firebase-service"
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://comidacasera.com"
+  const baseUrl = "https://paulapastas.com"
 
   // URLs estáticas
   const staticUrls = [
@@ -77,6 +77,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "weekly" as const,
       priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/salsas`, // Página principal de salsas
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/packs`, // Página principal de packs
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
     },
     // Subcategorías
     {
