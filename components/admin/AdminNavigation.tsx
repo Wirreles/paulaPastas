@@ -13,8 +13,8 @@ export default function AdminNavigation() {
     { href: "/admin", label: "Productos", icon: "📦", priority: "high" },
     { href: "/admin/orders", label: "Pedidos", icon: "📋", priority: "high" },
     { href: "/admin/usuarios", label: "Usuarios", icon: "👥", priority: "medium" },
-    { href: "/admin/home-sections", label: "Secciones del Home", icon: "🏠", priority: "medium" },
-    { href: "/admin/page-banners", label: "Banners", icon: "🖼️", priority: "medium" },
+    // { href: "/admin/home-sections", label: "Secciones del Home", icon: "🏠", priority: "medium" }, // Deshabilitado: secciones ahora son estáticas
+    // { href: "/admin/page-banners", label: "Banners", icon: "🖼️", priority: "medium" }, // Deshabilitado: banners ahora son estáticos
     { href: "/admin/blog", label: "Blog", icon: "📝", priority: "low" },
     { href: "/admin/reviews", label: "Reseñas", icon: "⭐", priority: "low" },
     { href: "/admin/newsletter", label: "Newsletter", icon: "📧", priority: "low" },

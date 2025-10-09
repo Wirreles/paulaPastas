@@ -2,83 +2,29 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ImageWrapper } from "@/components/ui/ImageWrapper"
-import { HeroPlaceholder, ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
+import Image from "next/image"
 import { ChevronDown, MessageCircle, ArrowRight, ShoppingBag, Minus, Plus, Package, Gift, Clock, Users, Eye, Star } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
-import { PageBanner, Producto } from "@/lib/types"
+import { Producto } from "@/lib/types"
 import { useCart } from "@/lib/cart-context"
 
 
 
 export default function PackRavioladaPage() {
-  const [banner, setBanner] = useState<PageBanner | null>(null)
-  const [isLoadingBanner, setIsLoadingBanner] = useState(true)
+  // Datos estáticos del banner
+  const bannerData = {
+    imageUrl: "/banners/banner-pack.webp",
+    title: "Nuestros combos artesanales",
+    subtitle: "Proba más sabores, compartí más momentos. Packs ideales para cenas con amigos, degustaciones en pareja o para regalar.",
+    description: "Banner principal de la página de Packs y Combos Artesanales"
+  }
+
   const [packs, setPacks] = useState<Producto[]>([])
   const [isLoadingPacks, setIsLoadingPacks] = useState(true)
   
   // Estados para el carrito y cantidades (igual que en el home)
   const { addItem } = useCart()
   const [quantities, setQuantities] = useState<Record<string, number>>({})
-
-  // useEffect para cargar el banner dinámicamente
-  useEffect(() => {
-    async function loadBanner() {
-      try {
-        setIsLoadingBanner(true)
-        console.log("🔄 Cargando banner para pack-raviolada...")
-        
-        // Obtener todos los banners y filtrar por la página específica
-        const allBanners = await FirebaseService.getPageBanners()
-        const packBanner = allBanners.find(b => 
-          b.slug === "pack-raviolada" && 
-          b.pageType === "subcategoria" &&
-          b.subcategoria === "pack"
-        )
-        
-        if (packBanner) {
-          console.log("✅ Banner encontrado:", packBanner)
-          setBanner(packBanner)
-        } else {
-          console.log("⚠️ No se encontró banner específico, usando fallback")
-          // Banner fallback con datos estáticos
-          setBanner({
-            id: "fallback",
-            name: "Banner Pack Raviolada",
-            description: "Banner principal de la página de Packs y Combos Artesanales",
-            imageUrl: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop",
-            title: "Nuestros combos artesanales",
-            subtitle: "Proba más sabores, compartí más momentos. Packs ideales para cenas con amigos, degustaciones en pareja o para regalar.",
-            pageType: "subcategoria",
-            categoria: "sin-tacc",
-            subcategoria: "pack",
-            slug: "pack-raviolada",
-            order: 1
-          })
-        }
-      } catch (error) {
-        console.error("❌ Error cargando banner:", error)
-        // En caso de error, usar banner fallback
-        setBanner({
-          id: "fallback",
-          name: "Banner Pack Raviolada",
-          description: "Banner principal de la página de Packs y Combos Artesanales",
-          imageUrl: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop",
-          title: "Nuestros combos artesanales",
-          subtitle: "Proba más sabores, compartí más momentos. Packs ideales para cenas con amigos, degustaciones en pareja o para regalar.",
-          pageType: "subcategoria",
-          categoria: "sin-tacc",
-          subcategoria: "pack",
-          slug: "pack-raviolada",
-          order: 1
-        })
-      } finally {
-        setIsLoadingBanner(false)
-      }
-    }
-    
-    loadBanner()
-  }, [])
 
   // useEffect para cargar los packs dinámicamente
   useEffect(() => {
@@ -220,51 +166,30 @@ export default function PackRavioladaPage() {
           </div>
         </div>
 
-        {/* 1. Banner Principal - Ahora dinámico */}
+        {/* 1. Banner Principal - Ahora estático */}
         <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
-          {isLoadingBanner ? (
-            // Loading state
-            <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-neutral-600">Cargando banner...</p>
-              </div>
-            </div>
-          ) : banner ? (
-            // Banner dinámico
-            <>
-              <div className="absolute inset-0 z-0">
-                <ImageWrapper
-                  src={banner.imageUrl}
-                  alt={banner.description}
-                  fill
-                  className="object-cover"
-                  priority={true}
-                  fallback="/placeholder.svg?height=800&width=1200&text=Pack+Raviolada"
-                  placeholder={<HeroPlaceholder className="object-cover" />}
-                />
-                <div className="absolute inset-0 bg-black/60" />
-              </div>
+          <div className="absolute inset-0 z-0">
+            <Image
+              src={bannerData.imageUrl}
+              alt={bannerData.description}
+              fill
+              className="object-cover"
+              priority={true}
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-black/60" />
+          </div>
 
-              <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
-                <h1 className="font-display text-5xl md:text-7xl font-bold mb-6">
-                  {banner.title}
-                </h1>
-                <div className="bg-black/40 backdrop-blur-sm rounded-lg p-8 max-w-3xl mx-auto">
-                  <p className="text-xl md:text-2xl text-neutral-100 leading-relaxed mb-4">
-                    {banner.subtitle}
-                  </p>
-                </div>
-              </div>
-            </>
-          ) : (
-            // Fallback si no hay banner
-            <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-neutral-600">Banner no disponible</p>
-              </div>
+          <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
+            <h1 className="font-display text-5xl md:text-7xl font-bold mb-6">
+              {bannerData.title}
+            </h1>
+            <div className="bg-black/40 backdrop-blur-sm rounded-lg p-8 max-w-3xl mx-auto">
+              <p className="text-xl md:text-2xl text-neutral-100 leading-relaxed mb-4">
+                {bannerData.subtitle}
+              </p>
             </div>
-          )}
+          </div>
         </section>
 
         {/* 2. Sección de Productos */}
@@ -299,15 +224,12 @@ export default function PackRavioladaPage() {
                       {/* Imagen más grande */}
                       <div className="relative h-64">
                         <Link href={productUrl}>
-                          <ImageWrapper
+                          <Image
                             src={pack.imagen}
                             alt={`${pack.nombre} caseros artesanales`}
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            fallback="/placeholder.svg?height=300&width=400&text=Pack"
-                            placeholder={<ProductPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
-                            lazyThreshold={0.1} // Cargar más temprano
-                            loading="lazy"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           />
                         </Link>
                         {pack.destacado && (

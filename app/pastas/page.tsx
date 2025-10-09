@@ -1,12 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect } from "react"
-import { ImageWrapper } from "@/components/ui/ImageWrapper"
-import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
+import Image from "next/image"
 import { ArrowRight } from "lucide-react"
-import { FirebaseService } from "@/lib/firebase-service"
-import { PageBanner } from "@/lib/types"
 
 const categorias = [
   {
@@ -33,56 +29,13 @@ const categorias = [
 ]
 
 export default function PastasPage() {
-  const [banner, setBanner] = useState<PageBanner | null>(null)
-  const [isLoadingBanner, setIsLoadingBanner] = useState(true)
-
-  // useEffect para cargar el banner dinámicamente
-  useEffect(() => {
-    async function loadBanner() {
-      try {
-        setIsLoadingBanner(true)
-        console.log("🔄 Cargando banner para pastas...")
-        
-        const bannerData = await FirebaseService.getPageBannerBySlug("pastas")
-        if (bannerData) {
-          console.log("✅ Banner encontrado:", bannerData)
-          setBanner(bannerData)
-        } else {
-          console.log("⚠️ No se encontró banner específico, usando fallback")
-          // Banner fallback con datos estáticos
-          setBanner({
-            id: "fallback",
-            name: "Banner Pastas",
-            description: "Banner principal de la página de Pastas",
-            imageUrl: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop",
-            title: "Nuestras Pastas",
-            subtitle: "Elaboradas diariamente con ingredientes frescos y recetas tradicionales familiares. Cada pasta es un bocado de amor y tradición.",
-            pageType: "categoria",
-            slug: "pastas",
-            order: 0
-          })
-        }
-      } catch (error) {
-        console.error("❌ Error cargando banner:", error)
-        // En caso de error, usar banner fallback
-        setBanner({
-          id: "fallback",
-          name: "Banner Pastas",
-          description: "Banner principal de la página de Pastas",
-          imageUrl: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop",
-          title: "Nuestras Pastas",
-          subtitle: "Elaboradas diariamente con ingredientes frescos y recetas tradicionales familiares. Cada pasta es un bocado de amor y tradición.",
-          pageType: "categoria",
-          slug: "pastas",
-          order: 0
-        })
-      } finally {
-        setIsLoadingBanner(false)
-      }
-    }
-    
-    loadBanner()
-  }, [])
+  // Datos estáticos del banner
+  const bannerData = {
+    imageUrl: "/banners/banner-pastas.webp",
+    title: "Nuestras Pastas",
+    subtitle: "Elaboradas diariamente con ingredientes frescos y recetas tradicionales familiares. Cada pasta es un bocado de amor y tradición.",
+    description: "Banner principal de la página de Pastas"
+  }
 
   // JSON-LD para datos estructurados
   const jsonLd = {
@@ -130,47 +83,26 @@ export default function PastasPage() {
 
         {/* Hero Section */}
         <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
-          {isLoadingBanner ? (
-            // Loading state
-            <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-neutral-600">Cargando banner...</p>
-              </div>
-            </div>
-          ) : banner ? (
-            // Banner dinámico
-            <>
-              <div className="absolute inset-0 z-0">
-                <ImageWrapper
-                  src={banner.imageUrl}
-                  alt={banner.description}
-                  fill
-                  className="object-cover"
-                  priority={true}
-                  fallback="/placeholder.svg?height=800&width=1200&text=Pastas+Artesanales"
-                  placeholder={<HeroPlaceholder className="object-cover" />}
-                />
-                <div className="absolute inset-0 bg-black/40" />
-              </div>
+          <div className="absolute inset-0 z-0">
+            <Image
+              src={bannerData.imageUrl}
+              alt={bannerData.description}
+              fill
+              className="object-cover"
+              priority={true}
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-black/40" />
+          </div>
 
-              <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
-                <h1 className="font-display text-5xl md:text-7xl font-bold mb-6">
-                  {banner.title}
-                </h1>
-                <p className="text-xl md:text-2xl text-neutral-200 max-w-3xl mx-auto">
-                  {banner.subtitle}
-                </p>
-              </div>
-            </>
-          ) : (
-            // Fallback si no hay banner
-            <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-neutral-600">Banner no disponible</p>
-              </div>
-            </div>
-          )}
+          <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
+            <h1 className="font-display text-5xl md:text-7xl font-bold mb-6">
+              {bannerData.title}
+            </h1>
+            <p className="text-xl md:text-2xl text-neutral-200 max-w-3xl mx-auto">
+              {bannerData.subtitle}
+            </p>
+          </div>
         </section>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -188,13 +120,12 @@ export default function PastasPage() {
                 <Link key={categoria.slug} href={`/pastas/${categoria.slug}`} className="group">
                   <article className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift">
                     <div className="relative h-64">
-                      <ImageWrapper
+                      <Image
                         src={categoria.imagen || "/placeholder.svg"}
                         alt={`${categoria.nombre} caseras artesanales`}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        fallback="/placeholder.svg?height=256&width=400&text=Categoria"
-                        placeholder={<HeroPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <div className="absolute bottom-6 left-6 text-white">

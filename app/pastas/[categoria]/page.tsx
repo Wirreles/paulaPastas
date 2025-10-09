@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ImageWrapper } from "@/components/ui/ImageWrapper"
-import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
+import Image from "next/image"
 import { FirebaseService } from "@/lib/firebase-service"
 import { ArrowRight } from "lucide-react"
 
@@ -17,7 +16,7 @@ const categoriaData = {
     nombre: "Pastas Rellenas",
     descripcion:
       "Descubrí nuestras exquisitas pastas rellenas artesanales. Ravioles, sorrentinos y lasagna elaboradas con ingredientes frescos y recetas tradicionales familiares.",
-    imagen: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=600&fit=crop",
+    imagen: "/banners/banner-rellenas.webp",
     subcategorias: [
       {
         nombre: "Lasagna",
@@ -43,7 +42,7 @@ const categoriaData = {
     nombre: "Pastas Sin Relleno",
     descripcion:
       "Fideos frescos y ñoquis elaborados diariamente con harina de primera calidad y huevos de granja. La base perfecta para tus salsas favoritas.",
-    imagen: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=1200&h=600&fit=crop",
+    imagen: "/banners/banner-sinrelleno.webp",
     subcategorias: [
       {
         nombre: "Ñoquis",
@@ -69,7 +68,7 @@ const categoriaData = {
     nombre: "Pastas Sin TACC",
     descripcion:
       "Pastas libres de gluten elaboradas con harinas certificadas sin TACC. Perfectas para celíacos sin renunciar al sabor tradicional.",
-    imagen: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=600&fit=crop",
+    imagen: "/banners/banner-sintac.webp",
     subcategorias: [],
   },
 }
@@ -113,15 +112,6 @@ async function getProductosPorCategoria(categoria: string) {
   }
 }
 
-async function getBannerForCategoria(categoria: string) {
-  try {
-    const banner = await FirebaseService.getPageBannerBySlug(categoria)
-    return banner
-  } catch (error) {
-    console.error("Error fetching banner:", error)
-    return null
-  }
-}
 
 export default async function CategoriaPage({ params }: CategoriaPageProps) {
   const { categoria } = await params
@@ -132,7 +122,6 @@ export default async function CategoriaPage({ params }: CategoriaPageProps) {
   }
 
   const productos = await getProductosPorCategoria(categoria)
-  const banner = await getBannerForCategoria(categoria)
 
   // JSON-LD para datos estructurados
   const jsonLd = {
@@ -211,24 +200,23 @@ export default async function CategoriaPage({ params }: CategoriaPageProps) {
         {/* Hero Section */}
         <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <ImageWrapper
-              src={banner?.imageUrl || data.imagen || "/placeholder.svg"}
-              alt={banner?.title || `${data.nombre} caseras artesanales`}
+            <Image
+              src={data.imagen || "/placeholder.svg"}
+              alt={`${data.nombre} caseras artesanales`}
               fill
               className="object-cover"
               priority={true}
-              fallback="/placeholder.svg?height=600&width=1200&text=Categoria"
-              placeholder={<HeroPlaceholder className="object-cover" />}
+              sizes="100vw"
             />
             <div className="absolute inset-0 bg-black/40" />
           </div>
 
           <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
             <h1 className="font-display text-4xl md:text-6xl font-bold mb-6">
-              {banner?.title || data.nombre}
+              {data.nombre}
             </h1>
             <p className="text-xl md:text-2xl text-neutral-200 max-w-3xl mx-auto">
-              {banner?.subtitle || data.descripcion}
+              {data.descripcion}
             </p>
           </div>
         </section>
@@ -249,13 +237,12 @@ export default async function CategoriaPage({ params }: CategoriaPageProps) {
                   <Link key={subcategoria.slug} href={`/pastas/${categoria}/${subcategoria.slug}`} className="group">
                     <article className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift">
                       <div className="relative h-48">
-                        <ImageWrapper
+                        <Image
                           src={subcategoria.imagen || "/placeholder.svg"}
                           alt={`${subcategoria.nombre} caseros artesanales`}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
-                          fallback="/placeholder.svg?height=192&width=400&text=Subcategoria"
-                          placeholder={<HeroPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                       </div>
                       <div className="p-6">

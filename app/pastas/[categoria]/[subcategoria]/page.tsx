@@ -2,8 +2,7 @@ import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ImageWrapper } from "@/components/ui/ImageWrapper"
-import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
+import Image from "next/image"
 import { ArrowLeft, ChevronRight, MessageCircle } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import ProductCard from "@/components/ProductCard"
@@ -65,19 +64,19 @@ const subcategoriaData = {
       nombre: "Lasagna Caseras",
       descripcion:
         "Lasagna artesanales con capas perfectas de pasta fresca, rellenos caseros y quesos de primera calidad. Listas para hornear en tu casa.",
-      imagen: "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=1200&h=600&fit=crop",
+      imagen: "/banners/banner-lasagna.webp",
     },
     ravioles: {
       nombre: "Ravioles Artesanales",
       descripcion:
         "Ravioles elaborados con masa fresca y rellenos tradicionales. Cada pieza es trabajada a mano siguiendo recetas familiares de generaciones.",
-      imagen: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=600&fit=crop",
+      imagen: "/banners/banner-ravioles.webp",
     },
     sorrentinos: {
       nombre: "Sorrentinos Caseros",
       descripcion:
         "Sorrentinos grandes con rellenos abundantes y sabrosos. Perfectos para compartir en familia con tus salsas favoritas.",
-      imagen: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=1200&h=600&fit=crop",
+      imagen: "/banners/banner-sorrentinos.webp",
     },
   },
   "sin-relleno": {
@@ -85,13 +84,13 @@ const subcategoriaData = {
       nombre: "Ñoquis de Papa",
       descripcion:
         "Ñoquis tradicionales elaborados con papas frescas y la receta secreta de la nonna. Suaves, esponjosos y llenos de sabor.",
-      imagen: "https://images.unsplash.com/photo-1572441713132-51c75654db73?w=1200&h=600&fit=crop",
+      imagen: "/banners/banner-ñoquis.webp",
     },
     fideos: {
       nombre: "Fideos Frescos",
       descripcion:
         "Fideos elaborados diariamente con harina 00 y huevos de granja. La base perfecta para cualquier salsa.",
-      imagen: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=1200&h=600&fit=crop",
+      imagen: "/banners/banner-fideos.webp",
     },
     "ravioles-fritos": {
       nombre: "Ravioles Fritos", // Nuevo
@@ -142,15 +141,6 @@ async function getProductosPorSubcategoria(categoria: string, subcategoria: stri
   }
 }
 
-async function getBannerForSubcategoria(categoria: string, subcategoria: string) {
-  try {
-    const banner = await FirebaseService.getPageBannerBySlug(`${categoria}/${subcategoria}`)
-    return banner
-  } catch (error) {
-    console.error("Error fetching banner:", error)
-    return null
-  }
-}
 
 export default async function SubcategoriaPage({ params }: SubcategoriaPageProps) {
   const { categoria, subcategoria } = await params
@@ -161,7 +151,6 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
   }
 
   const productos = await getProductosPorSubcategoria(categoria, subcategoria)
-  const banner = await getBannerForSubcategoria(categoria, subcategoria)
 
   // JSON-LD para datos estructurados
   const jsonLd = {
@@ -254,24 +243,23 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
         {/* Hero Section */}
         <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <ImageWrapper
-              src={banner?.imageUrl || data.imagen || "/placeholder.svg"}
-              alt={banner?.title || `${data.nombre} caseros artesanales`}
+            <Image
+              src={data.imagen || "/placeholder.svg"}
+              alt={`${data.nombre} caseros artesanales`}
               fill
               className="object-cover"
               priority={true}
-              fallback="/placeholder.svg?height=500&width=1200&text=Subcategoria"
-              placeholder={<HeroPlaceholder className="object-cover" />}
+              sizes="100vw"
             />
             <div className="absolute inset-0 bg-black/40" />
           </div>
 
           <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-6">
-              {banner?.title || data.nombre}
+              {data.nombre}
             </h1>
             <p className="text-lg md:text-xl text-neutral-200 max-w-3xl mx-auto">
-              {banner?.subtitle || data.descripcion}
+              {data.descripcion}
             </p>
           </div>
         </section>

@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { ArrowRight, Star, Clock, Truck, Leaf, Award, MessageCircle, ChevronLeft, ChevronRight, Minus, Plus, Eye, ShoppingBag } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { formatPrice } from "@/lib/utils"
@@ -205,17 +206,18 @@ export default function HomePage() {
   const isReviewExpanded = useCallback((reviewId: string) => expandedReviews.has(reviewId), [expandedReviews])
 
   // Obtener imágenes dinámicas optimizadas
-  const heroImage =
-    homeSections.find((s) => s.id === "hero-main-image")?.imageUrl ||
-    "/placeholder.svg?height=800&width=1200&text=Hero Image"
+  const heroImage = "/home-sections/hero-main-image.webp"
   
-  const dishesGalleryImages = homeSections
-    .filter((s) => s.sectionId === "dishes-gallery")
-    .sort((a, b) => a.order - b.order)
+  const dishesGalleryImages = [
+    { imageUrl: "/home-sections/dishes-gallery-1.webp", name: "Plato 1" },
+    { imageUrl: "/home-sections/dishes-gallery-2.webp", name: "Plato 2" },
+    { imageUrl: "/home-sections/dishes-gallery-3.webp", name: "Plato 3" },
+    { imageUrl: "/home-sections/dishes-gallery-4.webp", name: "Plato 4" },
+    { imageUrl: "/home-sections/dishes-gallery-5.webp", name: "Plato 5" },
+    { imageUrl: "/home-sections/dishes-gallery-6.webp", name: "Plato 6" },
+  ]
   
-  const qualityAssuredImage =
-    homeSections.find((s) => s.id === "quality-assured-image")?.imageUrl ||
-    "/placeholder.svg?height=400&width=600&text=Quality Assured Image"
+  const qualityAssuredImage = "/home-sections/quality-assured-image.webp"
 
   // Imágenes para precargar (solo las más importantes)
   const imagesToPreload = useMemo(() => {
@@ -236,47 +238,37 @@ export default function HomePage() {
     return images
   }, [heroImage, productosDestacados])
 
-  // Mapear las categorías del home a partir de los datos dinámicos
+  // Mapear las categorías del home con imágenes estáticas
   const categoriasHome = [
     {
       nombre: "Sorrentinos",
-      slug: "rellenas/sorrentinos", // Ajustado para la ruta correcta
+      slug: "rellenas/sorrentinos",
       descripcion: "Grandes y sabrosos",
-      imagen:
-        homeSections.find((s) => s.id === "home-category-sorrentinos")?.imageUrl ||
-        "/placeholder.svg?height=300&width=400&text=Sorrentinos",
+      imagen: "/home-sections/home-category-sorrentinos.webp",
     },
     {
       nombre: "Ñoquis",
-      slug: "sin-relleno/noquis", // Ajustado para la ruta correcta
+      slug: "sin-relleno/noquis",
       descripcion: "Suaves y esponjosos",
-      imagen:
-        homeSections.find((s) => s.id === "home-category-noquis")?.imageUrl ||
-        "/placeholder.svg?height=300&width=400&text=Ñoquis",
+      imagen: "/home-sections/home-category-noquis.webp",
     },
     {
       nombre: "Ravioles",
-      slug: "rellenas/ravioles", // Ajustado para la ruta correcta
+      slug: "rellenas/ravioles",
       descripcion: "Rellenos tradicionales",
-      imagen:
-        homeSections.find((s) => s.id === "home-category-ravioles")?.imageUrl ||
-        "/placeholder.svg?height=300&width=400&text=Ravioles",
+      imagen: "/home-sections/home-category-ravioles.webp",
     },
     {
       nombre: "Lasagna",
-      slug: "rellenas/lasagna", // Ajustado para la ruta correcta
+      slug: "rellenas/lasagna",
       descripcion: "Capas de sabor",
-      imagen:
-        homeSections.find((s) => s.id === "home-category-lasagna")?.imageUrl ||
-        "/placeholder.svg?height=300&width=400&text=Lasagna",
+      imagen: "/home-sections/home-category-lasagna.webp",
     },
     {
       nombre: "Fideos",
-      slug: "sin-relleno/fideos", // Ajustado para la ruta correcta
+      slug: "sin-relleno/fideos",
       descripcion: "Clásicos y versátiles",
-      imagen:
-        homeSections.find((s) => s.id === "home-category-fideos")?.imageUrl ||
-        "/placeholder.svg?height=300&width=400&text=Fideos",
+      imagen: "/home-sections/home-category-fideos.webp",
     },
   ]
 
@@ -366,15 +358,13 @@ export default function HomePage() {
           </div>
         </div>
         <div className="relative w-full lg:w-1/2 aspect-video lg:h-full order-2 lg:order-1">
-          <ImageWrapper
+          <Image
             src={heroImage}
             alt="Pasta artesanal en Rosario, plato de ravioles con salsa"
             fill
             className="object-cover w-full h-full"
-            fallback="/placeholder.svg?height=800&width=1200&text=Hero+Image"
             priority={true}
-            loading="eager"
-            placeholder={<HeroPlaceholder className="object-cover w-full h-full" />}
+            sizes="(max-width: 768px) 100vw, 50vw"
           />
         </div>
       </section>
@@ -534,14 +524,12 @@ export default function HomePage() {
               <Link key={categoria.slug} href={`/pastas/${categoria.slug}`} className="group">
                 <article className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift">
                   <div className="relative h-48">
-                    <ImageWrapper
+                    <Image
                       src={categoria.imagen}
                       alt={`${categoria.nombre} caseras artesanales`}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      fallback="/placeholder.svg?height=300&width=400&text=Categoria"
-                      placeholder={<CategoryPlaceholder className="object-cover group-hover:scale-105 transition-transform duration-300" />}
-                      lazyThreshold={0.3} // Cargar cuando 30% sea visible
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-6 left-6 text-white">
@@ -590,12 +578,12 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-4">
             {dishesGalleryImages.map((img, index) => (
               <div key={index} className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
-                <ImageWrapper 
+                <Image 
                   src={img.imageUrl} 
                   alt={img.name || `Plato ${index + 1}`} 
                   fill 
                   className="object-cover"
-                  fallback="/placeholder.svg?height=300&width=400&text=Plato"
+                  sizes="(max-width: 768px) 50vw, 25vw"
                 />
               </div>
             ))}
@@ -775,12 +763,12 @@ export default function HomePage() {
       <section className="py-16 bg-neutral-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-12">
           <figure className="relative w-full lg:w-1/2 aspect-video rounded-2xl overflow-hidden shadow-lg">
-            <ImageWrapper
+            <Image
               src={qualityAssuredImage}
               alt="Elaboración artesanal de pastas Paula Pastas"
               fill
               className="object-cover"
-              fallback="/placeholder.svg?height=400&width=600&text=Calidad+Asegurada"
+              sizes="(max-width: 1024px) 100vw, 50vw"
             />
           </figure>
           <div className="w-full lg:w-1/2 text-center lg:text-left">

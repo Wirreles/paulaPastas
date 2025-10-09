@@ -1,222 +1,32 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
 import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute"
-import { ImageWrapper } from "@/components/ui/ImageWrapper"
-import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
-import { Edit, ImageIcon, Plus, RefreshCcw } from "lucide-react"
-import { FirebaseService } from "@/lib/firebase-service"
-import { PageBanner } from "@/lib/types"
-import PageBannerForm from "@/components/admin/PageBannerForm"
 import AdminNavigation from "@/components/admin/AdminNavigation"
-import { toast } from "sonner"
 
 export default function AdminPageBannersPage() {
-  const [pageBanners, setPageBanners] = useState<PageBanner[]>([])
-  const [loadingBanners, setLoadingBanners] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editingBanner, setEditingBanner] = useState<PageBanner | null>(null)
-  const [selectedType, setSelectedType] = useState<string>("todos")
-
-  useEffect(() => {
-    loadPageBanners()
-  }, [])
-
-  const loadPageBanners = async () => {
-    try {
-      setLoadingBanners(true)
-      console.log("🔄 Cargando banners de páginas...")
-      const data = await FirebaseService.getPageBanners()
-      console.log("🎨 Banners cargados:", data)
-      setPageBanners(data)
-      toast.success("Banners actualizados correctamente")
-    } catch (error) {
-      console.error("Error loading page banners:", error)
-      toast.error("Error al cargar los banners")
-    } finally {
-      setLoadingBanners(false)
-    }
-  }
-
-  const handleEditBanner = (banner: PageBanner) => {
-    setEditingBanner(banner)
-    setShowForm(true)
-  }
-
-  // Agrupar banners por tipo
-  const groupedBanners = pageBanners.reduce((acc, banner) => {
-    const type = banner.pageType
-    if (!acc[type]) {
-      acc[type] = []
-    }
-    acc[type].push(banner)
-    return acc
-  }, {} as Record<string, PageBanner[]>)
-
-  // Obtener tipos únicos para el filtro
-  const uniqueTypes = Object.keys(groupedBanners).sort()
-
-  // Filtrar banners según la selección
-  const filteredBanners = selectedType === "todos" 
-    ? pageBanners 
-    : pageBanners.filter(banner => banner.pageType === selectedType)
-
+  // SECCIÓN DESHABILITADA: Los banners ahora son estáticos
   return (
     <AdminProtectedRoute>
       <div className="min-h-screen bg-neutral-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <AdminNavigation />
-
-          {/* Filter Section */}
-          <div className="bg-white rounded-lg border border-neutral-200 p-4 shadow-sm mb-6">
-            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <label className="block text-sm font-medium text-neutral-700 mb-2">Filtrar por tipo:</label>
-                <select
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="todos">Todos los tipos ({pageBanners.length})</option>
-                  {uniqueTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type === "categoria" && "Categorías"}
-                      {type === "subcategoria" && "Subcategorías"}
-                      {type === "especial" && "Páginas Especiales"}
-                      {type !== "categoria" && type !== "subcategoria" && type !== "especial" && type}
-                      {" "}({groupedBanners[type]?.length || 0})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex gap-3 w-full sm:w-auto">
-                <button
-                  onClick={loadPageBanners}
-                  disabled={loadingBanners}
-                  className="flex-1 inline-flex items-center justify-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <RefreshCcw className={`-ml-1 mr-2 h-5 w-5 text-neutral-500 ${loadingBanners ? 'animate-spin' : ''}`} aria-hidden="true" />
-                  Actualizar
-                </button>
-                <button
-                  onClick={() => setShowForm(true)}
-                  className="flex-1 inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto"
-                >
-                  <Plus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                  Nuevo Banner
-                </button>
-              </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <div className="w-16 h-16 mx-auto bg-yellow-100 rounded-full flex items-center justify-center mb-6">
+              <span className="text-2xl">🖼️</span>
             </div>
+            <h2 className="text-2xl font-bold text-neutral-900 mb-4">
+              Sección Deshabilitada
+            </h2>
+            <p className="text-neutral-600 mb-6">
+              Los banners ahora son estáticos y se gestionan directamente desde el código.
+            </p>
+            <p className="text-sm text-neutral-500">
+              Esta funcionalidad ha sido deshabilitada temporalmente. El código se mantiene intacto para uso futuro.
+            </p>
           </div>
-
-        {/* Banners Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-neutral-200">
-            <h2 className="text-lg font-semibold text-neutral-900">Banners ({filteredBanners.length})</h2>
-          </div>
-
-          {loadingBanners ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-              <p className="text-neutral-600">Cargando banners...</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-neutral-200">
-                <thead className="bg-neutral-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                      Banner
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                      Tipo
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                      Descripción
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                      Imagen
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-neutral-200">
-                  {filteredBanners.map((banner) => (
-                    <tr key={banner.id} className="hover:bg-neutral-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <ImageIcon className="w-5 h-5 text-neutral-500 mr-2" />
-                          <div className="text-sm font-medium text-neutral-900">{banner.name}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                          {banner.pageType === "categoria" && "Categoría"}
-                          {banner.pageType === "subcategoria" && "Subcategoría"}
-                          {banner.pageType === "especial" && "Página Especial"}
-                          {banner.pageType !== "categoria" && banner.pageType !== "subcategoria" && banner.pageType !== "especial" && banner.pageType}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-neutral-600 max-w-xs truncate">{banner.description}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="w-16 h-12 relative rounded-lg overflow-hidden bg-neutral-100">
-                          {banner.imageUrl ? (
-                            <ImageWrapper 
-                              src={banner.imageUrl} 
-                              alt={banner.name} 
-                              fill 
-                              className="object-cover"
-                              fallback="/placeholder.svg?height=48&width=64&text=Banner"
-                              placeholder={<ProductPlaceholder className="object-cover" />}
-                            />
-                          ) : (
-                            <ProductPlaceholder className="w-full h-full" />
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleEditBanner(banner)}
-                          className="text-primary-600 hover:text-primary-900 mr-3"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {filteredBanners.length === 0 && !loadingBanners && (
-                <div className="p-8 text-center">
-                  <ImageIcon className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
-                  <p className="text-neutral-600">No se encontraron banners</p>
-                </div>
-              )}
-            </div>
-          )}
         </div>
-      </div>
-
-        {/* Form Modal */}
-        {showForm && (
-          <PageBannerForm
-            banner={editingBanner}
-            onClose={() => {
-              setShowForm(false)
-              setEditingBanner(null)
-            }}
-            onSave={() => {
-              loadPageBanners()
-              setShowForm(false)
-              setEditingBanner(null)
-            }}
-          />
-        )}
       </div>
     </AdminProtectedRoute>
   )
-} 
+}

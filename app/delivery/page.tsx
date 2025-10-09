@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ImageWrapper } from "@/components/ui/ImageWrapper"
-import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
+import Image from "next/image"
 import { ChevronDown, MessageCircle, ArrowRight, Truck, Clock, MapPin, Package } from "lucide-react"
 
 export const metadata: Metadata = {
@@ -131,14 +130,13 @@ export default function DeliveryPage() {
         {/* 1. Banner Principal */}
         <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <ImageWrapper
-              src="https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=800&fit=crop"
+            <Image
+              src="/banners/banner-delivery.webp"
               alt="Delivery de pastas artesanales en Rosario"
               fill
               className="object-cover"
               priority={true}
-              fallback="/placeholder.svg?height=800&width=1200&text=Delivery"
-              placeholder={<HeroPlaceholder className="object-cover" />}
+              sizes="100vw"
             />
             <div className="absolute inset-0 bg-black/60" />
           </div>

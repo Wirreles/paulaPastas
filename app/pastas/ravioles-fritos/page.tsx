@@ -1,8 +1,7 @@
 import { Suspense } from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ImageWrapper } from "@/components/ui/ImageWrapper"
-import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
+import Image from "next/image"
 import { ArrowRight, CheckCircle, ShoppingBag } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import ProductCard from "@/components/ProductCard"
@@ -44,8 +43,13 @@ async function getProductosRaviolesFritos() {
 export default async function RaviolesFritosPage() {
   const productosRaviolesFritos = await getProductosRaviolesFritos()
   
-  // Obtener banner dinámico
-  const banner = await FirebaseService.getPageBannerBySlug("sin-relleno/ravioles-fritos")
+  // Datos estáticos del banner
+  const bannerData = {
+    imageUrl: "/banners/banner-raviolesfritos.webp",
+    title: "Ravioles Fritos",
+    subtitle: "Crocantes por fuera, cremosos por dentro. Perfectos para picadas, encuentros o para darte un gusto diferente.",
+    description: "Ravioles fritos dorados y crocantes"
+  }
 
   // JSON-LD para datos estructurados
   const jsonLd = {
@@ -142,24 +146,23 @@ export default async function RaviolesFritosPage() {
         {/* 1. 🧱 SECCIÓN HERO / BANNER PRINCIPAL */}
         <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <ImageWrapper
-              src={banner?.imageUrl || "/placeholder.svg?height=800&width=1200"}
-              alt={banner?.title || "Ravioles fritos dorados y crocantes"}
+            <Image
+              src={bannerData.imageUrl}
+              alt={bannerData.description}
               fill
               className="object-cover"
               priority={true}
-              fallback="/placeholder.svg?height=800&width=1200&text=Ravioles+Fritos"
-              placeholder={<HeroPlaceholder className="object-cover" />}
+              sizes="100vw"
             />
             <div className="absolute inset-0 bg-black/40" />
           </div>
 
           <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
             <h1 className="font-display text-5xl md:text-7xl font-bold mb-4">
-              {banner?.title || "Ravioles fritos en Rosario"}
+              {bannerData.title}
             </h1>
             <p className="text-xl md:text-2xl text-neutral-200 mb-6">
-              {banner?.subtitle || "Una experiencia que tenes que probar."}
+              {bannerData.subtitle}
             </p>
             <p className="text-lg md:text-xl text-neutral-300 max-w-3xl mx-auto">
               Del freezer directo a la sartén. Crocantes por fuera, cremosos por dentro. Perfectos para picadas,
@@ -190,43 +193,39 @@ export default async function RaviolesFritosPage() {
             <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">Galería de Imágenes</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
-                <ImageWrapper
+                <Image
                   src="/placeholder.svg?height=300&width=400"
                   alt="Ravioles fritos servidos en un plato"
                   fill
                   className="object-cover"
-                  fallback="/placeholder.svg?height=300&width=400&text=Ravioles+1"
-                  placeholder={<HeroPlaceholder className="object-cover" />}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
               </div>
               <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
-                <ImageWrapper
+                <Image
                   src="/placeholder.svg?height=300&width=400"
                   alt="Ravioles fritos cocinándose en una sartén"
                   fill
                   className="object-cover"
-                  fallback="/placeholder.svg?height=300&width=400&text=Ravioles+2"
-                  placeholder={<HeroPlaceholder className="object-cover" />}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
               </div>
               <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
-                <ImageWrapper
+                <Image
                   src="/placeholder.svg?height=300&width=400"
                   alt="Ravioles fritos como aperitivo en una picada"
                   fill
                   className="object-cover"
-                  fallback="/placeholder.svg?height=300&width=400&text=Ravioles+3"
-                  placeholder={<HeroPlaceholder className="object-cover" />}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
               </div>
               <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
-                <ImageWrapper
+                <Image
                   src="/placeholder.svg?height=300&width=400"
                   alt="Primer plano de ravioles fritos con textura crocante"
                   fill
                   className="object-cover"
-                  fallback="/placeholder.svg?height=300&width=400&text=Ravioles+4"
-                  placeholder={<HeroPlaceholder className="object-cover" />}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
               </div>
             </div>
