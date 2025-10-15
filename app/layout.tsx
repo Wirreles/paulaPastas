@@ -19,6 +19,13 @@ export const metadata: Metadata = {
     icon: '/pplog2.png',
     shortcut: '/pplog2.png',
     apple: '/pplog2.png',
+  },
+  alternates: {
+    canonical: "https://paulapastas.com",
+  },
+  openGraph: {
+    url: "https://paulapastas.com",
+    siteName: "Paula Pastas",
   }
 }
 
@@ -29,6 +36,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
+      <head>
+        <link rel="canonical" href="https://paulapastas.com" />
+      </head>
       <body className={`${inter.className} flex flex-col min-h-screen`}>
         <AuthProvider>
           <ToastProvider>

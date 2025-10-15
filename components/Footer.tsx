@@ -32,16 +32,31 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold text-lg mb-4">Enlaces Rápidos</h4>
+            <h4 className="font-semibold text-lg mb-4">Nuestras Pastas</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/menu/rellenas" className="text-neutral-400 hover:text-white transition-colors">
+                <Link href="/pastas" className="text-neutral-400 hover:text-white transition-colors">
+                  Todas las Pastas
+                </Link>
+              </li>
+              <li>
+                <Link href="/pastas/rellenas" className="text-neutral-400 hover:text-white transition-colors">
                   Pastas Rellenas
                 </Link>
               </li>
               <li>
-                <Link href="/menu/sin-tacc" className="text-neutral-400 hover:text-white transition-colors">
+                <Link href="/pastas/sin-relleno" className="text-neutral-400 hover:text-white transition-colors">
+                  Pastas Sin Relleno
+                </Link>
+              </li>
+              <li>
+                <Link href="/pastas/sin-tacc" className="text-neutral-400 hover:text-white transition-colors">
                   Sin TACC
+                </Link>
+              </li>
+              <li>
+                <Link href="/salsas" className="text-neutral-400 hover:text-white transition-colors">
+                  Salsas Caseras
                 </Link>
               </li>
               <li>
@@ -108,8 +123,49 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Sitemap Interno para SEO */}
+        <div className="border-t border-neutral-800 mt-8 pt-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <h5 className="font-medium mb-2 text-white">Páginas Principales</h5>
+              <ul className="space-y-1 text-neutral-400">
+                <li><Link href="/" className="hover:text-white transition-colors">Inicio</Link></li>
+                <li><Link href="/nosotros" className="hover:text-white transition-colors">Nosotros</Link></li>
+                <li><Link href="/delivery" className="hover:text-white transition-colors">Delivery</Link></li>
+                <li><Link href="/blog" className="hover:text-white transition-colors">Blog</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h5 className="font-medium mb-2 text-white">Categorías</h5>
+              <ul className="space-y-1 text-neutral-400">
+                <li><Link href="/pastas/rellenas/lasagna" className="hover:text-white transition-colors">Lasagna</Link></li>
+                <li><Link href="/pastas/rellenas/ravioles" className="hover:text-white transition-colors">Ravioles</Link></li>
+                <li><Link href="/pastas/rellenas/sorrentinos" className="hover:text-white transition-colors">Sorrentinos</Link></li>
+                <li><Link href="/pastas/sin-relleno/noquis" className="hover:text-white transition-colors">Ñoquis</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h5 className="font-medium mb-2 text-white">Servicios</h5>
+              <ul className="space-y-1 text-neutral-400">
+                <li><Link href="/pack-raviolada" className="hover:text-white transition-colors">Pack Raviolada</Link></li>
+                <li><Link href="/zona/vgg" className="hover:text-white transition-colors">Villa Gobernador Gálvez</Link></li>
+                <li><Link href="/zona/rosario-centro" className="hover:text-white transition-colors">Rosario Centro</Link></li>
+                <li><Link href="/zona/zona-sur" className="hover:text-white transition-colors">Zona Sur</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h5 className="font-medium mb-2 text-white">Cuenta</h5>
+              <ul className="space-y-1 text-neutral-400">
+                <li><Link href="/login" className="hover:text-white transition-colors">Iniciar Sesión</Link></li>
+                <li><Link href="/register" className="hover:text-white transition-colors">Registrarse</Link></li>
+                <li><Link href="/dashboard-usuario" className="hover:text-white transition-colors">Mi Cuenta</Link></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         <div className="border-t border-neutral-800 mt-8 pt-8 text-center text-sm text-neutral-400">
-          <p>&copy; 2025 Comida Casera. Todos los derechos reservados.</p>
+          <p>&copy; 2025 Paula Pastas. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>

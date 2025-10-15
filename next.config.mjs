@@ -48,6 +48,23 @@ const nextConfig = {
   },
   // Configuración adicional para Vercel
   output: 'standalone',
+  
+  // Redirecciones para SEO - Redirigir www a non-www
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'www.paulapastas.com',
+          },
+        ],
+        destination: 'https://paulapastas.com/:path*',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 export default nextConfig

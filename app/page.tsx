@@ -1,12 +1,14 @@
 "use client" // Necesario para el carrusel y el acordeón interactivo
 
 import { Suspense, useState, useEffect, useMemo, useCallback } from "react"
+import Head from "next/head"
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight, Star, Clock, Truck, Leaf, Award, MessageCircle, ChevronLeft, ChevronRight, Minus, Plus, Eye, ShoppingBag } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { formatPrice } from "@/lib/utils"
 import { useHomeData } from "@/hooks/use-home-data"
+import { useCanonical } from "@/hooks/use-canonical"
 import { HeroImage, ProductImage, ImageWrapper } from "@/components/ui/ImageWrapper"
 import { ImageDebugInfo } from "@/components/ui/ImageDebugInfo"
 import { HeroPlaceholder, ProductPlaceholder, CategoryPlaceholder } from "@/components/ui/ImagePlaceholder"
@@ -104,6 +106,9 @@ const STATIC_FAQS = [
 
 
 export default function HomePage() {
+  // Configurar URL canónica
+  useCanonical("https://paulapastas.com")
+  
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0)
   const [itemsPerPage, setItemsPerPage] = useState(1)
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
@@ -314,9 +319,24 @@ export default function HomePage() {
   console.log("🔍 Antes del render - productosDestacados:", productosDestacados)
 
   return (
-    <div className="min-h-screen">
-      {/* Preloader de imágenes importantes */}
-      <ImagePreloader images={imagesToPreload} priority={true} />
+    <>
+      <Head>
+        <title>Paula Pastas - Pastas Artesanales en Rosario | Delivery Premium</title>
+        <meta name="description" content="Las mejores pastas artesanales de Rosario. Ravioles, sorrentinos, lasagna y más. Delivery rápido con cadena de frío. ¡Pedí online ahora!" />
+        <meta name="keywords" content="pastas artesanales, rosario, delivery, ravioles, sorrentinos, lasagna, pastas caseras, paula pastas" />
+        <meta property="og:title" content="Paula Pastas - Pastas Artesanales en Rosario" />
+        <meta property="og:description" content="Las mejores pastas artesanales de Rosario. Delivery rápido con cadena de frío. ¡Pedí online ahora!" />
+        <meta property="og:url" content="https://paulapastas.com" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://paulapastas.com/home-sections/hero-main-image.webp" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Paula Pastas - Pastas Artesanales en Rosario" />
+        <meta name="twitter:description" content="Las mejores pastas artesanales de Rosario. Delivery rápido con cadena de frío." />
+        <meta name="twitter:image" content="https://paulapastas.com/home-sections/hero-main-image.webp" />
+      </Head>
+      <div className="min-h-screen">
+        {/* Preloader de imágenes importantes */}
+        <ImagePreloader images={imagesToPreload} priority={true} />
       
       {/* JSON-LD para reseñas y FAQ */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewsJsonLd) }} />
@@ -843,6 +863,7 @@ export default function HomePage() {
         alt="Imagen principal del home"
         componentName="Home Hero"
       />
-    </div>
+      </div>
+    </>
   )
 }

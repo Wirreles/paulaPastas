@@ -3,6 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight } from "lucide-react"
+import { useCanonical } from "@/hooks/use-canonical"
 
 const categorias = [
   {
@@ -29,6 +30,9 @@ const categorias = [
 ]
 
 export default function PastasPage() {
+  // Configurar URL canónica
+  useCanonical("https://paulapastas.com/pastas")
+
   // Datos estáticos del banner
   const bannerData = {
     imageUrl: "/banners/banner-pastas.webp",
@@ -43,7 +47,7 @@ export default function PastasPage() {
     "@type": "CollectionPage",
     name: "Pastas Artesanales",
     description: "Pastas caseras elaboradas con ingredientes frescos y recetas tradicionales",
-    url: "https://comidacasera.com/pastas",
+    url: "https://paulapastas.com/pastas",
     breadcrumb: {
       "@type": "BreadcrumbList",
       itemListElement: [
@@ -51,13 +55,13 @@ export default function PastasPage() {
           "@type": "ListItem",
           position: 1,
           name: "Inicio",
-          item: "https://comidacasera.com",
+          item: "https://paulapastas.com",
         },
         {
           "@type": "ListItem",
           position: 2,
           name: "Pastas",
-          item: "https://comidacasera.com/pastas",
+          item: "https://paulapastas.com/pastas",
         },
       ],
     },

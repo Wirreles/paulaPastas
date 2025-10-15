@@ -96,7 +96,7 @@ export async function generateMetadata({ params }: CategoriaPageProps): Promise<
       locale: "es_AR",
     },
     alternates: {
-      canonical: `https://comidacasera.com/pastas/${categoria}`,
+      canonical: `https://paulapastas.com/pastas/${categoria}`,
     },
   }
 }
@@ -129,7 +129,7 @@ export default async function CategoriaPage({ params }: CategoriaPageProps) {
     "@type": "CollectionPage",
     name: data.nombre,
     description: data.descripcion,
-    url: `https://comidacasera.com/pastas/${categoria}`,
+    url: `https://paulapastas.com/pastas/${categoria}`,
     breadcrumb: {
       "@type": "BreadcrumbList",
       itemListElement: [
@@ -137,19 +137,19 @@ export default async function CategoriaPage({ params }: CategoriaPageProps) {
           "@type": "ListItem",
           position: 1,
           name: "Inicio",
-          item: "https://comidacasera.com",
+          item: "https://paulapastas.com",
         },
         {
           "@type": "ListItem",
           position: 2,
           name: "Pastas",
-          item: "https://comidacasera.com/pastas",
+          item: "https://paulapastas.com/pastas",
         },
         {
           "@type": "ListItem",
           position: 3,
           name: data.nombre,
-          item: `https://comidacasera.com/pastas/${categoria}`,
+          item: `https://paulapastas.com/pastas/${categoria}`,
         },
       ],
     },

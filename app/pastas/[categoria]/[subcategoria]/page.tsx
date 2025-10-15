@@ -124,7 +124,7 @@ export async function generateMetadata({ params }: SubcategoriaPageProps): Promi
       locale: "es_AR",
     },
     alternates: {
-      canonical: `https://comidacasera.com/pastas/${categoria}/${subcategoria}`,
+      canonical: `https://paulapastas.com/pastas/${categoria}/${subcategoria}`,
     },
   }
 }
