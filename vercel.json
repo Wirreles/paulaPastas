@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.paulapastas.com"
+        }
+      ],
+      "destination": "https://paulapastas.com/$1",
+      "permanent": true
+    }
+  ]
+}

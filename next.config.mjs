@@ -49,19 +49,38 @@ const nextConfig = {
   // Configuración adicional para Vercel
   output: 'standalone',
   
-  // Redirecciones para SEO - Redirigir www a non-www
-  async redirects() {
+  // Redirecciones para SEO - TEMPORALMENTE DESHABILITADO PARA EVITAR BUCLES
+  // async redirects() {
+  //   return [
+  //     {
+  //       source: '/:path*',
+  //       has: [
+  //         {
+  //           type: 'host',
+  //           value: 'www.paulapastas.com',
+  //         },
+  //       ],
+  //       destination: 'https://paulapastas.com/:path*',
+  //       permanent: true,
+  //     },
+  //   ]
+  // },
+  
+  // Configuración adicional para evitar bucles de redirección
+  async headers() {
     return [
       {
-        source: '/:path*',
-        has: [
+        source: '/(.*)',
+        headers: [
           {
-            type: 'host',
-            value: 'www.paulapastas.com',
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
           },
         ],
-        destination: 'https://paulapastas.com/:path*',
-        permanent: true,
       },
     ]
   },
