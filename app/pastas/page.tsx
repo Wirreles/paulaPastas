@@ -1,52 +1,54 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import Image from "next/image"
-import { ArrowRight } from "lucide-react"
-import { useCanonical } from "@/hooks/use-canonical"
+import Link from "next/link";
+import Image from "next/image";
+import { ArrowRight } from "lucide-react";
+import { useCanonical } from "@/hooks/use-canonical";
 
 const categorias = [
   {
     nombre: "Pastas Rellenas",
     slug: "rellenas",
     descripcion: "Ravioles, sorrentinos y lasagna con rellenos tradicionales",
-    imagen: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=600&h=400&fit=crop",
+    imagen: "/pastas/rellenas.webp",
     subcategorias: ["Lasagna", "Ravioles", "Sorrentinos"],
   },
   {
     nombre: "Pastas Sin Relleno",
     slug: "sin-relleno",
     descripcion: "Fideos frescos y ñoquis elaborados diariamente",
-    imagen: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=600&h=400&fit=crop",
+    imagen: "/pastas/sinrelleno.webp",
     subcategorias: ["Ñoquis", "Fideos"],
   },
   {
     nombre: "Pastas Sin TACC",
     slug: "sin-tacc",
     descripcion: "Pastas libres de gluten para celíacos",
-    imagen: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=600&h=400&fit=crop",
+    imagen: "/pastas/sintac.webp",
     subcategorias: ["Aptas para celíacos"],
   },
-]
+];
 
 export default function PastasPage() {
   // Configurar URL canónica
-  useCanonical("https://paulapastas.com/pastas")
+  useCanonical("https://paulapastas.com/pastas");
 
   // Datos estáticos del banner
   const bannerData = {
     imageUrl: "/banners/banner-pastas.webp",
     title: "Nuestras Pastas",
-    subtitle: "Elaboradas diariamente con ingredientes frescos y recetas tradicionales familiares. Cada pasta es un bocado de amor y tradición.",
-    description: "Banner principal de la página de Pastas"
-  }
+    subtitle:
+      "Elaboradas diariamente con ingredientes frescos y recetas tradicionales familiares. Cada pasta es un bocado de amor y tradición.",
+    description: "Banner principal de la página de Pastas",
+  };
 
   // JSON-LD para datos estructurados
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: "Pastas Artesanales",
-    description: "Pastas caseras elaboradas con ingredientes frescos y recetas tradicionales",
+    description:
+      "Pastas caseras elaboradas con ingredientes frescos y recetas tradicionales",
     url: "https://paulapastas.com/pastas",
     breadcrumb: {
       "@type": "BreadcrumbList",
@@ -65,18 +67,24 @@ export default function PastasPage() {
         },
       ],
     },
-  }
+  };
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       <div className="min-h-screen bg-neutral-50">
         {/* Breadcrumb */}
         <div className="bg-white border-b border-neutral-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <nav className="flex items-center space-x-2 text-sm">
-              <Link href="/" className="text-neutral-500 hover:text-primary-600">
+              <Link
+                href="/"
+                className="text-neutral-500 hover:text-primary-600"
+              >
                 Inicio
               </Link>
               <span className="text-neutral-400">/</span>
@@ -116,12 +124,18 @@ export default function PastasPage() {
               <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
                 Explorá Nuestras Categorías
               </h2>
-              <p className="text-lg text-neutral-600">Tenemos opciones para todos los gustos y necesidades</p>
+              <p className="text-lg text-neutral-600">
+                Tenemos opciones para todos los gustos y necesidades
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {categorias.map((categoria) => (
-                <Link key={categoria.slug} href={`/pastas/${categoria.slug}`} className="group">
+                <Link
+                  key={categoria.slug}
+                  href={`/pastas/${categoria.slug}`}
+                  className="group"
+                >
                   <article className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift">
                     <div className="relative h-64">
                       <Image
@@ -133,15 +147,22 @@ export default function PastasPage() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <div className="absolute bottom-6 left-6 text-white">
-                        <h3 className="text-2xl font-bold mb-2">{categoria.nombre}</h3>
-                        <p className="text-neutral-200 text-sm">{categoria.descripcion}</p>
+                        <h3 className="text-2xl font-bold mb-2">
+                          {categoria.nombre}
+                        </h3>
+                        <p className="text-neutral-200 text-sm">
+                          {categoria.descripcion}
+                        </p>
                       </div>
                     </div>
 
                     <div className="p-6">
                       <div className="flex flex-wrap gap-2 mb-4">
                         {categoria.subcategorias.map((sub, index) => (
-                          <span key={index} className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full">
+                          <span
+                            key={index}
+                            className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full"
+                          >
                             {sub}
                           </span>
                         ))}
@@ -165,7 +186,8 @@ export default function PastasPage() {
                 ¿No sabés qué elegir?
               </h2>
               <p className="text-lg text-neutral-600 mb-6">
-                Contactanos y te ayudamos a encontrar la pasta perfecta para tu ocasión
+                Contactanos y te ayudamos a encontrar la pasta perfecta para tu
+                ocasión
               </p>
               <Link
                 href="/delivery"
@@ -179,5 +201,5 @@ export default function PastasPage() {
         </div>
       </div>
     </>
-  )
+  );
 }
