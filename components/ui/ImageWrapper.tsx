@@ -22,10 +22,10 @@ interface ImageWrapperProps {
   placeholder?: React.ReactNode
 }
 
-export function ImageWrapper({ 
-  src, 
-  alt, 
-  fallback = "/placeholder.svg", 
+export function ImageWrapper({
+  src,
+  alt,
+  fallback = "/placeholder.svg",
   priority = false,
   sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
   quality = 75, // Reducido para mejor rendimiento
@@ -42,7 +42,9 @@ export function ImageWrapper({
 }: ImageWrapperProps) {
   const [imageError, setImageError] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [shouldLoad, setShouldLoad] = useState(priority)
+  // Inicializar shouldLoad en true si estamos en el navegador (client-side)
+  // Esto soluciona el problema con SSR donde el Intersection Observer no funciona
+  const [shouldLoad, setShouldLoad] = useState(priority || typeof window !== 'undefined')
   const imageRef = useRef<HTMLDivElement>(null)
 
   // Función optimizada para validar URLs
@@ -93,7 +95,7 @@ export function ImageWrapper({
   // Placeholder optimizado
   if (!shouldLoad) {
     return (
-      <div 
+      <div
         ref={imageRef}
         className={`relative ${fill ? 'w-full h-full' : ''} ${className}`}
       >
@@ -113,13 +115,13 @@ export function ImageWrapper({
         {isLoading && (
           <div className="absolute inset-0 bg-gradient-to-br from-neutral-100 to-neutral-200 animate-pulse rounded" />
         )}
-        <img 
+        <img
           src={imageUrl}
           alt={alt}
           loading={priority ? "eager" : loading}
           className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
-          style={{ 
-            maxWidth: "100%", 
+          style={{
+            maxWidth: "100%",
             height: "auto",
             ...(fill && { width: "100%", height: "100%", objectFit: "cover" })
           }}
@@ -157,13 +159,13 @@ export function ImageWrapper({
 }
 
 // Componente especializado para imágenes de productos (Firebase)
-export function ProductImage({ 
-  src, 
-  alt, 
+export function ProductImage({
+  src,
+  alt,
   fallback = "/placeholder.svg",
   className = "",
   priority = false,
-  ...props 
+  ...props
 }: Omit<ImageWrapperProps, 'fill'>) {
   return (
     <ImageWrapper
@@ -179,12 +181,12 @@ export function ProductImage({
 }
 
 // Componente para imágenes de hero/banner (Firebase)
-export function HeroImage({ 
-  src, 
-  alt, 
+export function HeroImage({
+  src,
+  alt,
   fallback = "/placeholder.svg",
   className = "",
-  ...props 
+  ...props
 }: Omit<ImageWrapperProps, 'priority'>) {
   return (
     <ImageWrapper
