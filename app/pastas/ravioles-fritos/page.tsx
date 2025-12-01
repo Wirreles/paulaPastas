@@ -6,6 +6,9 @@ import { ArrowRight, CheckCircle, ShoppingBag } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import ProductCard from "@/components/ProductCard"
 
+// Forzar renderizado dinámico para evitar caché de productos eliminados
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: "Ravioles Fritos en Rosario | Una Experiencia Única | Paula Pastas",
   description:
