@@ -1,22 +1,23 @@
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'
 import { FirebaseService } from './firebase-service'
+import { Logger } from './logger'
 
 // Configuración del SDK de MercadoPago
 let client: MercadoPagoConfig | null = null
 
 try {
   // Configuración para pagos normales (productos)
-  const accessToken = process.env.NEXT_PUBLIC_MP_ACCESS_TOKEN || ''
-  console.log('DEBUG: Token de acceso:', accessToken ? `${accessToken.substring(0, 10)}...` : 'NO CONFIGURADO')
+  // Priorizar token del lado del servidor, fallback al público por compatibilidad
+  const accessToken = process.env.MP_ACCESS_TOKEN || process.env.NEXT_PUBLIC_MP_ACCESS_TOKEN || ''
   
   if (!accessToken) {
-    console.error('ERROR: NEXT_PUBLIC_MP_ACCESS_TOKEN no está configurado')
+    Logger.error('ERROR: MP_ACCESS_TOKEN no está configurado')
   } else {
     client = new MercadoPagoConfig({ accessToken })
-    console.log('DEBUG: Configuración de MercadoPago inicializada correctamente')
+    Logger.debug('Configuración de MercadoPago inicializada correctamente')
   }
 } catch (error) {
-  console.error('ERROR: Error inicializando configuración de MercadoPago:', error)
+  Logger.error('ERROR: Error inicializando configuración de MercadoPago:', error)
 }
 
 export interface PaymentRequest {
@@ -65,32 +66,11 @@ export class MercadoPagoService {
    */
   static async createProductPreference(data: PaymentRequest): Promise<PaymentResponse> {
     try {
-      console.log('=== INICIO DE CREACIÓN DE PREFERENCIA ===')
-      console.log('Datos recibidos:', JSON.stringify(data, null, 2))
-      console.log('Cupón aplicado:', data.couponApplied ? 'SÍ' : 'NO')
-      console.log('🔍 DEBUG: Estructura completa de data.couponApplied:', {
-        exists: !!data.couponApplied,
-        type: typeof data.couponApplied,
-        keys: data.couponApplied ? Object.keys(data.couponApplied) : 'N/A',
-        value: data.couponApplied
-      })
-      if (data.couponApplied) {
-        console.log('Detalles del cupón:', {
-          codigo: data.couponApplied.codigo,
-          tipo: data.couponApplied.tipoDescuento,
-          descuento: data.couponApplied.descuento,
-          descuentoAplicado: data.couponApplied.descuentoAplicado,
-          totalOriginal: data.couponApplied.originalAmount,
-          totalFinal: data.couponApplied.totalAmount
-        })
-      }
-
+      Logger.debug('=== INICIO DE CREACIÓN DE PREFERENCIA ===')
+      
       // Validaciones iniciales
-      if (!process.env.NEXT_PUBLIC_MP_ACCESS_TOKEN || !client) {
-        console.error('ERROR: Configuración incompleta:', {
-          hasToken: !!process.env.NEXT_PUBLIC_MP_ACCESS_TOKEN,
-          hasClient: !!client
-        })
+      if (!client) {
+        Logger.error('ERROR: Cliente de MercadoPago no inicializado')
         throw new Error('Configuración de entorno incompleta o cliente de MercadoPago no inicializado')
       }
 
@@ -117,11 +97,6 @@ export class MercadoPagoService {
           throw new Error(`Producto no encontrado: ${item.productId}`)
         }
 
-        console.log(`DEBUG: Datos del producto ${item.productId}:`, JSON.stringify(productData, null, 2))
-        console.log(`DEBUG: Campos disponibles:`, Object.keys(productData))
-        console.log(`DEBUG: Precio del producto:`, productData.precio, `(tipo: ${typeof productData.precio})`)
-        console.log(`DEBUG: Nombre del producto:`, productData.nombre, `(tipo: ${typeof productData.nombre})`)
-
         if (productData.disponible === false) {
           throw new Error(`El producto ${productData.name || productData.nombre || item.productId} no está disponible`)
         }
@@ -130,21 +105,12 @@ export class MercadoPagoService {
           throw new Error(`Stock insuficiente para el producto ${productData.name || productData.nombre || item.productId}`)
         }
 
-        // Validar que el precio existe y es un número válido
         let price = productData.precio || productData.price
-        console.log(`DEBUG: Precio antes de validar:`, price, `(tipo: ${typeof price})`)
-        
-        if (typeof price === 'string') {
-          price = parseFloat(price)
-          console.log(`DEBUG: Precio convertido de string:`, price)
-        }
+        if (typeof price === 'string') price = parseFloat(price)
         
         if (!price || typeof price !== 'number' || price <= 0) {
-          console.error(`ERROR: Precio inválido para producto ${productData.name || productData.nombre || item.productId}:`, productData.precio || productData.price)
-          throw new Error(`Precio inválido para el producto ${productData.name || productData.nombre || item.productId}`)
+          throw new Error(`Precio inválido para el producto ${productData.name || productData.nombre}`)
         }
-
-        console.log(`DEBUG: Precio validado:`, price)
 
         validatedProducts.push({
           productId: item.productId,
@@ -161,41 +127,29 @@ export class MercadoPagoService {
       // Aplicar descuento del cupón si existe
       let finalAmount = totalAmount
       let discountAmount = 0
-      let productsWithDiscount = []
-      
-      console.log('🔍 DEBUG: Verificando cupón...')
-      console.log('🔍 DEBUG: data.couponApplied existe?', !!data.couponApplied)
-      console.log('🔍 DEBUG: data.couponApplied completo:', JSON.stringify(data.couponApplied, null, 2))
-      console.log('🔍 DEBUG: totalAmount antes del descuento:', totalAmount)
+      let productsWithDiscount = validatedProducts.map(product => ({
+        ...product,
+        originalPrice: product.price,
+        discountPerUnit: 0,
+        finalPrice: product.price
+      }))
       
       if (data.couponApplied) {
-        console.log('✅ DEBUG: Cupón aplicado:', data.couponApplied)
-        console.log('✅ DEBUG: Tipo de descuento:', data.couponApplied.tipoDescuento)
-        console.log('✅ DEBUG: Valor del descuento:', data.couponApplied.descuento)
+        Logger.debug('✅ Cupón aplicado:', data.couponApplied.codigo)
         
         // Calcular descuento por producto
         productsWithDiscount = validatedProducts.map(product => {
           let productDiscount = 0
           let finalPrice = product.price
           
-          console.log(`🔍 DEBUG: Procesando producto ${product.name}:`)
-          console.log(`  - Precio original: $${product.price}`)
-          console.log(`  - Cantidad: ${product.quantity}`)
-          
-          if (data.couponApplied && data.couponApplied.tipoDescuento === 'porcentaje') {
-            productDiscount = (product.price * data.couponApplied.descuento) / 100
+          if (data.couponApplied!.tipoDescuento === 'porcentaje') {
+            productDiscount = (product.price * data.couponApplied!.descuento) / 100
             finalPrice = product.price - productDiscount
-            console.log(`  - Descuento porcentual (${data.couponApplied.descuento}%): $${productDiscount}`)
-            console.log(`  - Precio final: $${finalPrice}`)
-          } else if (data.couponApplied && data.couponApplied.tipoDescuento === 'monto') {
-            // Para descuento de monto fijo, distribuir proporcionalmente
+          } else if (data.couponApplied!.tipoDescuento === 'monto') {
             const productTotal = product.price * product.quantity
             const productProportion = productTotal / totalAmount
-            productDiscount = data.couponApplied.descuento * productProportion
+            productDiscount = data.couponApplied!.descuento * productProportion
             finalPrice = Math.max(0, product.price - (productDiscount / product.quantity))
-            console.log(`  - Proporción del producto: ${(productProportion * 100).toFixed(2)}%`)
-            console.log(`  - Descuento de monto fijo: $${productDiscount}`)
-            console.log(`  - Precio final: $${finalPrice}`)
           }
           
           return {
@@ -206,58 +160,73 @@ export class MercadoPagoService {
           }
         })
         
-        // Calcular totales
         discountAmount = productsWithDiscount.reduce((total, product) => {
           return total + (product.discountPerUnit * product.quantity)
         }, 0)
         
         finalAmount = totalAmount - discountAmount
-        
-        console.log(`✅ DEBUG: RESUMEN DEL DESCUENTO:`)
-        console.log(`  - Total original: $${totalAmount}`)
-        console.log(`  - Descuento aplicado: $${discountAmount}`)
-        console.log(`  - Total final: $${finalAmount}`)
-        console.log('✅ DEBUG: Productos con descuento:', productsWithDiscount.map(p => ({
-          name: p.name,
-          originalPrice: p.originalPrice,
-          finalPrice: p.finalPrice,
-          discount: p.discountPerUnit
-        })))
-      } else {
-        console.log('❌ DEBUG: NO hay cupón aplicado')
-        // Si no hay cupón, usar precios originales
-        productsWithDiscount = validatedProducts.map(product => ({
-          ...product,
-          originalPrice: product.price,
-          discountPerUnit: 0,
-          finalPrice: product.price
-        }))
       }
 
-      // Generar ID de la compra
-      const purchaseId = `purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      const preference = new Preference(client)
+      // Construir objeto de compra para Firestore (con estado pendiente)
+      const purchaseData = {
+        buyerId: data.userId || null,
+        buyerEmail: data.userData.email,
+        buyerName: data.userData.name,
+        buyerPhone: data.userData.phone,
+        buyerAddress: data.userData.address,
+        products: productsWithDiscount.map(p => ({
+          productId: p.productId,
+          quantity: p.quantity,
+          name: p.name,
+          price: p.price,
+          stock: p.stock,
+          imageUrl: p.imageUrl,
+          originalPrice: p.originalPrice,
+          finalPrice: p.finalPrice,
+          discountPerUnit: p.discountPerUnit
+        })),
+        totalAmount: totalAmount,
+        finalAmount: finalAmount,
+        status: 'pending', // Estado inicial del pago
+        orderStatus: 'pendiente_pago', // Estado inicial del pedido
+        createdAt: new Date(),
+        deliveryOption: data.deliveryOption,
+        deliverySlot: data.deliverySlot,
+        comments: data.comments,
+        isUserLoggedIn: data.isUserLoggedIn,
+        selectedAddressId: data.addressId,
+        selectedAddressData: data.addressData,
+        couponApplied: data.couponApplied ? {
+          ...data.couponApplied,
+          descuentoAplicado: discountAmount
+        } : null,
+        discountAmount: discountAmount,
+        paymentMethod: 'mercadopago'
+      }
 
+      // Guardar directamente en 'purchases'
+      const purchaseId = await FirebaseService.addCompletedPurchase(purchaseData)
+      Logger.log(`✅ Compra iniciada guardada en Firestore con ID: ${purchaseId}`)
+
+      // Crear preferencia en MercadoPago
+      const preference = new Preference(client)
       const preferenceData = {
         body: {
-          items: [
-            // Productos con precios ya reducidos (si aplica cupón)
-            ...productsWithDiscount.map((p) => ({
-              id: p.productId,
-              title: p.name,
-              quantity: p.quantity,
-              unit_price: parseFloat(p.finalPrice.toString()),
-              currency_id: "ARS",
-              picture_url: p.imageUrl || undefined
-            }))
-          ],
+          items: productsWithDiscount.map((p) => ({
+            id: p.productId,
+            title: p.name,
+            quantity: p.quantity,
+            unit_price: parseFloat(p.finalPrice.toFixed(2)),
+            currency_id: "ARS",
+            picture_url: p.imageUrl || undefined
+          })),
           back_urls: {
             success: `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/checkout/success`,
             failure: `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/checkout/failure`,
             pending: `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/checkout/pending`
           },
           notification_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/webhooks/mercadopago`,
-          external_reference: purchaseId,
+          external_reference: purchaseId, // Usamos el ID de la compra como referencia externa
           payer: {
             email: data.userData.email,
             name: data.userData.name,
@@ -269,90 +238,20 @@ export class MercadoPagoService {
         }
       }
 
-      // Crear preferencia
-      console.log('DEBUG: Intentando crear preferencia con MercadoPago...')
-      console.log('DEBUG: Datos de preferencia:', JSON.stringify(preferenceData, null, 2))
+      Logger.debug('DEBUG: Creando preferencia con notification_url:', preferenceData.body.notification_url)
       
-      if (!client) {
-        throw new Error('Cliente de MercadoPago no inicializado')
-      }
-      
-      let result
-      try {
-        result = await preference.create(preferenceData)
-        console.log('DEBUG: Preferencia creada exitosamente:', result.id)
-        console.log('DEBUG: Campos completos del resultado:', JSON.stringify(result, null, 2))
-        console.log('DEBUG: Tipos de campos:', {
-          id: typeof result.id,
-          init_point: typeof (result as any).init_point,
-          sandbox_init_point: typeof (result as any).sandbox_init_point,
-          hasInitPoint: 'init_point' in result,
-          hasSandboxInitPoint: 'sandbox_init_point' in result
-        })
-      } catch (preferenceError) {
-        console.error('ERROR: Error creando preferencia:', preferenceError)
-        throw preferenceError
-      }
-
-      // Guardar en Firestore como compra pendiente
-      const pendingPurchaseData = {
-        buyerId: data.userId || null,
-        buyerEmail: data.userData.email || '',
-        buyerName: data.userData.name || '',
-        buyerPhone: data.userData.phone || '',
-        buyerAddress: data.userData.address || '',
-        products: productsWithDiscount.map(p => ({
-          ...p,
-          originalPrice: p.originalPrice,
-          finalPrice: p.finalPrice,
-          discountPerUnit: p.discountPerUnit
-        })),
-        totalAmount: finalAmount, // Usar el precio final con descuento
-        originalAmount: totalAmount, // Mantener el precio original
-        discountAmount: discountAmount, // Monto del descuento aplicado
-        couponApplied: data.couponApplied ? {
-          id: data.couponApplied.id,
-          codigo: data.couponApplied.codigo,
-          descuento: data.couponApplied.descuento,
-          tipoDescuento: data.couponApplied.tipoDescuento,
-          descuentoAplicado: discountAmount
-        } : null,
-        status: 'pending',
-        createdAt: new Date(),
-        preferenceId: result.id,
-        deliveryOption: data.deliveryOption,
-        deliverySlot: data.deliverySlot || null,
-        comments: data.comments,
-        isUserLoggedIn: data.isUserLoggedIn,
-        addressId: data.addressId || null,
-        addressData: data.addressData || null
-      }
-
-      await FirebaseService.addPendingPurchase(purchaseId, pendingPurchaseData)
-
-      console.log('=== RESUMEN DE LA PREFERENCIA CREADA ===')
-      console.log('ID de preferencia:', result.id)
-      console.log('ID de compra:', purchaseId)
-      console.log('Total original (sin descuento):', totalAmount)
-      console.log('Descuento aplicado:', discountAmount)
-      console.log('Total final (con descuento):', finalAmount)
-      console.log('Cupón aplicado:', data.couponApplied ? data.couponApplied.codigo : 'Ninguno')
-      console.log('Items en la preferencia:', preferenceData.body.items.length)
-      console.log('Detalle de precios enviados a MercadoPago:')
-      preferenceData.body.items.forEach((item, index) => {
-        console.log(`  Item ${index + 1}: ${item.title} - Cantidad: ${item.quantity} - Precio unitario: $${item.unit_price}`)
-      })
+      const result = await preference.create(preferenceData)
+      Logger.debug('DEBUG: Preferencia creada exitosamente:', result.id)
 
       return {
         id: result.id || '',
-        initPoint: (result as any).init_point || (result as any).initPoint || (result as any).body?.init_point || (result as any).response?.init_point || '',
-        sandboxInitPoint: (result as any).sandbox_init_point || (result as any).sandboxInitPoint || (result as any).body?.sandbox_init_point || (result as any).response?.sandbox_init_point || '',
+        initPoint: result.init_point!,
+        sandboxInitPoint: result.sandbox_init_point!,
         externalReference: purchaseId
       }
 
     } catch (error) {
-      console.error('Error creando preferencia centralizada:', error)
-      console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace available')
+      Logger.error('Error creando preferencia:', error)
       throw new Error(error instanceof Error ? error.message : 'Error desconocido al crear preferencia')
     }
   }
@@ -376,91 +275,50 @@ export class MercadoPagoService {
         const paymentInstance = new Payment(client)
         const paymentInfo = await paymentInstance.get({ id: data.id })
         const { external_reference, status } = paymentInfo
+        const paymentId = paymentInfo.id
 
-        if (external_reference && external_reference.startsWith('purchase_')) {
-          // Buscar la compra pendiente en Firestore
-          const pendingPurchaseData = await FirebaseService.getPendingPurchase(external_reference)
+        // La referencia externa es el ID de nuestra compra en 'purchases'
+        if (external_reference) {
+          Logger.log(`Webhook recibido para compra ${external_reference}, estado: ${status}`)
+          
+          // Obtener la compra actual
+          const currentPurchase = await FirebaseService.getPurchaseById(external_reference)
+          
+          if (currentPurchase) {
+            const updates: any = {
+              status: status,
+              paymentId: String(paymentId),
+              updatedAt: new Date()
+            }
 
-          if (!pendingPurchaseData) {
-            console.error('Compra pendiente no encontrada:', external_reference)
-            return
-          }
-
-          if (status === 'approved') {
-            // Actualizar stock
-            for (const prod of pendingPurchaseData.products) {
-              try {
-                const productData = await FirebaseService.getProductById(prod.productId)
-
-                if (!productData) continue
-
-                if (typeof productData.stock === 'number') {
-                  if (productData.stock < prod.quantity) {
-                    await FirebaseService.addFailedPurchase({
-                      reason: 'Stock insuficiente en webhook',
-                      ...prod,
-                      buyerId: pendingPurchaseData.buyerId,
-                      paymentId: paymentInfo.id,
-                      createdAt: new Date()
-                    })
-                    continue
-                  }
-
-                  await FirebaseService.updateProductStock(prod.productId, productData.stock - prod.quantity)
+            // Lógica basada en el estado
+            if (status === 'approved') {
+              // Solo si no estaba aprobada antes
+              if (currentPurchase.status !== 'approved') {
+                updates.orderStatus = 'en_preparacion'
+                
+                // Aquí se podría descontar stock si no se hizo antes
+                // y marcar el cupón como usado
+                if (currentPurchase.couponApplied?.id) {
+                   await FirebaseService.markCouponAsUsed(currentPurchase.couponApplied.id)
                 }
-              } catch (stockError) {
-                console.error(`Error actualizando stock de ${prod.productId}:`, stockError)
-                // Continuar con otros productos
               }
+            } else if (status === 'rejected' || status === 'cancelled') {
+              updates.orderStatus = 'cancelado'
             }
 
-            // Marcar cupón como usado si se aplicó uno
-            if (pendingPurchaseData.couponApplied) {
-              try {
-                await FirebaseService.markCouponAsUsed(pendingPurchaseData.couponApplied.id)
-              } catch (couponError) {
-                console.error('Error al marcar cupón como usado en webhook:', couponError)
-                // No fallar la compra si hay error con el cupón
-              }
-            }
-
-            // Guardar la compra finalizada
-            await FirebaseService.addCompletedPurchase({
-              buyerId: pendingPurchaseData.buyerId,
-              buyerEmail: pendingPurchaseData.buyerEmail || '',
-              buyerName: pendingPurchaseData.buyerName || '',
-              buyerPhone: pendingPurchaseData.buyerPhone || '',
-              buyerAddress: pendingPurchaseData.buyerAddress || '',
-              products: pendingPurchaseData.products,
-              paymentId: paymentInfo.id,
-              status: paymentInfo.status,
-              totalAmount: pendingPurchaseData.totalAmount,
-              originalAmount: pendingPurchaseData.originalAmount,
-              discountAmount: pendingPurchaseData.discountAmount,
-              couponApplied: pendingPurchaseData.couponApplied,
-              paidToSellers: false,
-              createdAt: new Date(),
-              deliveryOption: pendingPurchaseData.deliveryOption,
-              deliverySlot: pendingPurchaseData.deliverySlot,
-              comments: pendingPurchaseData.comments,
-              isUserLoggedIn: pendingPurchaseData.isUserLoggedIn,
-              addressId: pendingPurchaseData.addressId || null,
-              addressData: pendingPurchaseData.addressData || null,
-              orderStatus: 'en_preparacion', // Estado inicial para MercadoPago
-              paymentMethod: 'mercadopago' // Agregar método de pago
-            })
-
-            // Eliminar la compra pendiente
-            await FirebaseService.deletePendingPurchase(external_reference)
-          } else if (status === 'rejected' || status === 'cancelled') {
-            // Eliminar la compra pendiente si fue rechazada o cancelada
-            await FirebaseService.deletePendingPurchase(external_reference)
+            // Actualizar la compra existente en 'purchases'
+            await FirebaseService.updatePurchase(external_reference, updates)
+            Logger.log(`✅ Compra ${external_reference} actualizada a status: ${status}`)
+          } else {
+            Logger.warn(`⚠️ Compra con referencia ${external_reference} no encontrada en purchases.`)
           }
         }
       }
     } catch (error) {
-      console.error('Error en handleWebhook:', error)
+      Logger.error('Error en handleWebhook:', error)
       throw new Error(error instanceof Error ? error.message : 'Error procesando notificación')
     }
   }
-} 
+}
+ 

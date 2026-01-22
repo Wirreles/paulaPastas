@@ -12,6 +12,7 @@ import { CartProvider } from "@/lib/cart-context"; // Importar CartProvider
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://paulapastas.com"),
   title: "Comida Casera - Pastas Artesanales",
   description:
     "Pastas frescas y salsas caseras hechas con amor y tradición. ¡Pedí online!",

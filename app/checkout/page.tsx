@@ -20,6 +20,7 @@ import { Loader2, CheckCircle, CreditCard, Wallet, MapPin, ChevronDown, X } from
 import { ImageWrapper } from "@/components/ui/ImageWrapper"
 import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { useToast } from "@/lib/toast-context"
+import { Logger } from "@/lib/logger"
 import {
   Select,
   SelectContent,
@@ -65,8 +66,8 @@ export default function CheckoutPage() {
   const [userAddresses, setUserAddresses] = useState<any[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string>("")
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false)
-  const [errors, setErrors] = useState<{[key: string]: string}>({})
-  
+  const [errors, setErrors] = useState<{ [key: string]: string }>({})
+
   // Estado para cupones
   const [couponCode, setCouponCode] = useState("")
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null)
@@ -101,7 +102,7 @@ export default function CheckoutPage() {
         comments: "",
       })
       setPurchaseOption("logged")
-      
+
       // Cargar direcciones del usuario
       loadUserAddresses()
     }
@@ -109,14 +110,14 @@ export default function CheckoutPage() {
 
   const loadUserAddresses = async () => {
     if (!user?.uid) return
-    
+
     setIsLoadingAddresses(true)
     try {
-      console.log("🔄 Cargando direcciones del usuario:", user.uid)
+      Logger.debug("🔄 Cargando direcciones del usuario: " + user.uid)
       const addresses = await FirebaseService.getDireccionesByUser(user.uid)
-      console.log("📍 Direcciones encontradas:", addresses)
+      Logger.debug("📍 Direcciones encontradas: " + addresses.length)
       setUserAddresses(addresses)
-      
+
       // Si hay direcciones, seleccionar la primera por defecto
       if (addresses.length > 0) {
         setSelectedAddressId(addresses[0].id)
@@ -126,10 +127,10 @@ export default function CheckoutPage() {
         }))
       } else {
         // Si no hay direcciones guardadas, mantener la dirección del perfil si existe
-        console.log("📍 No hay direcciones guardadas, usando dirección del perfil:", userData?.direccion || "ninguna")
+        Logger.debug("📍 No hay direcciones guardadas, usando dirección del perfil: " + (userData?.direccion || "ninguna"))
       }
     } catch (error) {
-      console.error("❌ Error al cargar direcciones:", error)
+      Logger.error("❌ Error al cargar direcciones:", error)
     } finally {
       setIsLoadingAddresses(false)
     }
@@ -153,7 +154,7 @@ export default function CheckoutPage() {
 
     try {
       const result = await FirebaseService.validateCoupon(couponCode.trim(), totalPrice)
-      
+
       if (result.valid && result.cupon) {
         // Validaciones adicionales
         if (result.cupon.montoMinimo > 0 && totalPrice < result.cupon.montoMinimo) {
@@ -179,7 +180,7 @@ export default function CheckoutPage() {
         setCouponError(result.error || "Cupón inválido")
       }
     } catch (error) {
-      console.error("❌ Error al validar cupón:", error)
+      Logger.error("❌ Error al validar cupón:", error)
       setCouponError("Error al validar el cupón. Intenta nuevamente.")
     } finally {
       setIsValidatingCoupon(false)
@@ -197,7 +198,7 @@ export default function CheckoutPage() {
   // Calcular descuento del cupón
   const calculateCouponDiscount = () => {
     if (!appliedCoupon) return 0
-    
+
     if (appliedCoupon.tipoDescuento === 'porcentaje') {
       return (totalPrice * appliedCoupon.descuento) / 100
     } else {
@@ -211,12 +212,12 @@ export default function CheckoutPage() {
   // Función helper para formatear información del cupón
   const getCouponInfo = () => {
     if (!appliedCoupon) return null
-    
+
     const discountAmount = calculateCouponDiscount()
-    const discountPercentage = appliedCoupon.tipoDescuento === 'porcentaje' 
-      ? `${appliedCoupon.descuento}%` 
+    const discountPercentage = appliedCoupon.tipoDescuento === 'porcentaje'
+      ? `${appliedCoupon.descuento}%`
       : `$${appliedCoupon.descuento}`
-    
+
     return {
       code: appliedCoupon.codigo,
       discountType: appliedCoupon.tipoDescuento === 'porcentaje' ? 'Porcentaje' : 'Monto fijo',
@@ -235,7 +236,7 @@ export default function CheckoutPage() {
   const handleAddressChange = (addressId: string) => {
     setSelectedAddressId(addressId)
     const selectedAddress = userAddresses.find(addr => addr.id === addressId)
-    
+
     if (selectedAddress) {
       const formattedAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
       setFormData(prev => ({
@@ -243,7 +244,7 @@ export default function CheckoutPage() {
         address: formattedAddress
       }))
     }
-    
+
     // Limpiar error de dirección cuando se selecciona una
     if (errors.address) {
       setErrors(prev => {
@@ -257,7 +258,7 @@ export default function CheckoutPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-    
+
     // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[name]) {
       setErrors(prev => {
@@ -276,18 +277,18 @@ export default function CheckoutPage() {
   // Validaciones para cada paso
   const validateStep1 = (): boolean => {
     clearErrors()
-    
+
     if (purchaseOption === "logged" && !user) {
       setErrors({ step1: "Debes iniciar sesión para continuar" })
       return false
     }
-    
+
     return true
   }
 
   const validateStep2 = (): boolean => {
     clearErrors()
-    const newErrors: {[key: string]: string} = {}
+    const newErrors: { [key: string]: string } = {}
 
     // Validar nombre
     if (!formData.name.trim()) {
@@ -334,7 +335,7 @@ export default function CheckoutPage() {
 
   const validateStep3 = (): boolean => {
     clearErrors()
-    const newErrors: {[key: string]: string} = {}
+    const newErrors: { [key: string]: string } = {}
 
     if (deliveryOption === "delivery" && !selectedDeliverySlot) {
       newErrors.deliverySlot = "Selecciona un horario de entrega"
@@ -386,8 +387,8 @@ export default function CheckoutPage() {
   const handleMercadoPagoPayment = async () => {
     setIsCreatingPayment(true)
     try {
-      console.log("🔄 Iniciando pago con MercadoPago")
-      
+      Logger.debug("🔄 Iniciando pago con MercadoPago")
+
       // Validar datos requeridos
       if (!formData.name || !formData.email || !formData.phone) {
         error("Datos incompletos", "Por favor completa todos los campos requeridos")
@@ -397,7 +398,7 @@ export default function CheckoutPage() {
       // Validar dirección solo si es delivery
       let finalAddress = formData.address
       let addressData = null
-      
+
       if (deliveryOption === "delivery") {
         if (user && userAddresses.length > 0 && selectedAddressId) {
           // Usuario logueado con direcciones guardadas
@@ -460,14 +461,16 @@ export default function CheckoutPage() {
         } : null,
       }
 
-      console.log("📦 Datos del pago:", paymentData)
-      console.log("🔍 DEBUG: Verificación del cupón antes del envío:")
-      console.log("  - appliedCoupon existe?", !!appliedCoupon)
-      console.log("  - appliedCoupon completo:", appliedCoupon)
-      console.log("  - calculateCouponDiscount():", calculateCouponDiscount())
-      console.log("  - totalPrice:", totalPrice)
-      console.log("  - finalPrice:", finalPrice)
-      console.log("  - paymentData.couponApplied:", paymentData.couponApplied)
+
+
+      Logger.debug("📦 Datos del pago:", JSON.stringify(paymentData))
+      Logger.debug("🔍 DEBUG: Verificación del cupón antes del envío:")
+      Logger.debug(`  - appliedCoupon existe? ${!!appliedCoupon}`)
+      // Logger.debug("  - appliedCoupon completo:", appliedCoupon) // Omitir objeto complejo si no es necesario
+      Logger.debug(`  - calculateCouponDiscount(): ${calculateCouponDiscount()}`)
+      Logger.debug(`  - totalPrice: ${totalPrice}`)
+      Logger.debug(`  - finalPrice: ${finalPrice}`)
+      // Logger.debug("  - paymentData.couponApplied:", paymentData.couponApplied)
 
       // Crear pago usando el servicio integrado
       const response = await fetch("/api/mercadopago/create-preference", {
@@ -484,7 +487,7 @@ export default function CheckoutPage() {
       }
 
       const result = await response.json()
-      console.log("✅ Respuesta del servicio:", result)
+      Logger.debug("✅ Respuesta del servicio:", JSON.stringify(result))
 
       // Redirigir a MercadoPago si se recibió el enlace
       if (result.initPoint) {
@@ -497,7 +500,7 @@ export default function CheckoutPage() {
       }
 
     } catch (err: unknown) {
-      console.error("❌ Error en MercadoPago:", err)
+      Logger.error("❌ Error en MercadoPago:", err)
       error("Error de pago", err instanceof Error ? err.message : "Error al procesar el pago")
     } finally {
       setIsCreatingPayment(false)
@@ -510,7 +513,7 @@ export default function CheckoutPage() {
       // Validar dirección solo si es delivery
       let finalAddress = formData.address
       let addressData = null
-      
+
       if (deliveryOption === "delivery") {
         if (user && userAddresses.length > 0 && selectedAddressId) {
           // Usuario logueado con direcciones guardadas
@@ -571,27 +574,27 @@ export default function CheckoutPage() {
       }
 
       const purchaseId = await FirebaseService.addCompletedPurchase(purchaseData)
-      
-      console.log("✅ Compra creada:", purchaseId)
-      
+
+      Logger.debug("✅ Compra creada: " + purchaseId)
+
       // Si se aplicó un cupón, actualizar su estado en Firebase (solo una vez)
       if (appliedCoupon && !couponMarkedAsUsed) {
         try {
           await FirebaseService.markCouponAsUsed(appliedCoupon.id)
           setCouponMarkedAsUsed(true) // Marcar como usado localmente
-          console.log("✅ Cupón marcado como usado:", appliedCoupon.codigo)
+          Logger.debug("✅ Cupón marcado como usado: " + appliedCoupon.codigo)
         } catch (error) {
-          console.error("❌ Error al marcar cupón como usado:", error)
+          Logger.error("❌ Error al marcar cupón como usado:", error)
           // No fallar la orden si hay error con el cupón
         }
       }
-      
+
       setPurchaseId(purchaseId)
       setOrderConfirmed(true)
       clearCart()
       success("Pedido confirmado", "Tu pedido ha sido recibido con éxito")
     } catch (err: unknown) {
-      console.error("Error al procesar el pedido:", err)
+      Logger.error("Error al procesar el pedido:", err)
       error("Error", "Hubo un error al procesar tu pedido. Por favor, inténtalo de nuevo.")
     } finally {
       setIsSubmitting(false)
@@ -605,11 +608,11 @@ export default function CheckoutPage() {
           <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
           <CardTitle className="text-3xl font-bold mb-4">¡Pedido Confirmado!</CardTitle>
           <p className="text-neutral-700 mb-4">
-            Tu pedido ha sido recibido con éxito. 
+            Tu pedido ha sido recibido con éxito.
             <br />
             <span className="font-semibold">Compra: {purchaseId}</span>
           </p>
-          
+
           {appliedCoupon && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
               <p className="text-sm text-green-800">
@@ -620,7 +623,7 @@ export default function CheckoutPage() {
               </p>
             </div>
           )}
-          
+
           <p className="text-neutral-600 mb-6">
             En breve nos pondremos en contacto contigo por WhatsApp para coordinar los detalles del envío y el pago.
           </p>
@@ -638,23 +641,21 @@ export default function CheckoutPage() {
           <Card className="p-4 sm:p-6">
             <CardHeader className="pb-3 sm:pb-6">
               <CardTitle className="text-xl sm:text-2xl font-bold text-neutral-900">Finalizar Compra</CardTitle>
-              
+
               {/* Indicador de progreso */}
               <div className="mt-3 sm:mt-4">
                 <div className="flex items-center justify-between mb-2 px-1">
                   {[1, 2, 3, 4].map((stepNumber) => (
                     <div key={stepNumber} className="flex items-center">
-                      <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${
-                        step >= stepNumber 
-                          ? 'bg-blue-600 text-white' 
-                          : 'bg-neutral-200 text-neutral-600'
-                      }`}>
+                      <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${step >= stepNumber
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-neutral-200 text-neutral-600'
+                        }`}>
                         {stepNumber}
                       </div>
                       {stepNumber < 4 && (
-                        <div className={`w-6 sm:w-12 h-1 mx-1 sm:mx-2 ${
-                          step > stepNumber ? 'bg-blue-600' : 'bg-neutral-200'
-                        }`} />
+                        <div className={`w-6 sm:w-12 h-1 mx-1 sm:mx-2 ${step > stepNumber ? 'bg-blue-600' : 'bg-neutral-200'
+                          }`} />
                       )}
                     </div>
                   ))}
@@ -672,13 +673,13 @@ export default function CheckoutPage() {
               {step === 1 && (
                 <div className="space-y-4 sm:space-y-6">
                   <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 px-1">Paso 1: Elegir modalidad de compra</h2>
-                  
+
                   {errors.step1 && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 mx-1">
                       <p className="text-sm text-red-700">{errors.step1}</p>
                     </div>
                   )}
-                  
+
                   <RadioGroup
                     value={purchaseOption}
                     onValueChange={(value: "guest" | "logged") => {
@@ -702,7 +703,7 @@ export default function CheckoutPage() {
                       </Label>
                     </div>
                   </RadioGroup>
-                  
+
                   {user && purchaseOption === "logged" && (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 mx-1">
                       <div className="flex items-start space-x-2">
@@ -724,7 +725,7 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                   )}
-                  
+
                   {!user && purchaseOption === "logged" && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mx-1">
                       <p className="text-xs sm:text-sm text-blue-700 mb-3 leading-relaxed">
@@ -735,10 +736,10 @@ export default function CheckoutPage() {
                       </Button>
                     </div>
                   )}
-                  
+
                   <div className="flex justify-end pt-2 sm:pt-4">
-                    <Button 
-                      onClick={handleNextStep} 
+                    <Button
+                      onClick={handleNextStep}
                       disabled={purchaseOption === "logged" && !user}
                       className="min-w-[100px] sm:min-w-[120px] text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3"
                     >
@@ -752,15 +753,15 @@ export default function CheckoutPage() {
               {step === 2 && (
                 <div className="space-y-6">
                   <h2 className="text-xl font-semibold mb-4">Paso 2: Completar datos de entrega</h2>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="name">Nombre y Apellido *</Label>
-                      <Input 
-                        id="name" 
-                        name="name" 
-                        value={formData.name} 
-                        onChange={handleInputChange} 
+                      <Input
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
                         className={errors.name ? "border-red-500 focus:border-red-500" : ""}
                         placeholder="Tu nombre completo"
                       />
@@ -802,8 +803,8 @@ export default function CheckoutPage() {
                       <Label htmlFor="address">Dirección de entrega *</Label>
                       {user && userAddresses.length > 0 ? (
                         <div className="space-y-2">
-                          <Select 
-                            value={selectedAddressId} 
+                          <Select
+                            value={selectedAddressId}
                             onValueChange={handleAddressChange}
                           >
                             <SelectTrigger className={errors.address ? "border-red-500 focus:border-red-500" : ""}>
@@ -827,11 +828,11 @@ export default function CheckoutPage() {
                               ))}
                             </SelectContent>
                           </Select>
-                          
+
                           {errors.address && (
                             <p className="text-sm text-red-600 mt-1">{errors.address}</p>
                           )}
-                          
+
                           {selectedAddressId && (
                             <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                               <div className="flex items-start space-x-2">
@@ -935,7 +936,7 @@ export default function CheckoutPage() {
               {step === 3 && (
                 <div className="space-y-6">
                   <h2 className="text-xl font-semibold mb-4">Elegí tu horario de preferencia para recibir el pedido</h2>
-                  
+
                   {deliveryOption === "delivery" ? (
                     <div className="space-y-4">
                       <RadioGroup
@@ -953,13 +954,13 @@ export default function CheckoutPage() {
                           </div>
                         ))}
                       </RadioGroup>
-                      
+
                       {errors.deliverySlot && (
                         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                           <p className="text-sm text-red-700">{errors.deliverySlot}</p>
                         </div>
                       )}
-                      
+
                       {/* Texto informativo sobre confirmación por WhatsApp */}
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <p className="text-sm text-blue-700">
@@ -1042,19 +1043,18 @@ export default function CheckoutPage() {
                   )}
 
                   <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 mt-4 sm:mt-6">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={handlePrevStep}
                       className="w-full sm:w-auto text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3"
                     >
                       Anterior
                     </Button>
-                    <Button 
-                      onClick={handleSubmitOrder} 
+                    <Button
+                      onClick={handleSubmitOrder}
                       disabled={isSubmitting || isCreatingPayment}
-                      className={`w-full sm:w-auto text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3 ${
-                        paymentMethod === "mercadopago" ? "bg-blue-600 hover:bg-blue-700" : ""
-                      }`}
+                      className={`w-full sm:w-auto text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3 ${paymentMethod === "mercadopago" ? "bg-blue-600 hover:bg-blue-700" : ""
+                        }`}
                     >
                       {isCreatingPayment ? (
                         <>
@@ -1103,10 +1103,10 @@ export default function CheckoutPage() {
                 {items.map((item) => (
                   <div key={item.productId} className="flex items-center gap-2 sm:gap-3">
                     <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 rounded-md overflow-hidden">
-                      <ImageWrapper 
-                        src={item.imageUrl || "/placeholder.svg"} 
-                        alt={item.name} 
-                        fill 
+                      <ImageWrapper
+                        src={item.imageUrl || "/placeholder.svg"}
+                        alt={item.name}
+                        fill
                         className="object-cover"
                         fallback="/placeholder.svg?height=64&width=64&text=Producto"
                         placeholder={<ProductPlaceholder className="object-cover" />}
@@ -1123,11 +1123,11 @@ export default function CheckoutPage() {
                 ))}
               </div>
               <Separator className="my-6" />
-              
+
               {/* Sección de Cupón */}
               <div className="space-y-3 sm:space-y-4">
                 <h4 className="font-semibold text-neutral-900 text-sm sm:text-base">¿Tenés un cupón?</h4>
-                
+
                 {!appliedCoupon ? (
                   <div className="space-y-2 sm:space-y-3">
                     <div className="flex flex-col sm:flex-row gap-2">
@@ -1152,7 +1152,7 @@ export default function CheckoutPage() {
                         )}
                       </Button>
                     </div>
-                    
+
                     {couponError && (
                       <p className="text-xs sm:text-sm text-red-600 bg-red-50 p-2 rounded">
                         {couponError}
@@ -1189,30 +1189,30 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 )}
-                
+
                 {couponSuccess && (
                   <p className="text-xs sm:text-sm text-green-600 bg-green-50 p-2 rounded">
                     {couponSuccess}
                   </p>
                 )}
               </div>
-              
+
               <Separator className="my-6" />
-              
+
               {/* Resumen de precios */}
               <div className="space-y-2 sm:space-y-3">
                 <div className="flex justify-between text-xs sm:text-sm text-neutral-600">
                   <span>Subtotal:</span>
                   <span>{formatPrice(totalPrice)}</span>
                 </div>
-                
+
                 {appliedCoupon && (
                   <div className="flex justify-between text-xs sm:text-sm text-green-600">
                     <span className="truncate pr-2">Descuento ({appliedCoupon.codigo}):</span>
                     <span className="flex-shrink-0">-{formatPrice(calculateCouponDiscount())}</span>
                   </div>
                 )}
-                
+
                 <Separator />
                 <div className="flex justify-between items-center text-base sm:text-lg font-bold text-neutral-900">
                   <span>Total del Pedido:</span>

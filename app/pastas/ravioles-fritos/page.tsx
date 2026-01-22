@@ -45,7 +45,7 @@ async function getProductosRaviolesFritos() {
 
 export default async function RaviolesFritosPage() {
   const productosRaviolesFritos = await getProductosRaviolesFritos()
-  
+
   // Datos estáticos del banner
   const bannerData = {
     imageUrl: "/banners/banner-raviolesfritos.webp",
@@ -192,7 +192,7 @@ export default async function RaviolesFritosPage() {
           </section>
 
           {/* 3. GALERÍA DE IMÁGENES */}
-          <section className="mb-16">
+          {/* <section className="mb-16">
             <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">Galería de Imágenes</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
@@ -232,7 +232,7 @@ export default async function RaviolesFritosPage() {
                 />
               </div>
             </div>
-          </section>
+          </section> */}
 
           {/* 4. SECCIÓN DESTACADOS - LOS MÁS PEDIDOS */}
           <section className="bg-white rounded-2xl shadow-lg p-8 mb-16">
@@ -341,7 +341,7 @@ export default async function RaviolesFritosPage() {
             <p className="text-lg text-neutral-600 mb-8">
               Todo lo que necesitás saber para que tus ravioles fritos queden perfectos.
             </p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-4xl mx-auto">
               {preguntasTemperaturaSalsas.map((item, index) => (
                 <div key={index} className="flex items-start space-x-3">

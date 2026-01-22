@@ -28,13 +28,13 @@ const categoriaData = {
         nombre: "Ravioles",
         slug: "ravioles",
         descripcion: "Ravioles artesanales con masa fresca y rellenos tradicionales",
-        imagen: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop",
+        imagen: "/pastas/ravioles.webp",
       },
       {
         nombre: "Sorrentinos",
         slug: "sorrentinos",
         descripcion: "Sorrentinos grandes con los mejores rellenos caseros",
-        imagen: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop",
+        imagen: "/pastas/sorrentinos.webp",
       },
     ],
   },
@@ -48,7 +48,7 @@ const categoriaData = {
         nombre: "Ñoquis",
         slug: "noquis",
         descripcion: "Ñoquis de papa tradicionales hechos con la receta de la nonna",
-        imagen: "https://images.unsplash.com/photo-1572441713132-51c75654db73?w=400&h=300&fit=crop",
+        imagen: "/pastas/noquis.webp",
       },
       {
         nombre: "Fideos",
@@ -60,7 +60,7 @@ const categoriaData = {
         nombre: "Ravioles Fritos", // Nuevo
         slug: "ravioles-fritos", // Nuevo
         descripcion: "Crocantes por fuera, cremosos por dentro. ¡Una delicia!", // Nuevo
-        imagen: "/placeholder.svg?height=400&width=300", // Nuevo
+        imagen: "/pastas/raviolesFritos.webp", // Nuevo
       },
     ],
   },

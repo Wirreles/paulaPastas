@@ -29,6 +29,7 @@ import type {
   Suscripcion, // Importar Suscripcion
   NewsletterCampaign, // Importar NewsletterCampaign
 } from "./types"
+import { Logger } from "./logger"
 
 // Cache para optimizar consultas
 interface CacheEntry<T> {
@@ -67,14 +68,14 @@ class Cache {
     for (const key of this.cache.keys()) {
       if (key.includes(pattern)) {
         this.cache.delete(key)
-        console.log(`🗑️ Cache invalidado: ${key}`)
+        Logger.debug(`🗑️ Cache invalidado: ${key}`)
       }
     }
   }
 
   invalidateAll(): void {
     this.cache.clear()
-    console.log("🗑️ Cache completamente limpiado")
+    Logger.debug("🗑️ Cache completamente limpiado")
   }
 }
 
@@ -86,7 +87,7 @@ export class FirebaseService {
     const cacheKey = `productos_${categoria || 'all'}`
     const cached = cache.get<Producto[]>(cacheKey)
     if (cached) {
-      console.log(`📦 Cache hit: getProductos(${categoria || 'all'})`)
+      Logger.debug(`📦 Cache hit: getProductos(${categoria || 'all'})`)
       return cached
     }
 
@@ -112,11 +113,11 @@ export class FirebaseService {
         return a.nombre.localeCompare(b.nombre)
       })
 
-      console.log(`📦 FirebaseService.getProductos(${categoria}): Encontrados ${productos.length} productos`)
+      Logger.debug(`📦 FirebaseService.getProductos(${categoria}): Encontrados ${productos.length} productos`)
       cache.set(cacheKey, productos)
       return productos
     } catch (error) {
-      console.error("❌ Error en getProductos:", error)
+      Logger.error("❌ Error en getProductos:", error)
       return []
     }
   }
@@ -126,12 +127,12 @@ export class FirebaseService {
     const cacheKey = `productos_${categoria}_${subcategoria}`
     const cached = cache.get<Producto[]>(cacheKey)
     if (cached) {
-      console.log(`📦 Cache hit: getProductosPorSubcategoria(${categoria}, ${subcategoria})`)
+      Logger.debug(`📦 Cache hit: getProductosPorSubcategoria(${categoria}, ${subcategoria})`)
       return cached
     }
 
     try {
-      console.log(`🔍 Buscando productos para categoria: "${categoria}", subcategoria: "${subcategoria}"`)
+      Logger.debug(`🔍 Buscando productos para categoria: "${categoria}", subcategoria: "${subcategoria}"`)
 
       const productosRef = collection(db, "productos")
       const q = query(productosRef, where("categoria", "==", categoria))
@@ -142,17 +143,17 @@ export class FirebaseService {
         return { id: doc.id, ...data } as Producto
       })
 
-      console.log(`📦 Productos encontrados en categoria "${categoria}":`, todosLosProductos.length)
+      Logger.debug(`📦 Productos encontrados en categoria "${categoria}":`, todosLosProductos.length)
 
       // Filtrar por subcategoría
       const productosFiltrados = todosLosProductos.filter((p) => p.subcategoria === subcategoria)
 
-      console.log(`✅ Productos filtrados para subcategoria "${subcategoria}":`, productosFiltrados.length)
+      Logger.debug(`✅ Productos filtrados para subcategoria "${subcategoria}":`, productosFiltrados.length)
       
       cache.set(cacheKey, productosFiltrados)
       return productosFiltrados
     } catch (error) {
-      console.error("❌ Error fetching productos por subcategoria:", error)
+      Logger.error("❌ Error fetching productos por subcategoria:", error)
       return []
     }
   }
@@ -161,7 +162,7 @@ export class FirebaseService {
     const cacheKey = `producto_${slug}`
     const cached = cache.get<Producto>(cacheKey)
     if (cached) {
-      console.log(`📦 Cache hit: getProducto(${slug})`)
+      Logger.debug(`📦 Cache hit: getProducto(${slug})`)
       return cached
     }
 
@@ -176,7 +177,7 @@ export class FirebaseService {
       cache.set(cacheKey, producto)
       return producto
     } catch (error) {
-      console.error("❌ Error en getProducto:", error)
+      Logger.error("❌ Error en getProducto:", error)
       return null
     }
   }
@@ -185,21 +186,21 @@ export class FirebaseService {
     const cacheKey = 'productos_destacados'
     const cached = cache.get<Producto[]>(cacheKey)
     if (cached) {
-      console.log("📦 Cache hit: getProductosDestacados")
+      Logger.debug("📦 Cache hit: getProductosDestacados")
       return cached
     }
 
     try {
-      console.log("🔍 FirebaseService: Buscando productos destacados...")
+      Logger.debug("🔍 FirebaseService: Buscando productos destacados...")
       const q = query(collection(db, "productos"), where("destacado", "==", true), orderBy("orden", "asc"))
       const snapshot = await getDocs(q)
       const productos = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Producto)
       
-      console.log("📦 FirebaseService: Productos destacados encontrados:", productos.length)
+      Logger.debug("📦 FirebaseService: Productos destacados encontrados:", productos.length)
       cache.set(cacheKey, productos)
       return productos
     } catch (error) {
-      console.error("❌ Error en getProductosDestacados:", error)
+      Logger.error("❌ Error en getProductosDestacados:", error)
       return []
     }
   }
@@ -217,7 +218,7 @@ export class FirebaseService {
       
       return docRef.id
     } catch (error) {
-      console.error("❌ Error en addProducto:", error)
+      Logger.error("❌ Error en addProducto:", error)
       throw error
     }
   }
@@ -233,7 +234,7 @@ export class FirebaseService {
       // Invalidar cache relacionado con productos
       cache.invalidate('productos')
     } catch (error) {
-      console.error("❌ Error en updateProducto:", error)
+      Logger.error("❌ Error en updateProducto:", error)
       throw error
     }
   }
@@ -245,7 +246,7 @@ export class FirebaseService {
       // Invalidar cache relacionado con productos
       cache.invalidate('productos')
     } catch (error) {
-      console.error("❌ Error en deleteProducto:", error)
+      Logger.error("❌ Error en deleteProducto:", error)
       throw error
     }
   }
@@ -255,7 +256,7 @@ export class FirebaseService {
     const cacheKey = 'categorias'
     const cached = cache.get<Categoria[]>(cacheKey)
     if (cached) {
-      console.log("📦 Cache hit: getCategorias")
+      Logger.debug("📦 Cache hit: getCategorias")
       return cached
     }
 
@@ -267,7 +268,7 @@ export class FirebaseService {
       cache.set(cacheKey, categorias)
       return categorias
     } catch (error) {
-      console.error("❌ Error en getCategorias:", error)
+      Logger.error("❌ Error en getCategorias:", error)
       return []
     }
   }
@@ -276,7 +277,7 @@ export class FirebaseService {
     const cacheKey = `categoria_${slug}`
     const cached = cache.get<Categoria>(cacheKey)
     if (cached) {
-      console.log(`📦 Cache hit: getCategoria(${slug})`)
+      Logger.debug(`📦 Cache hit: getCategoria(${slug})`)
       return cached
     }
 
@@ -291,7 +292,7 @@ export class FirebaseService {
       cache.set(cacheKey, categoria)
       return categoria
     } catch (error) {
-      console.error("❌ Error en getCategoria:", error)
+      Logger.error("❌ Error en getCategoria:", error)
       return null
     }
   }
@@ -301,7 +302,7 @@ export class FirebaseService {
     const cacheKey = 'packs'
     const cached = cache.get<Pack[]>(cacheKey)
     if (cached) {
-      console.log("📦 Cache hit: getPacks")
+      Logger.debug("📦 Cache hit: getPacks")
       return cached
     }
 
@@ -313,7 +314,7 @@ export class FirebaseService {
       cache.set(cacheKey, packs)
       return packs
     } catch (error) {
-      console.error("❌ Error en getPacks:", error)
+      Logger.error("❌ Error en getPacks:", error)
       return []
     }
   }
@@ -323,7 +324,7 @@ export class FirebaseService {
     const cacheKey = 'zonas'
     const cached = cache.get<ZonaEntrega[]>(cacheKey)
     if (cached) {
-      console.log("📦 Cache hit: getZonas")
+      Logger.debug("📦 Cache hit: getZonas")
       return cached
     }
 
@@ -334,7 +335,7 @@ export class FirebaseService {
       cache.set(cacheKey, zonas)
       return zonas
     } catch (error) {
-      console.error("❌ Error en getZonas:", error)
+      Logger.error("❌ Error en getZonas:", error)
       return []
     }
   }
@@ -346,7 +347,7 @@ export class FirebaseService {
       const docRef = doc(db, "homeSections", id)
       await updateDoc(docRef, section)
     } catch (error) {
-      console.error("Error en updateHomeSection:", error)
+      Logger.error("Error en updateHomeSection:", error)
       throw error
     }
   }
@@ -359,7 +360,7 @@ export class FirebaseService {
       const downloadURL = await getDownloadURL(snapshot.ref)
       return downloadURL
     } catch (error) {
-      console.error("Error uploading image:", error)
+      Logger.error("Error uploading image:", error)
       throw error
     }
   }
@@ -376,10 +377,10 @@ export class FirebaseService {
       const storageRef = ref(storage, filePath)
       await deleteObject(storageRef)
     } catch (error) {
-      console.error("Error deleting image:", error)
+      Logger.error("Error deleting image:", error)
       // No lanzar error si el archivo no se encuentra, solo registrar
       if ((error as any).code === "storage/object-not-found") {
-        console.warn("Image not found, skipping deletion:", url)
+        Logger.warn("Image not found, skipping deletion:", url)
       } else {
         throw error
       }
@@ -396,7 +397,7 @@ export class FirebaseService {
       })
       return docRef.id
     } catch (error) {
-      console.error("Error en addOrder:", error)
+      Logger.error("Error en addOrder:", error)
       throw error
     }
   }
@@ -412,21 +413,21 @@ export class FirebaseService {
         const { id: _, ...docData } = data
         return { id: doc.id, ...docData } as PageBanner
       })
-      console.log(`🎨 PageBanners cargados: ${banners.length} banners`)
+      Logger.debug(`🎨 PageBanners cargados: ${banners.length} banners`)
       return banners
     } catch (error) {
-      console.error("Error en getPageBanners:", error)
+      Logger.error("Error en getPageBanners:", error)
       return []
     }
   }
 
   static async getPageBannerBySlug(slug: string): Promise<PageBanner | null> {
     try {
-      console.log(`🔍 Buscando banner para slug: "${slug}"`)
+      Logger.debug(`🔍 Buscando banner para slug: "${slug}"`)
       const q = query(collection(db, "pageBanners"), where("slug", "==", slug), limit(1))
       const snapshot = await getDocs(q)
       if (snapshot.empty) {
-        console.log(`❌ No se encontró banner para slug: "${slug}"`)
+        Logger.debug(`❌ No se encontró banner para slug: "${slug}"`)
         return null
       }
       const doc = snapshot.docs[0]
@@ -434,10 +435,10 @@ export class FirebaseService {
       // Remover el campo 'id' interno si existe para evitar conflictos
       const { id: _, ...docData } = data
       const banner = { id: doc.id, ...docData } as PageBanner
-      console.log(`✅ Banner encontrado para "${slug}":`, banner.name)
+      Logger.debug(`✅ Banner encontrado para "${slug}":`, banner.name)
       return banner
     } catch (error) {
-      console.error("Error en getPageBannerBySlug:", error)
+      Logger.error("Error en getPageBannerBySlug:", error)
       return null
     }
   }
@@ -445,10 +446,10 @@ export class FirebaseService {
   static async createPageBanner(banner: Omit<PageBanner, "id">): Promise<string> {
     try {
       const docRef = await addDoc(collection(db, "pageBanners"), banner)
-      console.log(`✅ PageBanner creado: ${docRef.id}`)
+      Logger.debug(`✅ PageBanner creado: ${docRef.id}`)
       return docRef.id
     } catch (error) {
-      console.error("Error en createPageBanner:", error)
+      Logger.error("Error en createPageBanner:", error)
       throw error
     }
   }
@@ -456,9 +457,9 @@ export class FirebaseService {
   static async updatePageBanner(id: string, banner: Partial<PageBanner>): Promise<void> {
     try {
       await updateDoc(doc(db, "pageBanners", id), banner)
-      console.log(`✅ PageBanner actualizado: ${id}`)
+      Logger.debug(`✅ PageBanner actualizado: ${id}`)
     } catch (error) {
-      console.error("Error en updatePageBanner:", error)
+      Logger.error("Error en updatePageBanner:", error)
       throw error
     }
   }
@@ -466,9 +467,9 @@ export class FirebaseService {
   static async deletePageBanner(id: string): Promise<void> {
     try {
       await deleteDoc(doc(db, "pageBanners", id))
-      console.log(`✅ PageBanner eliminado: ${id}`)
+      Logger.debug(`✅ PageBanner eliminado: ${id}`)
     } catch (error) {
-      console.error("Error en deletePageBanner:", error)
+      Logger.error("Error en deletePageBanner:", error)
       throw error
     }
   }
@@ -479,10 +480,10 @@ export class FirebaseService {
       const q = query(collection(db, "blogArticles"), orderBy("order", "asc"))
       const snapshot = await getDocs(q)
       const articles = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as BlogArticle)
-      console.log(`📝 BlogArticles cargados: ${articles.length} artículos`)
+      Logger.debug(`📝 BlogArticles cargados: ${articles.length} artículos`)
       return articles
     } catch (error) {
-      console.error("Error en getBlogArticles:", error)
+      Logger.error("Error en getBlogArticles:", error)
       return []
     }
   }
@@ -496,28 +497,28 @@ export class FirebaseService {
       )
       const snapshot = await getDocs(q)
       const articles = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as BlogArticle)
-      console.log(`📝 Artículos publicados cargados: ${articles.length} artículos`)
+      Logger.debug(`📝 Artículos publicados cargados: ${articles.length} artículos`)
       return articles
     } catch (error) {
-      console.error("Error en getPublishedBlogArticles:", error)
+      Logger.error("Error en getPublishedBlogArticles:", error)
       return []
     }
   }
 
   static async getBlogArticleBySlug(slug: string): Promise<BlogArticle | null> {
     try {
-      console.log(`🔍 Buscando artículo para slug: "${slug}"`)
+      Logger.debug(`🔍 Buscando artículo para slug: "${slug}"`)
       const q = query(collection(db, "blogArticles"), where("slug", "==", slug), limit(1))
       const snapshot = await getDocs(q)
       if (snapshot.empty) {
-        console.log(`❌ No se encontró artículo para slug: "${slug}"`)
+        Logger.debug(`❌ No se encontró artículo para slug: "${slug}"`)
         return null
       }
       const article = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as BlogArticle
-      console.log(`✅ Artículo encontrado para "${slug}":`, article.title)
+      Logger.debug(`✅ Artículo encontrado para "${slug}":`, article.title)
       return article
     } catch (error) {
-      console.error("Error en getBlogArticleBySlug:", error)
+      Logger.error("Error en getBlogArticleBySlug:", error)
       return null
     }
   }
@@ -525,10 +526,10 @@ export class FirebaseService {
   static async createBlogArticle(article: Omit<BlogArticle, "id">): Promise<string> {
     try {
       const docRef = await addDoc(collection(db, "blogArticles"), article)
-      console.log(`✅ BlogArticle creado: ${docRef.id}`)
+      Logger.debug(`✅ BlogArticle creado: ${docRef.id}`)
       return docRef.id
     } catch (error) {
-      console.error("Error en createBlogArticle:", error)
+      Logger.error("Error en createBlogArticle:", error)
       throw error
     }
   }
@@ -536,9 +537,9 @@ export class FirebaseService {
   static async updateBlogArticle(id: string, article: Partial<BlogArticle>): Promise<void> {
     try {
       await updateDoc(doc(db, "blogArticles", id), article)
-      console.log(`✅ BlogArticle actualizado: ${id}`)
+      Logger.debug(`✅ BlogArticle actualizado: ${id}`)
     } catch (error) {
-      console.error("Error en updateBlogArticle:", error)
+      Logger.error("Error en updateBlogArticle:", error)
       throw error
     }
   }
@@ -546,9 +547,9 @@ export class FirebaseService {
   static async deleteBlogArticle(id: string): Promise<void> {
     try {
       await deleteDoc(doc(db, "blogArticles", id))
-      console.log(`✅ BlogArticle eliminado: ${id}`)
+      Logger.debug(`✅ BlogArticle eliminado: ${id}`)
     } catch (error) {
-      console.error("Error en deleteBlogArticle:", error)
+      Logger.error("Error en deleteBlogArticle:", error)
       throw error
     }
   }
@@ -561,11 +562,11 @@ export class FirebaseService {
     if (!forceRefresh) {
       const cached = cache.get<Order[]>(cacheKey)
       if (cached) {
-        console.log(`📦 Cache hit: getPedidosByUser(${userId})`)
+        Logger.debug(`📦 Cache hit: getPedidosByUser(${userId})`)
         return cached
       }
     } else {
-      console.log(`🔄 Forzando recarga: getPedidosByUser(${userId})`)
+      Logger.debug(`🔄 Forzando recarga: getPedidosByUser(${userId})`)
       // Limpiar cache específico
       cache.invalidate(cacheKey)
     }
@@ -580,17 +581,17 @@ export class FirebaseService {
       const pedidos = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Order)
       
       cache.set(cacheKey, pedidos)
-      console.log(`📦 Pedidos cargados para usuario ${userId}:`, pedidos.length)
+      Logger.debug(`📦 Pedidos cargados para usuario ${userId}:`, pedidos.length)
       return pedidos
     } catch (error) {
-      console.error("Error en getPedidosByUser:", error)
+      Logger.error("Error en getPedidosByUser:", error)
       return []
     }
   }
 
   static async getDireccionesByUser(userId: string): Promise<any[]> {
     try {
-      console.log(`🔍 Buscando direcciones para userId: ${userId}`)
+      Logger.debug(`🔍 Buscando direcciones para userId: ${userId}`)
       
       // Primero intentar sin orderBy para evitar problemas con timestamps
       const q = query(
@@ -600,14 +601,14 @@ export class FirebaseService {
       const snapshot = await getDocs(q)
       const direcciones = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
       
-      console.log(`✅ Direcciones encontradas: ${direcciones.length}`)
+      Logger.debug(`✅ Direcciones encontradas: ${direcciones.length}`)
       direcciones.forEach((dir, index) => {
-        console.log(`  ${index + 1}. ${dir.calle} ${dir.numero}, ${dir.ciudad}`)
+        Logger.debug(`  ${index + 1}. ${dir.calle} ${dir.numero}, ${dir.ciudad}`)
       })
       
       return direcciones
     } catch (error) {
-      console.error("Error en getDireccionesByUser:", error)
+      Logger.error("Error en getDireccionesByUser:", error)
       return []
     }
   }
@@ -620,7 +621,7 @@ export class FirebaseService {
       })
       return docRef.id
     } catch (error) {
-      console.error("Error en addDireccion:", error)
+      Logger.error("Error en addDireccion:", error)
       throw error
     }
   }
@@ -632,7 +633,7 @@ export class FirebaseService {
         fechaActualizacion: serverTimestamp(),
       })
     } catch (error) {
-      console.error("Error en updateDireccion:", error)
+      Logger.error("Error en updateDireccion:", error)
       throw error
     }
   }
@@ -641,7 +642,7 @@ export class FirebaseService {
     try {
       await deleteDoc(doc(db, "direcciones", id))
     } catch (error) {
-      console.error("Error en deleteDireccion:", error)
+      Logger.error("Error en deleteDireccion:", error)
       throw error
     }
   }
@@ -653,7 +654,7 @@ export class FirebaseService {
         fechaActualizacion: serverTimestamp(),
       })
     } catch (error) {
-      console.error("Error en updateUserProfile:", error)
+      Logger.error("Error en updateUserProfile:", error)
       throw error
     }
   }
@@ -673,7 +674,7 @@ export class FirebaseService {
       
       return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Order
     } catch (error) {
-      console.error("Error en getOrderByExternalReference:", error)
+      Logger.error("Error en getOrderByExternalReference:", error)
       return null
     }
   }
@@ -686,9 +687,9 @@ export class FirebaseService {
       // Invalidar cache específico de pedidos
       cache.invalidate('pedidos')
       
-      console.log("✅ Estado de pedido actualizado y cache invalidado:", orderId, "->", status)
+      Logger.log("✅ Estado de pedido actualizado y cache invalidado:", orderId, "->", status)
     } catch (error) {
-      console.error("Error actualizando estado del pedido:", error)
+      Logger.error("Error actualizando estado del pedido:", error)
       throw error
     }
   }
@@ -705,7 +706,7 @@ export class FirebaseService {
       
       return { id: productDoc.id, ...productDoc.data() }
     } catch (error) {
-      console.error("Error obteniendo producto por ID:", error)
+      Logger.error("Error obteniendo producto por ID:", error)
       return null
     }
   }
@@ -715,7 +716,7 @@ export class FirebaseService {
       const productRef = doc(db, "productos", productId)
       await updateDoc(productRef, { stock: newStock })
     } catch (error) {
-      console.error("Error actualizando stock del producto:", error)
+      Logger.error("Error actualizando stock del producto:", error)
       throw error
     }
   }
@@ -725,7 +726,7 @@ export class FirebaseService {
       const purchaseRef = doc(db, "pending_purchases", purchaseId)
       await setDoc(purchaseRef, purchaseData)
     } catch (error) {
-      console.error("Error agregando compra pendiente:", error)
+      Logger.error("Error agregando compra pendiente:", error)
       throw error
     }
   }
@@ -741,34 +742,72 @@ export class FirebaseService {
       
       return { id: purchaseDoc.id, ...purchaseDoc.data() }
     } catch (error) {
-      console.error("Error obteniendo compra pendiente:", error)
+      Logger.error("Error obteniendo compra pendiente:", error)
       return null
+    }
+  }
+  // Nuevo método para agregar compra DIRECTAMENTE a purchases (para el refactor)
+  // Reutilizamos addCompletedPurchase pero permitimos que se llame desde el inicio
+  static async addCompletedPurchase(purchaseData: any): Promise<string> {
+    try {
+      // Asegurar que tenga fecha de creación
+      const dataToSave = {
+        ...purchaseData,
+        createdAt: purchaseData.createdAt || new Date()
+      }
+      
+      const docRef = await addDoc(collection(db, "purchases"), dataToSave)
+      Logger.log("✅ Compra creada en purchases con ID:", docRef.id)
+      
+      // Invalidar cache de compras
+      cache.invalidate('compras')
+      
+      return docRef.id
+    } catch (error) {
+      Logger.error("Error guardando compra en purchases:", error)
+      throw error
+    }
+  }
+
+  // Nuevo método para obtener una compra por ID (cualquier estado)
+  static async getPurchaseById(purchaseId: string): Promise<any> {
+    try {
+      const purchaseRef = doc(db, "purchases", purchaseId)
+      const purchaseDoc = await getDoc(purchaseRef)
+      
+      if (!purchaseDoc.exists()) {
+        return null
+      }
+      
+      return { id: purchaseDoc.id, ...purchaseDoc.data() }
+    } catch (error) {
+      Logger.error("Error obteniendo compra:", error)
+      return null
+    }
+  }
+
+  // Nuevo método para actualizar una compra existente
+  static async updatePurchase(purchaseId: string, updateData: any): Promise<void> {
+    try {
+      const purchaseRef = doc(db, "purchases", purchaseId)
+      await updateDoc(purchaseRef, updateData)
+      
+      // Invalidar cache de compras
+      cache.invalidate('compras')
+      
+      Logger.log(`✅ Compra actualizada: ${purchaseId}`)
+    } catch (error) {
+      Logger.error("Error actualizando compra:", error)
+      throw error
     }
   }
 
   static async deletePendingPurchase(purchaseId: string): Promise<void> {
     try {
-      const purchaseRef = doc(db, "pending_purchases", purchaseId)
-      await deleteDoc(purchaseRef)
+      await deleteDoc(doc(db, "pending_purchases", purchaseId))
+      Logger.debug(`🗑️ Compra pendiente eliminada: ${purchaseId}`)
     } catch (error) {
-      console.error("Error eliminando compra pendiente:", error)
-      throw error
-    }
-  }
-
-  static async addCompletedPurchase(purchaseData: any): Promise<string> {
-    try {
-      // Agregar campo de estado por defecto
-      const purchaseWithStatus = {
-        ...purchaseData,
-        orderStatus: 'en_preparacion', // Estado por defecto
-        createdAt: purchaseData.createdAt || new Date()
-      }
-      const purchaseRef = await addDoc(collection(db, "purchases"), purchaseWithStatus)
-      return purchaseRef.id
-    } catch (error) {
-      console.error("Error agregando compra completada:", error)
-      throw error
+      Logger.error("Error eliminando compra pendiente:", error)
     }
   }
 
@@ -777,7 +816,7 @@ export class FirebaseService {
       const purchaseRef = await addDoc(collection(db, "failed_purchases"), purchaseData)
       return purchaseRef.id
     } catch (error) {
-      console.error("Error agregando compra fallida:", error)
+      Logger.error("Error agregando compra fallida:", error)
       throw error
     }
   }
@@ -790,11 +829,11 @@ export class FirebaseService {
     if (!forceRefresh) {
       const cached = cache.get<any[]>(cacheKey)
       if (cached) {
-        console.log(`📦 Cache hit: getCompletedPurchasesByUser(${userId})`)
+        Logger.debug(`📦 Cache hit: getCompletedPurchasesByUser(${userId})`)
         return cached
       }
     } else {
-      console.log(`🔄 Forzando recarga: getCompletedPurchasesByUser(${userId})`)
+      Logger.debug(`🔄 Forzando recarga: getCompletedPurchasesByUser(${userId})`)
       // Limpiar cache específico
       cache.invalidate(cacheKey)
     }
@@ -810,10 +849,10 @@ export class FirebaseService {
       const compras = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
       
       cache.set(cacheKey, compras)
-      console.log(`📦 Compras cargadas para usuario ${userId}:`, compras.length)
+      Logger.debug(`📦 Compras cargadas para usuario ${userId}:`, compras.length)
       return compras
     } catch (error) {
-      console.error("Error en getCompletedPurchasesByUser:", error)
+      Logger.error("Error en getCompletedPurchasesByUser:", error)
       return []
     }
   }
@@ -830,9 +869,9 @@ export class FirebaseService {
       // Invalidar cache específico de compras
       cache.invalidate('compras')
       
-      console.log("✅ Estado de compra actualizado y cache invalidado:", purchaseId, "->", status)
+      Logger.log("✅ Estado de compra actualizado y cache invalidado:", purchaseId, "->", status)
     } catch (error) {
-      console.error("Error actualizando estado de la compra:", error)
+      Logger.error("Error actualizando estado de la compra:", error)
       throw error
     }
   }
@@ -847,7 +886,7 @@ export class FirebaseService {
       const snapshot = await getDocs(q)
       return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     } catch (error) {
-      console.error("Error en getAllPurchases:", error)
+      Logger.error("Error en getAllPurchases:", error)
       return []
     }
   }
@@ -860,10 +899,10 @@ export class FirebaseService {
       const snapshot = await getDocs(q)
       const usuarios = snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }) as Usuario)
 
-      console.log(`FirebaseService.getUsuarios(): Encontrados ${usuarios.length} usuarios`)
+      Logger.debug(`FirebaseService.getUsuarios(): Encontrados ${usuarios.length} usuarios`)
       return usuarios
     } catch (error) {
-      console.error("Error en getUsuarios:", error)
+      Logger.error("Error en getUsuarios:", error)
       return []
     }
   }
@@ -875,7 +914,7 @@ export class FirebaseService {
 
       return { uid: usuarioDoc.id, ...usuarioDoc.data() } as Usuario
     } catch (error) {
-      console.error("Error en getUsuario:", error)
+      Logger.error("Error en getUsuario:", error)
       return null
     }
   }
@@ -886,9 +925,9 @@ export class FirebaseService {
         ...usuarioData,
         fechaActualizacion: serverTimestamp(),
       })
-      console.log(`Usuario ${uid} actualizado exitosamente`)
+      Logger.debug(`Usuario ${uid} actualizado exitosamente`)
     } catch (error) {
-      console.error("Error en updateUsuario:", error)
+      Logger.error("Error en updateUsuario:", error)
       throw error
     }
   }
@@ -899,9 +938,9 @@ export class FirebaseService {
         baneado: true,
         fechaBaneo: serverTimestamp(),
       })
-      console.log(`Usuario ${uid} baneado exitosamente`)
+      Logger.debug(`Usuario ${uid} baneado exitosamente`)
     } catch (error) {
-      console.error("Error en banUsuario:", error)
+      Logger.error("Error en banUsuario:", error)
       throw error
     }
   }
@@ -912,9 +951,9 @@ export class FirebaseService {
         baneado: false,
         fechaBaneo: null,
       })
-      console.log(`Usuario ${uid} desbaneado exitosamente`)
+      Logger.debug(`Usuario ${uid} desbaneado exitosamente`)
     } catch (error) {
-      console.error("Error en unbanUsuario:", error)
+      Logger.error("Error en unbanUsuario:", error)
       throw error
     }
   }
@@ -929,7 +968,7 @@ export class FirebaseService {
       const docRef = await addDoc(collection(db, "reviews"), reviewData)
       return docRef.id
     } catch (error) {
-      console.error("Error al agregar reseña:", error)
+      Logger.error("Error al agregar reseña:", error)
       throw error
     }
   }
@@ -946,7 +985,7 @@ export class FirebaseService {
       const snapshot = await getDocs(q)
       return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Review)
     } catch (error) {
-      console.error("Error al obtener reseñas del producto:", error)
+      Logger.error("Error al obtener reseñas del producto:", error)
       return []
     }
   }
@@ -962,7 +1001,7 @@ export class FirebaseService {
       const snapshot = await getDocs(q)
       return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Review)
     } catch (error) {
-      console.error("Error al obtener reseñas del usuario:", error)
+      Logger.error("Error al obtener reseñas del usuario:", error)
       throw error
     }
   }
@@ -979,9 +1018,9 @@ export class FirebaseService {
       // Invalidar cache de reseñas
       cache.invalidate('reviews')
       cache.invalidate('all_reviews')
-      console.log("✅ Estado de reseña actualizado y cache invalidado:", reviewId)
+      Logger.log("✅ Estado de reseña actualizado y cache invalidado:", reviewId)
     } catch (error) {
-      console.error("Error al actualizar estado de reseña:", error)
+      Logger.error("Error al actualizar estado de reseña:", error)
       throw error
     }
   }
@@ -996,9 +1035,9 @@ export class FirebaseService {
       // Invalidar cache de reseñas
       cache.invalidate('reviews')
       cache.invalidate('all_reviews')
-      console.log("✅ Estado destacado de reseña actualizado y cache invalidado:", reviewId)
+      Logger.log("✅ Estado destacado de reseña actualizado y cache invalidado:", reviewId)
     } catch (error) {
-      console.error("Error al cambiar estado destacado de reseña:", error)
+      Logger.error("Error al cambiar estado destacado de reseña:", error)
       throw error
     }
   }
@@ -1010,9 +1049,9 @@ export class FirebaseService {
       // Invalidar cache de reseñas
       cache.invalidate('reviews')
       cache.invalidate('all_reviews')
-      console.log("✅ Reseña eliminada y cache invalidado:", reviewId)
+      Logger.log("✅ Reseña eliminada y cache invalidado:", reviewId)
     } catch (error) {
-      console.error("Error al eliminar reseña:", error)
+      Logger.error("Error al eliminar reseña:", error)
       throw error
     }
   }
@@ -1022,7 +1061,7 @@ export class FirebaseService {
     const cacheKey = 'all_reviews'
     const cached = cache.get<Review[]>(cacheKey)
     if (cached) {
-      console.log("📦 Cache hit: getAllReviews")
+      Logger.debug("📦 Cache hit: getAllReviews")
       return cached
     }
 
@@ -1043,7 +1082,7 @@ export class FirebaseService {
       cache.set(cacheKey, reviews)
       return reviews
     } catch (error) {
-      console.error("❌ Error obteniendo todas las reseñas:", error)
+      Logger.error("❌ Error obteniendo todas las reseñas:", error)
       throw error
     }
   }
@@ -1053,34 +1092,34 @@ export class FirebaseService {
     const cacheKey = 'home_sections'
     const cached = cache.get<HomeSection[]>(cacheKey)
     if (cached) {
-      console.log("📦 Cache hit: getHomeSections")
+      Logger.debug("📦 Cache hit: getHomeSections")
       return cached
     }
 
     try {
-      console.log("🔍 FirebaseService: Iniciando getHomeSections...")
+      Logger.debug("🔍 FirebaseService: Iniciando getHomeSections...")
       const sectionsRef = collection(db, "homeSections")
-      console.log("🔍 FirebaseService: Referencia a colección creada")
+      Logger.debug("🔍 FirebaseService: Referencia a colección creada")
       
       // Primero intentar sin ordenamiento para ver si hay datos
-      console.log("🔍 FirebaseService: Obteniendo todas las secciones sin ordenamiento...")
+      Logger.debug("🔍 FirebaseService: Obteniendo todas las secciones sin ordenamiento...")
       const snapshot = await getDocs(sectionsRef)
-      console.log("🔍 FirebaseService: Snapshot obtenido, documentos encontrados:", snapshot.docs.length)
+      Logger.debug("🔍 FirebaseService: Snapshot obtenido, documentos encontrados:", snapshot.docs.length)
       
       if (snapshot.empty) {
-        console.log("⚠️ FirebaseService: No se encontraron secciones del home")
+        Logger.warn("⚠️ FirebaseService: No se encontraron secciones del home")
         return []
       }
 
       // Mapear los documentos
       const sections = snapshot.docs.map((doc) => {
         const data = doc.data()
-        console.log("🔍 FirebaseService: Documento mapeado:", { id: doc.id, ...data })
+        Logger.debug("🔍 FirebaseService: Documento mapeado:", { id: doc.id, ...data })
         return { id: doc.id, ...data } as HomeSection
       })
       
-      console.log("✅ FirebaseService: Secciones del home obtenidas exitosamente:", sections.length)
-      console.log("📋 FirebaseService: Secciones:", sections.map(s => ({ id: s.id, name: s.name, sectionId: s.sectionId })))
+      Logger.debug("✅ FirebaseService: Secciones del home obtenidas exitosamente:", sections.length)
+      Logger.debug("📋 FirebaseService: Secciones:", sections.map(s => ({ id: s.id, name: s.name, sectionId: s.sectionId })))
       
       // Ordenar por orden si existe, sino por nombre
       const sortedSections = sections.sort((a, b) => {
@@ -1090,13 +1129,13 @@ export class FirebaseService {
         return (a.name || '').localeCompare(b.name || '')
       })
       
-      console.log("✅ FirebaseService: Secciones ordenadas:", sortedSections.length)
+      Logger.debug("✅ FirebaseService: Secciones ordenadas:", sortedSections.length)
       
       cache.set(cacheKey, sortedSections)
       return sortedSections
     } catch (error) {
-      console.error("❌ FirebaseService: Error obteniendo secciones del home:", error)
-      console.error("❌ FirebaseService: Stack trace:", error instanceof Error ? error.stack : "No stack trace")
+      Logger.error("❌ FirebaseService: Error obteniendo secciones del home:", error)
+      Logger.error("❌ FirebaseService: Stack trace:", error instanceof Error ? error.stack : "No stack trace")
       return []
     }
   }
@@ -1125,10 +1164,10 @@ export class FirebaseService {
       }
 
       const docRef = await addDoc(collection(db, "suscripciones"), suscripcionData)
-      console.log("✅ Suscripción creada exitosamente:", docRef.id)
+      Logger.log("✅ Suscripción creada exitosamente:", docRef.id)
       return docRef.id
     } catch (error) {
-      console.error("❌ Error al crear suscripción:", error)
+      Logger.error("❌ Error al crear suscripción:", error)
       throw error
     }
   }
@@ -1151,7 +1190,7 @@ export class FirebaseService {
       const doc = querySnapshot.docs[0]
       return { id: doc.id, ...doc.data() } as Suscripcion
     } catch (error) {
-      console.error("❌ Error al obtener suscripción por email:", error)
+      Logger.error("❌ Error al obtener suscripción por email:", error)
       return null
     }
   }
@@ -1167,7 +1206,7 @@ export class FirebaseService {
         ...doc.data()
       })) as Suscripcion[]
     } catch (error) {
-      console.error("❌ Error al obtener suscripciones:", error)
+      Logger.error("❌ Error al obtener suscripciones:", error)
       return []
     }
   }
@@ -1189,7 +1228,7 @@ export class FirebaseService {
         ...doc.data()
       })) as Suscripcion[]
     } catch (error) {
-      console.error("❌ Error al obtener suscripciones activas:", error)
+      Logger.error("❌ Error al obtener suscripciones activas:", error)
       return []
     }
   }
@@ -1215,10 +1254,10 @@ export class FirebaseService {
       }
 
       await updateDoc(doc(db, "suscripciones", id), updateData)
-      console.log("✅ Estado de suscripción actualizado:", id, estado)
+      Logger.log("✅ Estado de suscripción actualizado:", id, estado)
       return true
     } catch (error) {
-      console.error("❌ Error al actualizar estado de suscripción:", error)
+      Logger.error("❌ Error al actualizar estado de suscripción:", error)
       return false
     }
   }
@@ -1229,10 +1268,10 @@ export class FirebaseService {
   static async deleteSuscripcion(id: string): Promise<boolean> {
     try {
       await deleteDoc(doc(db, "suscripciones", id))
-      console.log("✅ Suscripción eliminada:", id)
+      Logger.log("✅ Suscripción eliminada:", id)
       return true
     } catch (error) {
-      console.error("❌ Error al eliminar suscripción:", error)
+      Logger.error("❌ Error al eliminar suscripción:", error)
       return false
     }
   }
@@ -1249,10 +1288,10 @@ export class FirebaseService {
       }
 
       const docRef = await addDoc(collection(db, "newsletter_campaigns"), campaign)
-      console.log("✅ Campaña de newsletter creada:", docRef.id)
+      Logger.log("✅ Campaña de newsletter creada:", docRef.id)
       return docRef.id
     } catch (error) {
-      console.error("❌ Error al crear campaña de newsletter:", error)
+      Logger.error("❌ Error al crear campaña de newsletter:", error)
       throw error
     }
   }
@@ -1268,7 +1307,7 @@ export class FirebaseService {
         ...doc.data()
       })) as NewsletterCampaign[]
     } catch (error) {
-      console.error("❌ Error al obtener campañas de newsletter:", error)
+      Logger.error("❌ Error al obtener campañas de newsletter:", error)
       return []
     }
   }
@@ -1282,10 +1321,10 @@ export class FirebaseService {
         ...updateData,
         fechaActualizacion: new Date()
       })
-      console.log("✅ Campaña de newsletter actualizada:", id)
+      Logger.log("✅ Campaña de newsletter actualizada:", id)
       return true
     } catch (error) {
-      console.error("❌ Error al actualizar campaña de newsletter:", error)
+      Logger.error("❌ Error al actualizar campaña de newsletter:", error)
       return false
     }
   }
@@ -1296,10 +1335,10 @@ export class FirebaseService {
   static async deleteNewsletterCampaign(id: string): Promise<boolean> {
     try {
       await deleteDoc(doc(db, "newsletter_campaigns", id))
-      console.log("✅ Campaña de newsletter eliminada:", id)
+      Logger.log("✅ Campaña de newsletter eliminada:", id)
       return true
     } catch (error) {
-      console.error("❌ Error al eliminar campaña de newsletter:", error)
+      Logger.error("❌ Error al eliminar campaña de newsletter:", error)
       return false
     }
   }
@@ -1336,10 +1375,10 @@ export class FirebaseService {
       }
 
       const docRef = await addDoc(collection(db, "cupones"), welcomeCoupon)
-      console.log("✅ Cupón de bienvenida generado:", docRef.id, "para:", email)
+      Logger.log("✅ Cupón de bienvenida generado:", docRef.id, "para:", email)
       return docRef.id
     } catch (error) {
-      console.error("❌ Error generando cupón de bienvenida:", error)
+      Logger.error("❌ Error generando cupón de bienvenida:", error)
       throw error
     }
   }
@@ -1356,10 +1395,10 @@ export class FirebaseService {
       }
 
       const docRef = await addDoc(collection(db, "cupones"), coupon)
-      console.log("✅ Cupón creado:", docRef.id)
+      Logger.log("✅ Cupón creado:", docRef.id)
       return docRef.id
     } catch (error) {
-      console.error("❌ Error al crear cupón:", error)
+      Logger.error("❌ Error al crear cupón:", error)
       throw error
     }
   }
@@ -1375,7 +1414,7 @@ export class FirebaseService {
         ...doc.data()
       }))
     } catch (error) {
-      console.error("❌ Error al obtener cupones:", error)
+      Logger.error("❌ Error al obtener cupones:", error)
       return []
     }
   }
@@ -1398,7 +1437,7 @@ export class FirebaseService {
         ...doc.data()
       }
     } catch (error) {
-      console.error("❌ Error al obtener cupón por código:", error)
+      Logger.error("❌ Error al obtener cupón por código:", error)
       return null
     }
   }
@@ -1420,7 +1459,7 @@ export class FirebaseService {
         ...docSnap.data()
       }
     } catch (error) {
-      console.error("❌ Error al obtener cupón por ID:", error)
+      Logger.error("❌ Error al obtener cupón por ID:", error)
       return null
     }
   }
@@ -1434,10 +1473,10 @@ export class FirebaseService {
         ...updateData,
         fechaActualizacion: new Date()
       })
-      console.log("✅ Cupón actualizado:", id)
+      Logger.log("✅ Cupón actualizado:", id)
       return true
     } catch (error) {
-      console.error("❌ Error al actualizar cupón:", error)
+      Logger.error("❌ Error al actualizar cupón:", error)
       return false
     }
   }
@@ -1448,10 +1487,10 @@ export class FirebaseService {
   static async deleteCoupon(id: string): Promise<boolean> {
     try {
       await deleteDoc(doc(db, "cupones", id))
-      console.log("✅ Cupón eliminado:", id)
+      Logger.log("✅ Cupón eliminado:", id)
       return true
     } catch (error) {
-      console.error("❌ Error al eliminar cupón:", error)
+      Logger.error("❌ Error al eliminar cupón:", error)
       return false
     }
   }
@@ -1477,10 +1516,10 @@ export class FirebaseService {
         fechaActualizacion: new Date()
       })
       
-      console.log("✅ Cupón marcado como usado:", id, "Usos:", usosActuales)
+      Logger.log("✅ Cupón marcado como usado:", id, "Usos:", usosActuales)
       return true
     } catch (error) {
-      console.error("❌ Error al marcar cupón como usado:", error)
+      Logger.error("❌ Error al marcar cupón como usado:", error)
       return false
     }
   }
@@ -1526,7 +1565,7 @@ export class FirebaseService {
       
       return { valid: true, cupon }
     } catch (error) {
-      console.error("❌ Error validando cupón:", error)
+      Logger.error("❌ Error validando cupón:", error)
       return { valid: false, error: "Error validando cupón" }
     }
   }
