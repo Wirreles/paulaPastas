@@ -1,13 +1,11 @@
 import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import CartSidebar from "@/components/CartSidebar";
-import { AuthProvider } from "@/lib/auth-context";
-import { ToastProvider } from "@/lib/toast-context";
-import { CartProvider } from "@/lib/cart-context"; // Importar CartProvider
+import { Providers } from "@/components/Providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -40,7 +38,9 @@ export default function RootLayout({
     <html lang="es">
       <head>
         {/* Google Tag Manager */}
-        <script
+        <Script
+          id="gtm-script"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -49,10 +49,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-TRQ7MJL5');`,
           }}
         />
-        {/* End Google Tag Manager */}
 
         {/* Meta Pixel Code */}
-        <script
+        <Script
+          id="fb-pixel"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `!function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -66,22 +67,15 @@ fbq('init', '2255346224965031');
 fbq('track', 'PageView');`,
           }}
         />
-        <noscript>
-          <img
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=2255346224965031&ev=PageView&noscript=1"
-          />
-        </noscript>
-        {/* End Meta Pixel Code */}
 
-        {/* Google tag (gtag.js) */}
-        <script
-          async
+        {/* Google Analytics (gtag.js) */}
+        <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-FCTYS7HER2"
-        ></script>
-        <script
+          strategy="afterInteractive"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
@@ -102,20 +96,23 @@ gtag('config', 'G-FCTYS7HER2');`,
             style={{ display: "none", visibility: "hidden" }}
           ></iframe>
         </noscript>
-        {/* End Google Tag Manager (noscript) */}
 
-        <AuthProvider>
-          <ToastProvider>
-            <CartProvider>
-              {" "}
-              {/* Envolver con CartProvider */}
-              <Header />
-              <CartSidebar />
-              <main className="flex-grow">{children}</main>
-              <Footer />
-            </CartProvider>
-          </ToastProvider>
-        </AuthProvider>
+        {/* Meta Pixel (noscript) */}
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: "none" }}
+            src="https://www.facebook.com/tr?id=2255346224965031&ev=PageView&noscript=1"
+            alt="Pixel"
+          />
+        </noscript>
+
+        <Providers>
+          <Header />
+          <main className="flex-grow">{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
