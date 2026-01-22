@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  webpack: (config, { isServer }) => {
+    config.resolve.alias['@'] = process.cwd();
+    return config;
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
