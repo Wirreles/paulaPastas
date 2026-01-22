@@ -150,12 +150,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.8,
     },
-    {
-      url: `${baseUrl}/pastas/sin-relleno/ravioles-fritos`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    },
+
     {
       url: `${baseUrl}/pastas/salsas/salsas-clasicas`, // Nueva URL para subcategoría de salsas
       lastModified: new Date(),

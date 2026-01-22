@@ -56,12 +56,6 @@ const categoriaData = {
         descripcion: "Fideos frescos elaborados con harina 00 y huevos",
         imagen: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop",
       },
-      {
-        nombre: "Ravioles Fritos", // Nuevo
-        slug: "ravioles-fritos", // Nuevo
-        descripcion: "Crocantes por fuera, cremosos por dentro. ¡Una delicia!", // Nuevo
-        imagen: "/pastas/raviolesFritos.webp", // Nuevo
-      },
     ],
   },
   "sin-tacc": {

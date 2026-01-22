@@ -92,12 +92,7 @@ const subcategoriaData = {
         "Fideos elaborados diariamente con harina 00 y huevos de granja. La base perfecta para cualquier salsa.",
       imagen: "/banners/banner-fideos.webp",
     },
-    "ravioles-fritos": {
-      nombre: "Ravioles Fritos", // Nuevo
-      descripcion:
-        "Crocantes por fuera, cremosos por dentro. Perfectos para picadas, encuentros o para darte un gusto diferente.", // Nuevo
-      imagen: "/placeholder.svg?height=1200&width=600", // Nuevo
-    },
+
   },
 }
 
@@ -316,7 +311,7 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
               <p className="text-lg text-neutral-600 mb-8">
                 Descubrí lo que hace únicos a nuestros ravioles artesanales.
               </p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-4xl mx-auto">
                 <div className="flex items-start space-x-3">
                   <div className="w-6 h-6 bg-primary-100 rounded-full flex-shrink-0 mt-1"></div>
@@ -329,7 +324,7 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start space-x-3">
                   <div className="w-6 h-6 bg-primary-100 rounded-full flex-shrink-0 mt-1"></div>
                   <div>
