@@ -182,28 +182,66 @@ export class FirebaseService {
     }
   }
 
-  static async getProductosDestacados(): Promise<Producto[]> {
-    const cacheKey = 'productos_destacados'
-    const cached = cache.get<Producto[]>(cacheKey)
-    if (cached) {
-      Logger.debug("📦 Cache hit: getProductosDestacados")
-      return cached
-    }
+static async getProductosDestacados(): Promise<Producto[]> {
+  const cacheKey = 'productos_destacados'
+  const cached = cache.get<Producto[]>(cacheKey)
 
-    try {
-      Logger.debug("🔍 FirebaseService: Buscando productos destacados...")
-      const q = query(collection(db, "productos"), where("destacado", "==", true), orderBy("orden", "asc"))
-      const snapshot = await getDocs(q)
-      const productos = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Producto)
-      
-      Logger.debug("📦 FirebaseService: Productos destacados encontrados:", productos.length)
-      cache.set(cacheKey, productos)
-      return productos
-    } catch (error) {
-      Logger.error("❌ Error en getProductosDestacados:", error)
-      return []
-    }
+  if (cached) {
+    Logger.debug("📦 Cache hit: getProductosDestacados")
+    return cached
   }
+
+  try {
+    Logger.debug("🔍 FirebaseService: Buscando productos destacados...")
+
+    const q = query(
+      collection(db, "productos"),
+      where("destacado", "==", true),
+      orderBy("fechaCreacion", "desc") // 🔥 Ahora ordenamos por fecha
+    )
+
+    const snapshot = await getDocs(q)
+
+    const productos: Producto[] = snapshot.docs.map((doc) => {
+      const data = doc.data()
+
+      const {
+        fechaCreacion,
+        fechaActualizacion,
+        ...rest
+      } = data
+
+      return {
+        id: doc.id,
+        ...rest,
+
+        fechaCreacion:
+          fechaCreacion && typeof fechaCreacion.toDate === "function"
+            ? fechaCreacion.toDate().toISOString()
+            : null,
+
+        fechaActualizacion:
+          fechaActualizacion && typeof fechaActualizacion.toDate === "function"
+            ? fechaActualizacion.toDate().toISOString()
+            : null,
+      } as Producto
+    })
+
+    Logger.debug(
+      "📦 FirebaseService: Productos destacados encontrados:",
+      productos.length
+    )
+
+    cache.set(cacheKey, productos)
+
+    return productos
+  } catch (error) {
+    Logger.error("❌ Error en getProductosDestacados:", error)
+    return []
+  }
+}
+
+
 
   static async addProducto(producto: Omit<Producto, "id">): Promise<string> {
     try {

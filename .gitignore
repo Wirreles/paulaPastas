@@ -33,3 +33,5 @@ next-env.d.ts
 firestore.rules
 
 inawin-303*.json
+
+.claude/

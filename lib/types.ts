@@ -10,7 +10,6 @@ export interface Producto {
     | "lasagna"
     | "ravioles"
     | "sorrentinos"
-    | "noquis"
     | "fideos"
     | "ravioles-fritos"
     | "salsas-clasicas"
@@ -44,8 +43,8 @@ export interface Producto {
   seoTitle?: string
   seoDescription?: string
   seoKeywords?: string[]
-  fechaCreacion?: Date
-  fechaActualizacion?: Date
+  fechaCreacion?: string | null
+  fechaActualizacion?: string | null
 }
 
 export interface Pack {
