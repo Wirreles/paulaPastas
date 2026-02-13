@@ -183,21 +183,26 @@ export class FirebaseService {
   }
 
   static async getProductosDestacados(): Promise<Producto[]> {
-    const cacheKey = 'productos_destacados'
-    const cached = cache.get<Producto[]>(cacheKey)
-    if (cached) {
-      Logger.debug("📦 Cache hit: getProductosDestacados")
-      return cached
-    }
-
+    // Sin cache — refleja siempre el estado actual en cada request.
+    // Sin orderBy ni sort — devuelve todos los destacados en orden natural de Firestore.
+    // Los Timestamps (fechaCreacion, fechaActualizacion) se convierten a ISO string
+    // para que Next.js 15 pueda serializar los objetos al pasarlos a Client Components.
     try {
       Logger.debug("🔍 FirebaseService: Buscando productos destacados...")
-      const q = query(collection(db, "productos"), where("destacado", "==", true), orderBy("orden", "asc"))
+      const q = query(collection(db, "productos"), where("destacado", "==", true))
       const snapshot = await getDocs(q)
-      const productos = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Producto)
-      
+      const productos = snapshot.docs.map((doc) => {
+        const data = doc.data()
+        return {
+          id: doc.id,
+          ...data,
+          // Convertir Timestamps a ISO string (plain value serializable por Next.js 15)
+          fechaCreacion: data.fechaCreacion?.toDate?.()?.toISOString?.() ?? null,
+          fechaActualizacion: data.fechaActualizacion?.toDate?.()?.toISOString?.() ?? null,
+        } as unknown as Producto
+      })
+
       Logger.debug("📦 FirebaseService: Productos destacados encontrados:", productos.length)
-      cache.set(cacheKey, productos)
       return productos
     } catch (error) {
       Logger.error("❌ Error en getProductosDestacados:", error)

@@ -2,6 +2,10 @@ import type { Metadata } from "next"
 import { FirebaseService } from "@/lib/firebase-service"
 import { STATIC_FAQS, STATIC_REVIEWS } from "@/lib/constants"
 
+// Renderizado dinámico en cada request para que los productos destacados
+// siempre reflejen el estado actual (sin cache estático de Next.js en build/deploy)
+export const dynamic = 'force-dynamic'
+
 // Impotar componentes del Home
 import HeroSection from "@/components/home/HeroSection"
 import FeaturedProducts from "@/components/home/FeaturedProducts"
@@ -44,14 +48,46 @@ export const metadata: Metadata = {
   },
 }
 
+// Serializa un objeto de Firestore a plain object eliminando Timestamps y valores no serializables.
+// Next.js 15 lanza error al pasar objetos con toJSON() (como Timestamp) a Client Components.
+function serializeProducto(p: any) {
+  return {
+    id: p.id ?? null,
+    nombre: p.nombre ?? "",
+    slug: p.slug ?? "",
+    descripcion: p.descripcion ?? "",
+    descripcionAcortada: p.descripcionAcortada ?? "",
+    precio: p.precio ?? 0,
+    categoria: p.categoria ?? "",
+    subcategoria: p.subcategoria ?? "",
+    imagen: p.imagen ?? "",
+    ingredientes: p.ingredientes ?? [],
+    disponible: p.disponible ?? true,
+    destacado: p.destacado ?? false,
+    porciones: p.porciones ?? null,
+    orden: p.orden ?? null,
+    comoPreparar: p.comoPreparar ?? null,
+    historiaPlato: p.historiaPlato ?? null,
+    preguntasFrecuentes: p.preguntasFrecuentes ?? [],
+    seoTitle: p.seoTitle ?? "",
+    seoDescription: p.seoDescription ?? "",
+    seoKeywords: p.seoKeywords ?? [],
+    // fechaCreacion y fechaActualizacion son Timestamps de Firestore (tienen toJSON())
+    // Next.js 15 no puede serializarlos para pasarlos a Client Components → se omiten
+  }
+}
+
 export default async function HomePage() {
   // Fetch de datos en el Servidor
-  let productosDestacados = []
+  let productosDestacados: any[] = []
   let reviewsDestacadas = []
 
   try {
-    // Intentar cargar productos destacados
-    productosDestacados = await FirebaseService.getProductosDestacados()
+    const raw = await FirebaseService.getProductosDestacados()
+    // JSON.parse/stringify: convierte cualquier objeto no serializable (Timestamps de Firestore,
+    // class instances, etc.) a plain objects. Next.js 15 requiere plain objects para pasar
+    // datos de Server Components a Client Components.
+    productosDestacados = JSON.parse(JSON.stringify(raw))
 
     // Intentar cargar reseñas destacadas
     const allReviews = await FirebaseService.getAllReviews()
