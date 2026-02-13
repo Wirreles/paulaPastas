@@ -18,6 +18,7 @@ export interface Producto {
   ingredientes: string[]
   disponible: boolean
   destacado: boolean
+  orden?: number    // campo opcional para ordenamiento (usado en getProductosDestacados y getProductos)
   porciones?: number
   // tiempoPreparacion removido según solicitud
   // Nuevas secciones dinámicas para productos

@@ -20,11 +20,11 @@ import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { FirebaseService } from "@/lib/firebase-service"
-import { 
-  Package, 
-  Clock, 
-  CheckCircle, 
-  Truck, 
+import {
+  Package,
+  Clock,
+  CheckCircle,
+  Truck,
   XCircle,
   Eye,
   Edit,
@@ -39,7 +39,9 @@ import {
   Mail,
   Phone,
   ShoppingBag,
-  AlertCircle
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -81,6 +83,8 @@ export default function OrdersPage() {
   const [loadingPurchases, setLoadingPurchases] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("todos")
+  const [currentPage, setCurrentPage] = useState(1)
+  const ORDERS_PER_PAGE = 10
 
   useEffect(() => {
     loadPurchases()
@@ -398,15 +402,21 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
   }
 
   const filteredPurchases = purchases.filter(purchase => {
-    const matchesSearch = 
+    const matchesSearch =
       purchase.buyerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       purchase.buyerEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
       purchase.id.toLowerCase().includes(searchTerm.toLowerCase())
-    
+
     const matchesStatus = statusFilter === "todos" || purchase.orderStatus === statusFilter
-    
+
     return matchesSearch && matchesStatus
   })
+
+  // Paginación
+  const totalOrders = filteredPurchases.length
+  const totalPages = Math.max(1, Math.ceil(totalOrders / ORDERS_PER_PAGE))
+  const startIndex = (currentPage - 1) * ORDERS_PER_PAGE
+  const currentOrders = filteredPurchases.slice(startIndex, startIndex + ORDERS_PER_PAGE)
 
   const stats = {
     total: purchases.length,
@@ -530,11 +540,11 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
               <Input
                 placeholder="Buscar por nombre, email o ID..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1) }}
                 className="max-w-sm"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value); setCurrentPage(1) }}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
@@ -557,7 +567,7 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
                 <p className="text-neutral-600 text-lg">Cargando pedidos...</p>
               </div>
             ) : filteredPurchases.length > 0 ? (
-              filteredPurchases.map((purchase) => {
+              currentOrders.map((purchase) => {
                 const paymentInfo = getPaymentMethodInfo(purchase.paymentMethod)
                 const deliveryInfo = getDeliveryMethodInfo(purchase.deliveryOption)
                 const userInfo = getUserTypeInfo(purchase.isUserLoggedIn)
@@ -781,6 +791,44 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
               </Card>
             )}
           </div>
+
+          {/* Paginación */}
+          {!loadingPurchases && filteredPurchases.length > 0 && totalPages > 1 && (
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-neutral-600">
+                Mostrando {startIndex + 1} a {Math.min(startIndex + ORDERS_PER_PAGE, totalOrders)} de {totalOrders} pedidos
+              </div>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => setCurrentPage(p => p - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 border border-neutral-300 rounded-lg text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                      currentPage === page
+                        ? "border-primary-500 bg-primary-500 text-white"
+                        : "border-neutral-300 text-neutral-700 hover:bg-neutral-100"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 border border-neutral-300 rounded-lg text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </AdminProtectedRoute>

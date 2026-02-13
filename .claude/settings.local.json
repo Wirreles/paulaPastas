@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Remove-Item -Recurse -Force \"G:\\\\proyectos\\\\paulapastas\\\\paulaPastas\\\\.claude\\\\worktrees\\\\silly-torvalds\\\\.next\" -ErrorAction SilentlyContinue)",
+      "Bash(Write-Host \"Cache .next eliminado\")"
+    ]
+  }
+}
