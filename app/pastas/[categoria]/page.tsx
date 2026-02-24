@@ -53,7 +53,7 @@ const categoriaData = {
       {
         nombre: "Fideos",
         slug: "fideos",
-        descripcion: "Fideos frescos elaborados con harina 00 y huevos",
+        descripcion: "Fideos frescos elaborados con sémola de grano duro y huevos",
         imagen: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop",
       },
     ],

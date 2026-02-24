@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Loader2, CheckCircle, CreditCard, Wallet, MapPin, ChevronDown, X } from "lucide-react"
+import { Loader2, CheckCircle, CreditCard, Wallet, MapPin, ChevronDown, X, Truck } from "lucide-react"
 import { ImageWrapper } from "@/components/ui/ImageWrapper"
 import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { useToast } from "@/lib/toast-context"
@@ -312,17 +312,15 @@ export default function CheckoutPage() {
       newErrors.phone = "Ingresa un teléfono válido"
     }
 
-    // Validar dirección (solo si es delivery)
-    if (deliveryOption === "delivery") {
-      if (user && userAddresses.length > 0) {
-        if (!selectedAddressId) {
-          newErrors.address = "Selecciona una dirección de entrega"
-        }
-      } else if (!formData.address || (typeof formData.address === 'string' && !formData.address.trim())) {
-        newErrors.address = "La dirección es requerida"
-      } else if (typeof formData.address === 'string' && formData.address.trim().length < 10) {
-        newErrors.address = "La dirección debe ser más específica"
+    // Validar dirección (envío a domicilio obligatorio)
+    if (user && userAddresses.length > 0) {
+      if (!selectedAddressId) {
+        newErrors.address = "Selecciona una dirección de entrega"
       }
+    } else if (!formData.address || (typeof formData.address === 'string' && !formData.address.trim())) {
+      newErrors.address = "La dirección es requerida"
+    } else if (typeof formData.address === 'string' && formData.address.trim().length < 10) {
+      newErrors.address = "La dirección debe ser más específica"
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -337,7 +335,7 @@ export default function CheckoutPage() {
     clearErrors()
     const newErrors: { [key: string]: string } = {}
 
-    if (deliveryOption === "delivery" && !selectedDeliverySlot) {
+    if (!selectedDeliverySlot) {
       newErrors.deliverySlot = "Selecciona un horario de entrega"
     }
 
@@ -399,25 +397,20 @@ export default function CheckoutPage() {
       let finalAddress = formData.address
       let addressData = null
 
-      if (deliveryOption === "delivery") {
-        if (user && userAddresses.length > 0 && selectedAddressId) {
-          // Usuario logueado con direcciones guardadas
-          const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
-          if (selectedAddress) {
-            addressData = selectedAddress
-            finalAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
-          }
-        } else if (!finalAddress) {
-          // Usuario invitado o logueado sin direcciones guardadas
-          error("Dirección requerida", "Por favor ingresa tu dirección de entrega")
-          return
+      if (user && userAddresses.length > 0 && selectedAddressId) {
+        // Usuario logueado con direcciones guardadas
+        const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
+        if (selectedAddress) {
+          addressData = selectedAddress
+          finalAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
         }
-      } else {
-        // Para retiro por el local, usar dirección del local
-        finalAddress = "Retiro por el local - Paula Pastas"
+      } else if (!finalAddress) {
+        // Usuario invitado o logueado sin direcciones guardadas
+        error("Dirección requerida", "Por favor ingresa tu dirección de entrega")
+        return
       }
 
-      if (deliveryOption === "delivery" && !selectedDeliverySlot) {
+      if (!selectedDeliverySlot) {
         error("Horario requerido", "Por favor selecciona un horario de entrega")
         return
       }
@@ -514,22 +507,17 @@ export default function CheckoutPage() {
       let finalAddress = formData.address
       let addressData = null
 
-      if (deliveryOption === "delivery") {
-        if (user && userAddresses.length > 0 && selectedAddressId) {
-          // Usuario logueado con direcciones guardadas
-          const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
-          if (selectedAddress) {
-            addressData = selectedAddress
-            finalAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
-          }
-        } else if (!finalAddress) {
-          // Usuario invitado o logueado sin direcciones guardadas
-          error("Dirección requerida", "Por favor ingresa tu dirección de entrega")
-          return
+      if (user && userAddresses.length > 0 && selectedAddressId) {
+        // Usuario logueado con direcciones guardadas
+        const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
+        if (selectedAddress) {
+          addressData = selectedAddress
+          finalAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
         }
-      } else {
-        // Para retiro por el local, usar dirección del local o vacía
-        finalAddress = "Retiro por el local - Paula Pastas"
+      } else if (!finalAddress) {
+        // Usuario invitado o logueado sin direcciones guardadas
+        error("Dirección requerida", "Por favor ingresa tu dirección de entrega")
+        return
       }
 
       // Crear solo la compra en la colección purchases (eliminando orders)
@@ -549,7 +537,7 @@ export default function CheckoutPage() {
           finalPrice: item.price,
           discountPerUnit: 0
         })),
-        paymentId: `cash-local-${Date.now()}`, // ID único para efectivo local
+        paymentId: `cash-delivery-${Date.now()}`, // ID único para efectivo a domicilio
         status: 'pending', // Pago pendiente hasta que se confirme físicamente
         totalAmount: finalPrice,
         originalAmount: totalPrice,
@@ -908,20 +896,30 @@ export default function CheckoutPage() {
                     />
                   </div>
 
-                  <RadioGroup
-                    value={deliveryOption}
-                    onValueChange={(value: "delivery" | "pickup") => setDeliveryOption(value)}
-                    className="flex flex-col space-y-2 mt-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="delivery" id="delivery" />
-                      <Label htmlFor="delivery">Envío a domicilio</Label>
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Modalidad de entrega</Label>
+                    <RadioGroup
+                      value="delivery"
+                      className="flex flex-col space-y-3"
+                    >
+                      <div className="flex items-center space-x-3 p-4 border-2 border-primary-100 bg-primary-50/30 rounded-xl">
+                        <RadioGroupItem value="delivery" id="delivery-fixed" checked />
+                        <div className="flex items-center space-x-3">
+                          <Truck className="w-5 h-5 text-primary-600" />
+                          <div>
+                            <Label htmlFor="delivery-fixed" className="font-bold text-neutral-900 cursor-default">Envío a domicilio</Label>
+                            <p className="text-xs text-neutral-500">Recibí tu pedido en la puerta de tu casa</p>
+                          </div>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-2">
+                        <Truck className="w-5 h-5 text-blue-600" />
+                        <span className="font-medium text-blue-800 text-sm">Actualmente solo realizamos envíos a domicilio para garantizar la frescura.</span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="pickup" id="pickup" />
-                      <Label htmlFor="pickup">Retiro por el local</Label>
-                    </div>
-                  </RadioGroup>
+                  </div>
 
                   <div className="flex justify-between mt-6">
                     <Button variant="outline" onClick={handlePrevStep}>
@@ -937,44 +935,35 @@ export default function CheckoutPage() {
                 <div className="space-y-6">
                   <h2 className="text-xl font-semibold mb-4">Elegí tu horario de preferencia para recibir el pedido</h2>
 
-                  {deliveryOption === "delivery" ? (
-                    <div className="space-y-4">
-                      <RadioGroup
-                        value={selectedDeliverySlot}
-                        onValueChange={(value) => {
-                          setSelectedDeliverySlot(value)
-                          clearErrors()
-                        }}
-                        className="flex flex-col space-y-2"
-                      >
-                        {deliverySlots.map((slot) => (
-                          <div key={slot} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-neutral-50">
-                            <RadioGroupItem value={slot} id={slot} />
-                            <Label htmlFor={slot} className="font-medium">{slot}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-
-                      {errors.deliverySlot && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                          <p className="text-sm text-red-700">{errors.deliverySlot}</p>
+                  <div className="space-y-4">
+                    <RadioGroup
+                      value={selectedDeliverySlot}
+                      onValueChange={(value) => {
+                        setSelectedDeliverySlot(value)
+                        clearErrors()
+                      }}
+                      className="flex flex-col space-y-2"
+                    >
+                      {deliverySlots.map((slot) => (
+                        <div key={slot} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-neutral-50">
+                          <RadioGroupItem value={slot} id={slot} />
+                          <Label htmlFor={slot} className="font-medium">{slot}</Label>
                         </div>
-                      )}
+                      ))}
+                    </RadioGroup>
 
-                      {/* Texto informativo sobre confirmación por WhatsApp */}
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p className="text-sm text-blue-700">
-                          <strong>Aviso:</strong> Para confirmar el día y horario definitivo nos vamos a comunicar por WhatsApp.
-                        </p>
+                    {errors.deliverySlot && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-sm text-red-700">{errors.deliverySlot}</p>
                       </div>
-                    </div>
-                  ) : (
+                    )}
+
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                       <p className="text-sm text-blue-700">
-                        <strong>Retiro por el local:</strong> El horario de atención del local es de miércoles a sábado de 10:30 a 14:30. Te enviaremos la confirmación cuando esté listo para retirar.
+                        <strong>Envío a domicilio:</strong> Para confirmar el día y horario definitivo nos vamos a comunicar por WhatsApp.
                       </p>
                     </div>
-                  )}
+                  </div>
 
                   <div className="flex justify-between mt-6">
                     <Button variant="outline" onClick={handlePrevStep}>
@@ -1018,13 +1007,13 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 border rounded-lg hover:bg-neutral-50 transition-colors">
-                      <RadioGroupItem value="efectivo-local" id="efectivo-local" className="flex-shrink-0" />
+                      <RadioGroupItem value="efectivo" id="efectivo" className="flex-shrink-0" />
                       <div className="flex items-center space-x-2 flex-1 min-w-0">
                         <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
-                        <Label htmlFor="efectivo-local" className="font-medium text-sm sm:text-base">Efectivo en el local</Label>
+                        <Label htmlFor="efectivo" className="font-medium text-sm sm:text-base">Efectivo al momento de la entrega</Label>
                       </div>
                       <div className="ml-auto text-xs sm:text-sm text-neutral-600 flex-shrink-0">
-                        Al retirar
+                        Pagás al recibir
                       </div>
                     </div>
                   </RadioGroup>
@@ -1223,6 +1212,6 @@ export default function CheckoutPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </div >
   )
 }

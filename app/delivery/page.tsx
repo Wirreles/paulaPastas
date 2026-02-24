@@ -46,7 +46,7 @@ export default function DeliveryPage() {
     },
     areaServed: [
       "Rosario",
-      "Villa Gobernador Gálvez", 
+      "Villa Gobernador Gálvez",
       "Funes",
       "Fisherton",
       "Alvear",
@@ -104,8 +104,8 @@ export default function DeliveryPage() {
       respuesta: "El costo de envío depende de la distancia y el tipo de transporte requerido."
     },
     {
-      pregunta: "¿Puedo pasar a retirar por un punto de entrega?",
-      respuesta: "Contamos con puntos de retiro en: Rosario Centro y Pueblo Esther."
+      pregunta: "¿Hacen envíos a otras ciudades?",
+      respuesta: "Por el momento concentramos nuestras entregas en Rosario y alrededores para garantizar la máxima frescura y calidad de nuestras pastas congeladas."
     }
   ]
 
@@ -153,7 +153,7 @@ export default function DeliveryPage() {
                 Enviamos nuestras pastas congeladas premium con cadena de frío segura y horarios flexibles.
               </p>
             </div>
-            
+
             <div className="mt-8">
               <Link
                 href="/pack-raviolada"

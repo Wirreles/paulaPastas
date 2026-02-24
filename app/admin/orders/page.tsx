@@ -70,7 +70,7 @@ interface Purchase {
   deliverySlot?: string
   comments?: string
   paymentId?: string
-  paymentMethod?: 'mercadopago' | 'efectivo-local'
+  paymentMethod?: 'mercadopago' | 'efectivo' | 'efectivo-local'
   isUserLoggedIn: boolean
   couponApplied?: any
   discountAmount?: number
@@ -114,19 +114,19 @@ export default function OrdersPage() {
   const handleWhatsAppContact = (phoneNumber: string, customerName: string, orderId: string, orderStatus: string) => {
     // Limpiar el número de teléfono (remover espacios, guiones, etc.)
     const cleanPhone = phoneNumber.replace(/\s+/g, '').replace(/[-()]/g, '')
-    
+
     // Agregar código de país si no lo tiene (asumiendo Argentina +54)
     let formattedPhone = cleanPhone
     if (!cleanPhone.startsWith('54')) {
       formattedPhone = `54${cleanPhone}`
     }
-    
+
     // Generar mensaje dinámico según el estado del pedido
     const message = generateWhatsAppMessage(customerName, orderId, orderStatus)
-    
+
     // Crear URL de WhatsApp
     const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`
-    
+
     // Abrir WhatsApp en nueva pestaña
     window.open(whatsappUrl, '_blank')
   }
@@ -134,7 +134,7 @@ export default function OrdersPage() {
   // Función para generar mensajes dinámicos según el estado del pedido
   const generateWhatsAppMessage = (customerName: string, orderId: string, orderStatus: string) => {
     const orderNumber = orderId.slice(-8)
-    
+
     switch (orderStatus) {
       case 'en_preparacion':
         return `Hola ${customerName}! 👋 Te contactamos desde Paula Pastas sobre tu pedido #${orderNumber}. 🍝
@@ -256,9 +256,10 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
           color: 'bg-blue-100 text-blue-800 border-blue-200',
           bgColor: 'bg-blue-50'
         }
+      case 'efectivo':
       case 'efectivo-local':
         return {
-          text: 'Efectivo en Local',
+          text: 'Efectivo al recibir',
           icon: <Banknote className="w-4 h-4" />,
           color: 'bg-green-100 text-green-800 border-green-200',
           bgColor: 'bg-green-50'
@@ -284,7 +285,7 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
         }
       case 'pickup':
         return {
-          text: 'Retiro por Local',
+          text: 'Retiro por Local (Obsoleto)',
           icon: <MapPin className="w-4 h-4" />,
           color: 'bg-orange-100 text-orange-800 border-orange-200',
           bgColor: 'bg-orange-50'
@@ -360,7 +361,7 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
 
   const formatDate = (date: Date | string | any) => {
     let dateObj: Date
-    
+
     try {
       // Si es un objeto Firestore Timestamp
       if (date && typeof date === 'object' && date.toDate) {
@@ -388,9 +389,9 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
         return 'Fecha no disponible'
       }
 
-      return dateObj.toLocaleDateString('es-ES', { 
-        day: 'numeric', 
-        month: 'long', 
+      return dateObj.toLocaleDateString('es-ES', {
+        day: 'numeric',
+        month: 'long',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
@@ -426,7 +427,7 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
     entregado: purchases.filter(p => p.orderStatus === 'entregado').length,
     cancelado: purchases.filter(p => p.orderStatus === 'cancelado').length,
     mercadopago: purchases.filter(p => p.paymentMethod === 'mercadopago').length,
-    efectivoLocal: purchases.filter(p => p.paymentMethod === 'efectivo-local').length,
+    efectivo: purchases.filter(p => p.paymentMethod === 'efectivo' || p.paymentMethod === 'efectivo-local').length,
     delivery: purchases.filter(p => p.deliveryOption === 'delivery').length,
     pickup: purchases.filter(p => p.deliveryOption === 'pickup').length,
     usuariosRegistrados: purchases.filter(p => p.isUserLoggedIn).length,
@@ -502,12 +503,12 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
 
             <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-green-800">Efectivo Local</CardTitle>
+                <CardTitle className="text-sm font-medium text-green-800">Efectivo al Recibir</CardTitle>
                 <Banknote className="h-5 w-5 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-green-800">{stats.efectivoLocal}</div>
-                <p className="text-xs text-green-600 mt-1">Pagos en efectivo</p>
+                <div className="text-3xl font-bold text-green-800">{stats.efectivo}</div>
+                <p className="text-xs text-green-600 mt-1">Pagos contra entrega</p>
               </CardContent>
             </Card>
 
@@ -572,7 +573,7 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
                 const deliveryInfo = getDeliveryMethodInfo(purchase.deliveryOption)
                 const userInfo = getUserTypeInfo(purchase.isUserLoggedIn)
                 const paymentStatusInfo = getPaymentStatusInfo(purchase.status, purchase.paymentMethod)
-                
+
                 return (
                   <Card key={purchase.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
                     {/* Header con información principal */}
@@ -611,7 +612,7 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
 
                     <CardContent className="p-6">
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        
+
                         {/* Columna 1: Información del Cliente y Opciones */}
                         <div className="space-y-4">
                           <div className="bg-white rounded-lg border p-4">
@@ -619,7 +620,7 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
                               <User className="w-5 h-5 mr-2 text-primary-600" />
                               Información del Cliente
                             </h4>
-                            
+
                             {/* Badges de opciones seleccionadas */}
                             <div className="space-y-3">
                               <div className="flex items-center justify-between">
@@ -629,7 +630,7 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
                                   <span className="ml-1">{userInfo.text}</span>
                                 </Badge>
                               </div>
-                              
+
                               <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-neutral-600">Método de Pago:</span>
                                 <Badge className={`${paymentInfo.color} px-3 py-1`}>
@@ -645,7 +646,7 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
                                   <span className="ml-1">{paymentStatusInfo.text}</span>
                                 </Badge>
                               </div>
-                              
+
                               <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-neutral-600">Método de Entrega:</span>
                                 <Badge className={`${deliveryInfo.color} px-3 py-1`}>
@@ -685,7 +686,7 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
                               <Package className="w-5 h-5 mr-2 text-primary-600" />
                               Productos
                             </h4>
-                            
+
                             <div className="space-y-2">
                               {purchase.products.map((product, index) => (
                                 <div key={index} className="flex justify-between items-center py-2 border-b border-neutral-100 last:border-b-0">
@@ -697,7 +698,7 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
                                 </div>
                               ))}
                             </div>
-                            
+
                             {/* Totales */}
                             <div className="mt-4 pt-4 border-t space-y-2">
                               {purchase.originalAmount && purchase.originalAmount !== purchase.totalAmount && (
@@ -727,7 +728,7 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
                               <MapPin className="w-5 h-5 mr-2 text-primary-600" />
                               Detalles de Entrega
                             </h4>
-                            
+
                             <div className="space-y-3">
                               <div>
                                 <span className="text-sm font-medium text-neutral-600">Dirección:</span>
@@ -735,14 +736,14 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
                                   {purchase.buyerAddress}
                                 </p>
                               </div>
-                              
+
                               {purchase.deliverySlot && (
                                 <div>
                                   <span className="text-sm font-medium text-neutral-600">Horario:</span>
                                   <p className="text-sm text-neutral-800 mt-1">{purchase.deliverySlot}</p>
                                 </div>
                               )}
-                              
+
                               {purchase.comments && (
                                 <div>
                                   <span className="text-sm font-medium text-neutral-600">Comentarios:</span>
@@ -758,7 +759,7 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
                               <Clock className="w-5 h-5 mr-2 text-primary-600" />
                               Actualizar Estado
                             </h4>
-                            
+
                             <div className="grid grid-cols-1 gap-2">
                               {['en_preparacion', 'listo_para_entrega', 'en_camino', 'entregado', 'cancelado'].map((status) => (
                                 <Button
@@ -810,11 +811,10 @@ Si tenés alguna consulta sobre la cancelación o querés hacer un nuevo pedido,
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${
-                      currentPage === page
+                    className={`px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${currentPage === page
                         ? "border-primary-500 bg-primary-500 text-white"
                         : "border-neutral-300 text-neutral-700 hover:bg-neutral-100"
-                    }`}
+                      }`}
                   >
                     {page}
                   </button>

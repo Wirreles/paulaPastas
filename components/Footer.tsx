@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { MapPin, Phone, Mail, Clock } from "lucide-react"
+import { Phone, Mail, Truck } from "lucide-react"
 
 export default function Footer() {
   return (
@@ -90,54 +90,50 @@ export default function Footer() {
                 <span>paulapastas.ar@gmail.com</span>
               </li>
               <li className="flex items-center space-x-2 text-neutral-400">
-                <MapPin className="w-4 h-4" />
-                <span>Urquiza 1317, Rosario</span>
+                <Truck className="w-4 h-4" />
+                <span>Solo nos manejamos con delivery</span>
               </li>
             </ul>
           </div>
 
           {/* Hours */}
           <div>
-            <h4 className="font-semibold text-lg mb-4">Horarios</h4>
-            <ul className="space-y-2 text-sm text-neutral-400">
-              <li className="flex items-center space-x-2">
-                <Clock className="w-4 h-4" />
-                <span>Mié - Sáb: 10:30 - 14:30</span>
-              </li>
-            </ul>
-
-            <div className="mt-4">
-              <h5 className="font-medium mb-2">Síguenos</h5>
-              <div className="flex space-x-3">
-                <a href="https://www.facebook.com/profile.php?id=61572472166030" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white transition-colors">
-                  Facebook
-                </a>
-                <a href="https://www.instagram.com/paulapastas/" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white transition-colors">
-                  Instagram
-                </a>
-                <a href="https://wa.me/5493413557400" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white transition-colors">
-                  WhatsApp
-                </a>
-              </div>
+            <h4 className="font-semibold text-lg mb-4">Síguenos</h4>
+            <div className="flex flex-col space-y-2 text-sm">
+              <a href="https://www.facebook.com/profile.php?id=61572472166030" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white transition-colors">
+                Facebook
+              </a>
+              <a href="https://www.instagram.com/paulapastas/" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white transition-colors">
+                Instagram
+              </a>
+              <a href="https://wa.me/5493413557400" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white transition-colors">
+                WhatsApp
+              </a>
             </div>
           </div>
         </div>
 
         {/* Sitemap Interno para SEO */}
-        <div className="border-t border-neutral-800 mt-8 pt-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="border-t border-neutral-800 mt-8 pt-8 text-center sm:text-left">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 text-sm text-neutral-400">
             <div>
-              <h5 className="font-medium mb-2 text-white">Páginas Principales</h5>
-              <ul className="space-y-1 text-neutral-400">
-                <li><Link href="/" className="hover:text-white transition-colors">Inicio</Link></li>
-                <li><Link href="/nosotros" className="hover:text-white transition-colors">Nosotros</Link></li>
-                <li><Link href="/delivery" className="hover:text-white transition-colors">Delivery</Link></li>
-                <li><Link href="/blog" className="hover:text-white transition-colors">Blog</Link></li>
+              <h5 className="font-medium mb-3 text-white uppercase tracking-wider text-xs">Información</h5>
+              <ul className="space-y-2">
+                <li><Link href="/terminos-y-condiciones" className="hover:text-white transition-colors">Términos y condiciones</Link></li>
               </ul>
             </div>
             <div>
-              <h5 className="font-medium mb-2 text-white">Categorías</h5>
-              <ul className="space-y-1 text-neutral-400">
+              <h5 className="font-medium mb-3 text-white uppercase tracking-wider text-xs">Explorar</h5>
+              <ul className="space-y-2">
+                <li><Link href="/" className="hover:text-white transition-colors">Inicio</Link></li>
+                <li><Link href="/nosotros" className="hover:text-white transition-colors">Nosotros</Link></li>
+                <li><Link href="/pastas" className="hover:text-white transition-colors">Todos los productos</Link></li>
+                <li><Link href="/delivery" className="hover:text-white transition-colors">Delivery</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h5 className="font-medium mb-3 text-white uppercase tracking-wider text-xs">Categorías</h5>
+              <ul className="space-y-2">
                 <li><Link href="/pastas/rellenas/lasagna" className="hover:text-white transition-colors">Lasagna</Link></li>
                 <li><Link href="/pastas/rellenas/ravioles" className="hover:text-white transition-colors">Ravioles</Link></li>
                 <li><Link href="/pastas/rellenas/sorrentinos" className="hover:text-white transition-colors">Sorrentinos</Link></li>
@@ -145,20 +141,20 @@ export default function Footer() {
               </ul>
             </div>
             <div>
-              <h5 className="font-medium mb-2 text-white">Servicios</h5>
-              <ul className="space-y-1 text-neutral-400">
+              <h5 className="font-medium mb-3 text-white uppercase tracking-wider text-xs">Servicios</h5>
+              <ul className="space-y-2">
                 <li><Link href="/pack-raviolada" className="hover:text-white transition-colors">Pack Raviolada</Link></li>
-                <li><Link href="/zona/vgg" className="hover:text-white transition-colors">Villa Gobernador Gálvez</Link></li>
-                <li><Link href="/zona/rosario-centro" className="hover:text-white transition-colors">Rosario Centro</Link></li>
-                <li><Link href="/zona/zona-sur" className="hover:text-white transition-colors">Zona Sur</Link></li>
+                <li><Link href="/salsas" className="hover:text-white transition-colors">Salsas</Link></li>
+                <li><Link href="/zonas" className="hover:text-white transition-colors">Zonas de entrega</Link></li>
+                <li><Link href="/blog" className="hover:text-white transition-colors">Blog</Link></li>
               </ul>
             </div>
             <div>
-              <h5 className="font-medium mb-2 text-white">Cuenta</h5>
-              <ul className="space-y-1 text-neutral-400">
+              <h5 className="font-medium mb-3 text-white uppercase tracking-wider text-xs">Mi Cuenta</h5>
+              <ul className="space-y-2">
                 <li><Link href="/login" className="hover:text-white transition-colors">Iniciar Sesión</Link></li>
                 <li><Link href="/register" className="hover:text-white transition-colors">Registrarse</Link></li>
-                <li><Link href="/dashboard-usuario" className="hover:text-white transition-colors">Mi Cuenta</Link></li>
+                <li><Link href="/dashboard-usuario" className="hover:text-white transition-colors">Mis Pedidos</Link></li>
               </ul>
             </div>
           </div>

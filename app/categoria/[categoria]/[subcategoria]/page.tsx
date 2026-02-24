@@ -46,7 +46,7 @@ const subcategoriaData = {
     fideos: {
       nombre: "Fideos Frescos",
       descripcion:
-        "Fideos elaborados diariamente con harina 00 y huevos de granja. La base perfecta para cualquier salsa.",
+        "Fideos elaborados diariamente con sémola de grano duro y huevos de granja. La base perfecta para cualquier salsa.",
       imagen: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=1200&h=600&fit=crop",
     },
   },
