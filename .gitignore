@@ -35,3 +35,4 @@ firestore.rules
 inawin-303*.json
 
 .claude/
+CHECKOUT_SECURITY_UPDATE.md

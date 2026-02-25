@@ -383,6 +383,7 @@ export default function CheckoutPage() {
   }
 
   const handleMercadoPagoPayment = async () => {
+    if (isSubmitting || isCreatingPayment) return
     setIsCreatingPayment(true)
     try {
       Logger.debug("🔄 Iniciando pago con MercadoPago")
@@ -452,6 +453,7 @@ export default function CheckoutPage() {
           totalAmount: finalPrice, // Precio final con descuento
           originalAmount: totalPrice // Precio original sin descuento
         } : null,
+        couponCode: appliedCoupon?.codigo || null,
       }
 
 
@@ -501,6 +503,7 @@ export default function CheckoutPage() {
   }
 
   const handleOtherPaymentMethods = async () => {
+    if (isSubmitting || isCreatingPayment) return
     setIsSubmitting(true)
     try {
       // Validar dirección solo si es delivery
@@ -520,7 +523,6 @@ export default function CheckoutPage() {
         return
       }
 
-      // Crear solo la compra en la colección purchases (eliminando orders)
       const purchaseData = {
         buyerId: user?.uid || null,
         buyerEmail: formData.email,
@@ -537,8 +539,6 @@ export default function CheckoutPage() {
           finalPrice: item.price,
           discountPerUnit: 0
         })),
-        paymentId: `cash-delivery-${Date.now()}`, // ID único para efectivo a domicilio
-        status: 'pending', // Pago pendiente hasta que se confirme físicamente
         totalAmount: finalPrice,
         originalAmount: totalPrice,
         discountAmount: calculateCouponDiscount(),
@@ -547,35 +547,35 @@ export default function CheckoutPage() {
           codigo: appliedCoupon.codigo,
           descuento: appliedCoupon.descuento,
           tipoDescuento: appliedCoupon.tipoDescuento,
-          descuentoAplicado: calculateCouponDiscount()
         } : null,
-        paidToSellers: false,
-        createdAt: new Date(),
+        couponCode: appliedCoupon?.codigo || null,
         deliveryOption: deliveryOption,
         deliverySlot: deliveryOption === "delivery" ? selectedDeliverySlot : null,
         comments: formData.comments,
         isUserLoggedIn: !!user,
         addressId: selectedAddressId || null,
         addressData: addressData,
-        orderStatus: 'en_preparacion', // Estado inicial para efectivo local (consistente con MercadoPago)
-        paymentMethod: paymentMethod // Agregar método de pago
+        paymentMethod: paymentMethod
       }
 
-      const purchaseId = await FirebaseService.addCompletedPurchase(purchaseData)
+      // Llamar a la API para procesar el pedido en efectivo
+      const response = await fetch("/api/checkout/process-cash", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(purchaseData),
+      })
 
-      Logger.debug("✅ Compra creada: " + purchaseId)
-
-      // Si se aplicó un cupón, actualizar su estado en Firebase (solo una vez)
-      if (appliedCoupon && !couponMarkedAsUsed) {
-        try {
-          await FirebaseService.markCouponAsUsed(appliedCoupon.id)
-          setCouponMarkedAsUsed(true) // Marcar como usado localmente
-          Logger.debug("✅ Cupón marcado como usado: " + appliedCoupon.codigo)
-        } catch (error) {
-          Logger.error("❌ Error al marcar cupón como usado:", error)
-          // No fallar la orden si hay error con el cupón
-        }
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Error al procesar el pedido")
       }
+
+      const result = await response.json()
+      const purchaseId = result.purchaseId
+
+      Logger.debug("✅ Compra creada vía API: " + purchaseId)
 
       setPurchaseId(purchaseId)
       setOrderConfirmed(true)
@@ -583,7 +583,8 @@ export default function CheckoutPage() {
       success("Pedido confirmado", "Tu pedido ha sido recibido con éxito")
     } catch (err: unknown) {
       Logger.error("Error al procesar el pedido:", err)
-      error("Error", "Hubo un error al procesar tu pedido. Por favor, inténtalo de nuevo.")
+      const errorMessage = err instanceof Error ? err.message : "Hubo un error al procesar tu pedido. Por favor, inténtalo de nuevo."
+      error("Error", errorMessage)
     } finally {
       setIsSubmitting(false)
     }

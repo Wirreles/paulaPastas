@@ -1,5 +1,7 @@
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'
 import { FirebaseService } from './firebase-service'
+import { adminDb } from './firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
 import { Logger } from './logger'
 
 // Configuración del SDK de MercadoPago
@@ -51,6 +53,7 @@ export interface PaymentRequest {
     totalAmount: number // Precio final con descuento
     originalAmount: number // Precio original sin descuento
   } | null
+  couponCode?: string // Código del cupón para re-validación
 }
 
 export interface PaymentResponse {
@@ -91,81 +94,107 @@ export class MercadoPagoService {
           throw new Error(`Datos inválidos en el producto ${i}`)
         }
 
-        // Obtener datos del producto desde Firebase
-        const productData = await FirebaseService.getProductById(item.productId)
-        if (!productData) {
+        // Obtener datos del producto desde Firebase (usando Admin para seguridad y evitar reglas)
+        const productSnap = await adminDb.collection('productos').doc(item.productId).get()
+        if (!productSnap.exists) {
           throw new Error(`Producto no encontrado: ${item.productId}`)
         }
 
+        const productData = productSnap.data() || {}
+
         if (productData.disponible === false) {
-          throw new Error(`El producto ${productData.name || productData.nombre || item.productId} no está disponible`)
+          throw new Error(`El producto ${productData.nombre || item.productId} no está disponible`)
         }
 
         if (typeof productData.stock === 'number' && productData.stock < item.quantity) {
-          throw new Error(`Stock insuficiente para el producto ${productData.name || productData.nombre || item.productId}`)
+          throw new Error(`Stock insuficiente para el producto ${productData.nombre || item.productId}`)
         }
 
-        let price = productData.precio || productData.price
+        let price = productData.precio
         if (typeof price === 'string') price = parseFloat(price)
         
         if (!price || typeof price !== 'number' || price <= 0) {
-          throw new Error(`Precio inválido para el producto ${productData.name || productData.nombre}`)
+          throw new Error(`Precio inválido para el producto ${productData.nombre || item.productId}`)
         }
 
         validatedProducts.push({
           productId: item.productId,
           quantity: item.quantity,
-          name: productData.name || productData.nombre || item.name || 'Producto sin nombre',
+          name: productData.nombre || item.name || 'Producto sin nombre',
           price: price,
           stock: productData.stock ?? null,
-          imageUrl: item.imageUrl || productData.imageUrl || productData.imagen
+          imageUrl: productData.imagen || item.imageUrl
         })
 
         totalAmount += price * item.quantity
       }
 
-      // Aplicar descuento del cupón si existe
-      let finalAmount = totalAmount
+      // Re-validar cupón en backend (SEGURIDAD)
       let discountAmount = 0
-      let productsWithDiscount = validatedProducts.map(product => ({
-        ...product,
-        originalPrice: product.price,
-        discountPerUnit: 0,
-        finalPrice: product.price
-      }))
-      
-      if (data.couponApplied) {
-        Logger.debug('✅ Cupón aplicado:', data.couponApplied.codigo)
+      let finalAmount = totalAmount
+      let backendCouponData = null
+
+      // Usar couponCode si existe, o caer al código dentro de couponApplied
+      const codeToValidate = data.couponCode || data.couponApplied?.codigo
+
+      if (codeToValidate) {
+        const couponQuery = await adminDb
+          .collection('cupones')
+          .where('codigo', '==', codeToValidate.trim())
+          .limit(1)
+          .get()
+
+        if (!couponQuery.empty) {
+          const couponDoc = couponQuery.docs[0]
+          const coupon = couponDoc.data()
+
+          if (coupon.activo && coupon.usosActuales < coupon.maxUsos) {
+            // Validar monto mínimo en el servidor
+            if (!coupon.montoMinimo || totalAmount >= coupon.montoMinimo) {
+              if (coupon.tipoDescuento === 'porcentaje') {
+                discountAmount = (totalAmount * coupon.descuento) / 100
+              } else {
+                discountAmount = coupon.descuento
+              }
+
+              backendCouponData = {
+                id: couponDoc.id,
+                codigo: coupon.codigo,
+                descuento: coupon.descuento,
+                tipoDescuento: coupon.tipoDescuento,
+                descuentoAplicado: discountAmount
+              }
+            }
+          }
+        }
+      }
+
+      finalAmount = Math.max(0, totalAmount - discountAmount)
+
+      // Calcular proporción de descuento por producto para el registro
+      const productsWithDiscount = validatedProducts.map(product => {
+        let productDiscount = 0
+        let finalPrice = product.price
         
-        // Calcular descuento por producto
-        productsWithDiscount = validatedProducts.map(product => {
-          let productDiscount = 0
-          let finalPrice = product.price
-          
-          if (data.couponApplied!.tipoDescuento === 'porcentaje') {
-            productDiscount = (product.price * data.couponApplied!.descuento) / 100
+        if (backendCouponData) {
+          if (backendCouponData.tipoDescuento === 'porcentaje') {
+            productDiscount = (product.price * backendCouponData.descuento) / 100
             finalPrice = product.price - productDiscount
-          } else if (data.couponApplied!.tipoDescuento === 'monto') {
+          } else if (backendCouponData.tipoDescuento === 'monto') {
             const productTotal = product.price * product.quantity
             const productProportion = productTotal / totalAmount
-            productDiscount = data.couponApplied!.descuento * productProportion
+            productDiscount = backendCouponData.descuento * productProportion
             finalPrice = Math.max(0, product.price - (productDiscount / product.quantity))
           }
-          
-          return {
-            ...product,
-            originalPrice: product.price,
-            discountPerUnit: productDiscount / product.quantity,
-            finalPrice: finalPrice
-          }
-        })
+        }
         
-        discountAmount = productsWithDiscount.reduce((total, product) => {
-          return total + (product.discountPerUnit * product.quantity)
-        }, 0)
-        
-        finalAmount = totalAmount - discountAmount
-      }
+        return {
+          ...product,
+          originalPrice: product.price,
+          discountPerUnit: productDiscount / product.quantity,
+          finalPrice: finalPrice
+        }
+      })
 
       // Construir objeto de compra para Firestore (con estado pendiente)
       const purchaseData = {
@@ -196,17 +225,20 @@ export class MercadoPagoService {
         isUserLoggedIn: data.isUserLoggedIn,
         selectedAddressId: data.addressId,
         selectedAddressData: data.addressData,
-        couponApplied: data.couponApplied ? {
-          ...data.couponApplied,
-          descuentoAplicado: discountAmount
-        } : null,
+        couponApplied: backendCouponData,
         discountAmount: discountAmount,
         paymentMethod: 'mercadopago'
       }
 
-      // Guardar directamente en 'purchases'
-      const purchaseId = await FirebaseService.addCompletedPurchase(purchaseData)
-      Logger.log(`✅ Compra iniciada guardada en Firestore con ID: ${purchaseId}`)
+      // Guardar directamente en 'purchases' usando Admin DB para saltar reglas de seguridad
+      const purchaseRef = adminDb.collection('purchases').doc()
+      const dataToSave = {
+        ...purchaseData,
+        createdAt: FieldValue.serverTimestamp()
+      }
+      await purchaseRef.set(dataToSave)
+      const purchaseId = purchaseRef.id
+      Logger.log(`✅ Compra iniciada guardada en Firestore (Admin) con ID: ${purchaseId}`)
 
       // Crear preferencia en MercadoPago
       const preference = new Preference(client)
@@ -281,8 +313,9 @@ export class MercadoPagoService {
         if (external_reference) {
           Logger.log(`Webhook recibido para compra ${external_reference}, estado: ${status}`)
           
-          // Obtener la compra actual
-          const currentPurchase = await FirebaseService.getPurchaseById(external_reference)
+          // Obtener la compra actual usando adminDb
+          const purchaseDoc = await adminDb.collection('purchases').doc(external_reference).get()
+          const currentPurchase = purchaseDoc.exists ? { id: purchaseDoc.id, ...purchaseDoc.data() as any } : null
           
           if (currentPurchase) {
             const updates: any = {
@@ -299,17 +332,40 @@ export class MercadoPagoService {
                 
                 // Aquí se podría descontar stock si no se hizo antes
                 // y marcar el cupón como usado
+                // Marcar el cupón como usado usando Admin DB para saltar reglas
                 if (currentPurchase.couponApplied?.id) {
-                   await FirebaseService.markCouponAsUsed(currentPurchase.couponApplied.id)
+                  try {
+                    const cuponRef = adminDb.collection('cupones').doc(currentPurchase.couponApplied.id)
+                    const cuponDoc = await cuponRef.get()
+                    if (cuponDoc.exists) {
+                      const cuponData = cuponDoc.data() || {}
+                      const usosActuales = (cuponData.usosActuales || 0) + 1
+                      await cuponRef.update({
+                        usosActuales,
+                        usado: usosActuales >= (cuponData.maxUsos || 0),
+                        fechaActualizacion: new Date()
+                      })
+                      Logger.log(`✅ Cupón ${currentPurchase.couponApplied.id} marcado como usado via Admin`)
+                    }
+                  } catch (e) {
+                    Logger.error(`❌ Error al marcar cupón como usado via Admin:`, e)
+                  }
                 }
               }
             } else if (status === 'rejected' || status === 'cancelled') {
               updates.orderStatus = 'cancelado'
             }
 
-            // Actualizar la compra existente en 'purchases'
-            await FirebaseService.updatePurchase(external_reference, updates)
-            Logger.log(`✅ Compra ${external_reference} actualizada a status: ${status}`)
+            // Actualizar la compra existente en 'purchases' usando adminDb
+            await adminDb.collection('purchases').doc(external_reference).update(updates)
+            
+            // Invalidar cache de compras si es posible (solo si FirebaseService está accesible y tiene el método)
+            try {
+              // @ts-ignore - Accediendo a cache privado para invalidar
+              if (FirebaseService.cache) FirebaseService.cache.invalidate('compras')
+            } catch (e) {}
+
+            Logger.log(`✅ Compra ${external_reference} actualizada a status: ${status} (Admin)`)
           } else {
             Logger.warn(`⚠️ Compra con referencia ${external_reference} no encontrada en purchases.`)
           }
