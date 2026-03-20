@@ -39,7 +39,7 @@ export default function Header() {
           href: "/pastas/rellenas",
           id: "rellenas",
           subcategorias: [
-            { name: "Lasagna", href: "/pastas/rellenas/lasagna" },
+            { name: "Lasagna", href: "/pastas/rellenas/lasagna/lasagna-estrato" },
             { name: "Ravioles", href: "/pastas/rellenas/ravioles" },
             { name: "Sorrentinos", href: "/pastas/rellenas/sorrentinos" },
           ],
@@ -49,14 +49,14 @@ export default function Header() {
           href: "/pastas/sin-relleno",
           id: "sin-relleno",
           subcategorias: [
-            { name: "Ñoquis", href: "/pastas/sin-relleno/noquis" },
+            { name: "Ñoquis", href: "/pastas/sin-relleno/noquis/nube-de-papa" },
             { name: "Fideos", href: "/pastas/sin-relleno/fideos" },
           ],
         },
         { name: "Sin TACC", href: "/pastas/sin-tacc", id: "sin-tacc" },
         { name: "Pack", href: "/pack-raviolada", id: "pack" },
         { name: "Ravioles fritos", href: "/pastas/ravioles-fritos", id: "ravioles-fritos" },
-        { name: "Salsas", href: "/pastas/salsas", id: "salsas" },
+        { name: "Salsas", href: "/salsas", id: "salsas" },
       ],
     },
     { name: "Nosotros", href: "/nosotros" },
@@ -110,24 +110,29 @@ export default function Header() {
                 alt="Paula Pastas Logo"
                 width={56}
                 height={56}
+                priority
                 className="w-full h-full object-contain"
               />
             </div>
             <div className="block">
-              <span className="font-display text-base sm:text-lg lg:text-xl font-bold text-neutral-900">Paula Pastas</span>
+              <span className="font-display text-base sm:text-lg lg:text-xl font-bold text-neutral-900">
+                Paula Pastas
+              </span>
               <p className="text-xs text-neutral-600">Pastas Artesanales</p>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8 xl:space-x-10">
+          <nav aria-label="Navegación principal" className="hidden lg:flex items-center space-x-8 xl:space-x-10">
             {navigation.map((item) => (
               <div key={item.name} className="relative group">
                 <Link
                   href={item.href}
-                  className={`text-sm font-medium transition-colors hover:text-primary-600 ${
-                    pathname === item.href ? "text-primary-600" : "text-neutral-700"
-                  }`}
+                  aria-current={pathname.startsWith(item.href) ? "page" : undefined}
+                  className={`text-sm font-medium transition-colors hover:text-primary-600 ${pathname.startsWith(item.href)
+                      ? "text-primary-600"
+                      : "text-neutral-700"
+                    }`}
                 >
                   {item.name}
                 </Link>
@@ -143,6 +148,7 @@ export default function Header() {
                           >
                             {subitem.name}
                           </Link>
+
                           {subitem.subcategorias && (
                             <div className="ml-4 border-l border-neutral-200">
                               {subitem.subcategorias.map((subcategoria: any) => (

@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Star, Send, X } from "lucide-react"
-import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/lib/toast-context"
 import { FirebaseService } from "@/lib/firebase-service"
 import type { Review } from "@/lib/types"
@@ -15,20 +14,22 @@ interface ReviewFormProps {
 }
 
 export default function ReviewForm({ productoId, productoNombre, onClose, onReviewSubmitted }: ReviewFormProps) {
-  const { user, userData } = useAuth()
   const { success, error } = useToast()
   
+  const [nombre, setNombre] = useState("")
+  const [email, setEmail] = useState("")
   const [rating, setRating] = useState(5)
   const [testimonial, setTestimonial] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  if (!user || !userData || userData.rol !== "cliente") {
-    return null
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    if (!nombre.trim()) {
+      error("Error", "Por favor indicá tu nombre")
+      return
+    }
+
     if (!testimonial.trim()) {
       error("Error", "Por favor escribe tu reseña")
       return
@@ -37,14 +38,20 @@ export default function ReviewForm({ productoId, productoNombre, onClose, onRevi
     setIsSubmitting(true)
 
     try {
+      const guestId =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `guest_${Date.now()}_${Math.random().toString(16).slice(2)}`
+
       const reviewData: Omit<Review, "id" | "fechaCreacion"> = {
         productoId,
-        userId: user.uid,
-        userName: userData.nombre || "Usuario",
-        userEmail: user.email,
+        userId: guestId,
+        userName: nombre.trim(),
+        userEmail: email.trim() ? email.trim() : undefined,
         rating,
         testimonial: testimonial.trim(),
         aprobada: false, // Requiere aprobación del administrador
+        pending: true,
         destacada: false, // No destacada por defecto
       }
 
@@ -87,6 +94,34 @@ export default function ReviewForm({ productoId, productoNombre, onClose, onRevi
             <p className="text-sm text-neutral-600 mb-4">
               Estás escribiendo una reseña para: <span className="font-semibold">{productoNombre}</span>
             </p>
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Tu nombre *
+            </label>
+            <input
+              required
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="Ej: Ana"
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Email (opcional)
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="tu@email.com"
+              disabled={isSubmitting}
+            />
           </div>
 
           <div>
@@ -146,7 +181,7 @@ export default function ReviewForm({ productoId, productoNombre, onClose, onRevi
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !testimonial.trim()}
+              disabled={isSubmitting || !testimonial.trim() || !nombre.trim()}
               className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
             >
               {isSubmitting ? (

@@ -31,6 +31,30 @@ import type {
 } from "./types"
 import { Logger } from "./logger"
 
+function serializeFirestoreData(data: any): any {
+  if (data === null || data === undefined) return data
+
+  if (Array.isArray(data)) {
+    return data.map((item) => serializeFirestoreData(item))
+  }
+
+  if (typeof data === "object") {
+    if (typeof data.toDate === "function") {
+      return data.toDate().toISOString()
+    }
+
+    const serialized: any = {}
+
+    for (const key in data) {
+      serialized[key] = serializeFirestoreData(data[key])
+    }
+
+    return serialized
+  }
+
+  return data
+}
+
 // Cache para optimizar consultas
 interface CacheEntry<T> {
   data: T
@@ -100,7 +124,10 @@ export class FirebaseService {
       }
 
       const snapshot = await getDocs(q)
-      const productos = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Producto)
+      const productos = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...serializeFirestoreData(doc.data()),
+      })) as Producto[]
 
       // Ordenar por el campo orden si existe, sino por fecha de creación
       productos.sort((a, b) => {
@@ -123,40 +150,49 @@ export class FirebaseService {
   }
 
   // Función específica para obtener productos por subcategoría con cache
-  static async getProductosPorSubcategoria(categoria: string, subcategoria: string): Promise<Producto[]> {
-    const cacheKey = `productos_${categoria}_${subcategoria}`
-    const cached = cache.get<Producto[]>(cacheKey)
-    if (cached) {
-      Logger.debug(`📦 Cache hit: getProductosPorSubcategoria(${categoria}, ${subcategoria})`)
-      return cached
-    }
+ static async getProductosPorSubcategoria(
+  categoria: string,
+  subcategoria: string
+): Promise<Producto[]> {
 
-    try {
-      Logger.debug(`🔍 Buscando productos para categoria: "${categoria}", subcategoria: "${subcategoria}"`)
+  const cacheKey = `productos_${categoria}_${subcategoria}`
+  const cached = cache.get<Producto[]>(cacheKey)
 
-      const productosRef = collection(db, "productos")
-      const q = query(productosRef, where("categoria", "==", categoria))
-
-      const snapshot = await getDocs(q)
-      const todosLosProductos = snapshot.docs.map((doc) => {
-        const data = doc.data()
-        return { id: doc.id, ...data } as Producto
-      })
-
-      Logger.debug(`📦 Productos encontrados en categoria "${categoria}":`, todosLosProductos.length)
-
-      // Filtrar por subcategoría
-      const productosFiltrados = todosLosProductos.filter((p) => p.subcategoria === subcategoria)
-
-      Logger.debug(`✅ Productos filtrados para subcategoria "${subcategoria}":`, productosFiltrados.length)
-      
-      cache.set(cacheKey, productosFiltrados)
-      return productosFiltrados
-    } catch (error) {
-      Logger.error("❌ Error fetching productos por subcategoria:", error)
-      return []
-    }
+  if (cached) {
+    Logger.debug(
+      `📦 Cache hit: getProductosPorSubcategoria(${categoria}, ${subcategoria})`
+    )
+    return cached
   }
+
+  try {
+    const productosRef = collection(db, "productos")
+
+    const q = query(
+      productosRef,
+      where("categoria", "==", categoria),
+      where("subcategoria", "==", subcategoria)
+    )
+
+    const snapshot = await getDocs(q)
+
+    const productos = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...serializeFirestoreData(doc.data()),
+    })) as Producto[]
+
+    cache.set(cacheKey, productos)
+
+    Logger.debug(
+      `📦 Productos encontrados para ${categoria}/${subcategoria}: ${productos.length}`
+    )
+
+    return productos
+  } catch (error) {
+    Logger.error("❌ Error fetching productos por subcategoria:", error)
+    return []
+  }
+}
 
   static async getProducto(slug: string): Promise<Producto | null> {
     const cacheKey = `producto_${slug}`
@@ -173,7 +209,10 @@ export class FirebaseService {
       if (snapshot.empty) return null
 
       const doc = snapshot.docs[0]
-      const producto = { id: doc.id, ...doc.data() } as Producto
+      const producto = {
+        id: doc.id,
+        ...serializeFirestoreData(doc.data()),
+      } as Producto
       cache.set(cacheKey, producto)
       return producto
     } catch (error) {
@@ -194,15 +233,9 @@ static async getProductosDestacados(): Promise<Producto[]> {
     const snapshot = await getDocs(q)
 
     const productos: Producto[] = snapshot.docs.map((doc) => {
-      const data = doc.data()
-
       return {
         id: doc.id,
-        ...data,
-        fechaCreacion:
-          data.fechaCreacion?.toDate?.()?.toISOString?.() ?? null,
-        fechaActualizacion:
-          data.fechaActualizacion?.toDate?.()?.toISOString?.() ?? null,
+        ...serializeFirestoreData(doc.data())
       } as Producto
     })
 
@@ -277,7 +310,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
     try {
       const q = query(collection(db, "categorias"), orderBy("orden", "asc"))
       const snapshot = await getDocs(q)
-      const categorias = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Categoria)
+      const categorias = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...serializeFirestoreData(doc.data())
+      })) as Categoria[]
       
       cache.set(cacheKey, categorias)
       return categorias
@@ -302,7 +338,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
       if (snapshot.empty) return null
 
       const doc = snapshot.docs[0]
-      const categoria = { id: doc.id, ...doc.data() } as Categoria
+      const categoria = {
+        id: doc.id,
+        ...serializeFirestoreData(doc.data())
+      } as Categoria
       cache.set(cacheKey, categoria)
       return categoria
     } catch (error) {
@@ -323,7 +362,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
     try {
       const q = query(collection(db, "packs"), orderBy("orden", "asc"))
       const snapshot = await getDocs(q)
-      const packs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Pack)
+      const packs = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...serializeFirestoreData(doc.data())
+      })) as Pack[]
       
       cache.set(cacheKey, packs)
       return packs
@@ -344,7 +386,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
 
     try {
       const snapshot = await getDocs(collection(db, "zonas"))
-      const zonas = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as ZonaEntrega)
+      const zonas = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...serializeFirestoreData(doc.data())
+      })) as ZonaEntrega[]
       
       cache.set(cacheKey, zonas)
       return zonas
@@ -422,7 +467,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
       const q = query(collection(db, "pageBanners"), orderBy("order", "asc"))
       const snapshot = await getDocs(q)
       const banners = snapshot.docs.map((doc) => {
-        const data = doc.data()
+        const data = serializeFirestoreData(doc.data())
         // Remover el campo 'id' interno si existe para evitar conflictos
         const { id: _, ...docData } = data
         return { id: doc.id, ...docData } as PageBanner
@@ -445,7 +490,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
         return null
       }
       const doc = snapshot.docs[0]
-      const data = doc.data()
+      const data = serializeFirestoreData(doc.data())
       // Remover el campo 'id' interno si existe para evitar conflictos
       const { id: _, ...docData } = data
       const banner = { id: doc.id, ...docData } as PageBanner
@@ -493,7 +538,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
     try {
       const q = query(collection(db, "blogArticles"), orderBy("order", "asc"))
       const snapshot = await getDocs(q)
-      const articles = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as BlogArticle)
+      const articles = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...serializeFirestoreData(doc.data())
+      })) as BlogArticle[]
       Logger.debug(`📝 BlogArticles cargados: ${articles.length} artículos`)
       return articles
     } catch (error) {
@@ -510,7 +558,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
         orderBy("publishedAt", "desc")
       )
       const snapshot = await getDocs(q)
-      const articles = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as BlogArticle)
+      const articles = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...serializeFirestoreData(doc.data())
+      })) as BlogArticle[]
       Logger.debug(`📝 Artículos publicados cargados: ${articles.length} artículos`)
       return articles
     } catch (error) {
@@ -528,7 +579,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
         Logger.debug(`❌ No se encontró artículo para slug: "${slug}"`)
         return null
       }
-      const article = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as BlogArticle
+      const article = { id: snapshot.docs[0].id, ...serializeFirestoreData(snapshot.docs[0].data()) } as BlogArticle
       Logger.debug(`✅ Artículo encontrado para "${slug}":`, article.title)
       return article
     } catch (error) {
@@ -592,7 +643,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
         orderBy("fechaCreacion", "desc")
       )
       const snapshot = await getDocs(q)
-      const pedidos = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Order)
+      const pedidos = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...serializeFirestoreData(doc.data())
+      })) as Order[]
       
       cache.set(cacheKey, pedidos)
       Logger.debug(`📦 Pedidos cargados para usuario ${userId}:`, pedidos.length)
@@ -613,7 +667,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
         where("userId", "==", userId)
       )
       const snapshot = await getDocs(q)
-      const direcciones = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      const direcciones = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...serializeFirestoreData(doc.data())
+      }))
       
       Logger.debug(`✅ Direcciones encontradas: ${direcciones.length}`)
       direcciones.forEach((dir, index) => {
@@ -686,7 +743,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
         return null
       }
       
-      return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Order
+      return { id: snapshot.docs[0].id, ...serializeFirestoreData(snapshot.docs[0].data()) } as Order
     } catch (error) {
       Logger.error("Error en getOrderByExternalReference:", error)
       return null
@@ -718,7 +775,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
         return null
       }
       
-      return { id: productDoc.id, ...productDoc.data() }
+      return { id: productDoc.id, ...serializeFirestoreData(productDoc.data()) }
     } catch (error) {
       Logger.error("Error obteniendo producto por ID:", error)
       return null
@@ -754,7 +811,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
         return null
       }
       
-      return { id: purchaseDoc.id, ...purchaseDoc.data() }
+      return { id: purchaseDoc.id, ...serializeFirestoreData(purchaseDoc.data()) }
     } catch (error) {
       Logger.error("Error obteniendo compra pendiente:", error)
       return null
@@ -793,7 +850,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
         return null
       }
       
-      return { id: purchaseDoc.id, ...purchaseDoc.data() }
+      return { id: purchaseDoc.id, ...serializeFirestoreData(purchaseDoc.data()) }
     } catch (error) {
       Logger.error("Error obteniendo compra:", error)
       return null
@@ -860,7 +917,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
         limit(10) // Limitar a los últimos 10 pedidos
       )
       const snapshot = await getDocs(q)
-      const compras = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      const compras = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...serializeFirestoreData(doc.data())
+      }))
       
       cache.set(cacheKey, compras)
       Logger.debug(`📦 Compras cargadas para usuario ${userId}:`, compras.length)
@@ -898,7 +958,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
         orderBy("createdAt", "desc")
       )
       const snapshot = await getDocs(q)
-      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      return snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...serializeFirestoreData(doc.data())
+      }))
     } catch (error) {
       Logger.error("Error en getAllPurchases:", error)
       return []
@@ -911,7 +974,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
       const usuariosRef = collection(db, "usuarios")
       const q = query(usuariosRef, orderBy("fechaCreacion", "desc"))
       const snapshot = await getDocs(q)
-      const usuarios = snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }) as Usuario)
+      const usuarios = snapshot.docs.map((doc) => ({
+        uid: doc.id,
+        ...serializeFirestoreData(doc.data())
+      })) as Usuario[]
 
       Logger.debug(`FirebaseService.getUsuarios(): Encontrados ${usuarios.length} usuarios`)
       return usuarios
@@ -926,7 +992,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
       const usuarioDoc = await getDoc(doc(db, "usuarios", uid))
       if (!usuarioDoc.exists()) return null
 
-      return { uid: usuarioDoc.id, ...usuarioDoc.data() } as Usuario
+      return { uid: usuarioDoc.id, ...serializeFirestoreData(usuarioDoc.data()) } as Usuario
     } catch (error) {
       Logger.error("Error en getUsuario:", error)
       return null
@@ -997,7 +1063,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
         orderBy("fechaCreacion", "desc")
       )
       const snapshot = await getDocs(q)
-      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Review)
+      return snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...serializeFirestoreData(doc.data())
+      })) as Review[]
     } catch (error) {
       Logger.error("Error al obtener reseñas del producto:", error)
       return []
@@ -1013,7 +1082,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
         orderBy("fechaCreacion", "desc")
       )
       const snapshot = await getDocs(q)
-      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Review)
+      return snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...serializeFirestoreData(doc.data())
+      })) as Review[]
     } catch (error) {
       Logger.error("Error al obtener reseñas del usuario:", error)
       throw error
@@ -1088,8 +1160,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
       querySnapshot.forEach((doc) => {
         reviews.push({
           id: doc.id,
-          ...doc.data(),
-          fechaCreacion: doc.data().fechaCreacion?.toDate() || new Date(),
+          ...serializeFirestoreData(doc.data()),
         } as Review)
       })
       
@@ -1127,7 +1198,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
 
       // Mapear los documentos
       const sections = snapshot.docs.map((doc) => {
-        const data = doc.data()
+        const data = serializeFirestoreData(doc.data())
         Logger.debug("🔍 FirebaseService: Documento mapeado:", { id: doc.id, ...data })
         return { id: doc.id, ...data } as HomeSection
       })
@@ -1202,7 +1273,10 @@ static async getProductosDestacados(): Promise<Producto[]> {
       }
 
       const doc = querySnapshot.docs[0]
-      return { id: doc.id, ...doc.data() } as Suscripcion
+      return {
+  id: doc.id,
+  ...serializeFirestoreData(doc.data())
+} as Suscripcion
     } catch (error) {
       Logger.error("❌ Error al obtener suscripción por email:", error)
       return null
@@ -1217,7 +1291,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
       const querySnapshot = await getDocs(collection(db, "suscripciones"))
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...serializeFirestoreData(doc.data())
       })) as Suscripcion[]
     } catch (error) {
       Logger.error("❌ Error al obtener suscripciones:", error)
@@ -1239,7 +1313,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
       
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...serializeFirestoreData(doc.data())
       })) as Suscripcion[]
     } catch (error) {
       Logger.error("❌ Error al obtener suscripciones activas:", error)
@@ -1318,7 +1392,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
       const querySnapshot = await getDocs(collection(db, "newsletter_campaigns"))
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...serializeFirestoreData(doc.data())
       })) as NewsletterCampaign[]
     } catch (error) {
       Logger.error("❌ Error al obtener campañas de newsletter:", error)
@@ -1425,7 +1499,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
       const querySnapshot = await getDocs(collection(db, "cupones"))
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...serializeFirestoreData(doc.data())
       }))
     } catch (error) {
       Logger.error("❌ Error al obtener cupones:", error)
@@ -1448,7 +1522,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
       const doc = querySnapshot.docs[0]
       return {
         id: doc.id,
-        ...doc.data()
+        ...serializeFirestoreData(doc.data())
       }
     } catch (error) {
       Logger.error("❌ Error al obtener cupón por código:", error)
@@ -1470,7 +1544,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
       
       return {
         id: docSnap.id,
-        ...docSnap.data()
+        ...serializeFirestoreData(docSnap.data())
       }
     } catch (error) {
       Logger.error("❌ Error al obtener cupón por ID:", error)
@@ -1558,8 +1632,8 @@ static async getProductosDestacados(): Promise<Producto[]> {
       }
       
       const now = new Date()
-      const fechaInicio = new Date(cupon.fechaInicio.seconds * 1000)
-      const fechaFin = new Date(cupon.fechaFin.seconds * 1000)
+      const fechaInicio = new Date(cupon.fechaInicio)
+const fechaFin = new Date(cupon.fechaFin)
       
       if (now < fechaInicio) {
         return { valid: false, error: "Cupón aún no válido" }

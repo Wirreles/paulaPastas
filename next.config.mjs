@@ -11,40 +11,37 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    // Solo optimizar imágenes de dominios específicos, NO Firebase Storage
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'assets.elgourmet.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.unileverfoodsolutions.com.mx',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'unileverfoodsolutions.com.mx',
-        port: '',
-        pathname: '/**',
-      },
-      // Agregar otros dominios que SÍ quieras optimizar
-    ],
-    // Configuración de optimización para mejor rendimiento
-    formats: ['image/webp', 'image/avif'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // NO incluir firebasestorage.googleapis.com para evitar optimización innecesaria
-  },
+  remotePatterns: [
+    {
+      protocol: 'https',
+      hostname: 'firebasestorage.googleapis.com',
+    },
+    {
+      protocol: 'https',
+      hostname: 'images.unsplash.com',
+    },
+    {
+      protocol: 'https',
+      hostname: 'assets.elgourmet.com',
+    },
+    {
+      protocol: 'https',
+      hostname: 'www.unileverfoodsolutions.com.mx',
+    },
+    {
+      protocol: 'https',
+      hostname: 'unileverfoodsolutions.com.mx',
+    },
+  ],
+
+  formats: ['image/avif', 'image/webp'],
+
+  deviceSizes: [640,750,828,1080,1200,1920,2048],
+
+  imageSizes: [16,32,48,64,96,128,256,384],
+
+  minimumCacheTTL: 31536000
+},
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000'],

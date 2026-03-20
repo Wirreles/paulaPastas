@@ -162,7 +162,15 @@ export default function ReviewsPage() {
     }
     
     if (filterProducto && !review.productoId.includes(filterProducto)) return false
-    if (filterUsuario && !review.userName.toLowerCase().includes(filterUsuario.toLowerCase()) && !review.userEmail.toLowerCase().includes(filterUsuario.toLowerCase())) return false
+    if (filterUsuario) {
+      const filter = filterUsuario.toLowerCase()
+      if (
+        !review.userName.toLowerCase().includes(filter) &&
+        !(review.userEmail ?? "").toLowerCase().includes(filter)
+      ) {
+        return false
+      }
+    }
     
     return true
   })

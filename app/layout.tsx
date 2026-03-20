@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://paulapastas.com"),
-  title: "Comida Casera - Pastas Artesanales",
+  title: "Paula Pastas - Pastas Artesanales",
   description:
     "Pastas frescas y salsas caseras hechas con amor y tradición. ¡Pedí online!",
   generator: "v0.dev",
@@ -50,7 +50,23 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           }}
         />
 
-        {/* Meta Pixel Code */}
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-FCTYS7HER2"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-FCTYS7HER2');`,
+          }}
+        />
+
+        {/* Meta Pixel */}
         <Script
           id="fb-pixel"
           strategy="afterInteractive"
@@ -68,33 +84,31 @@ fbq('track', 'PageView');`,
           }}
         />
 
-        {/* Google Analytics (gtag.js) */}
+        {/* Microsoft Clarity */}
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-FCTYS7HER2"
-          strategy="afterInteractive"
-        />
-        <Script
-          id="google-analytics"
+          id="clarity-script"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
-            __html: `window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-FCTYS7HER2');`,
+            __html: `(function(c,l,a,r,i,t,y){
+c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "vva4r0prt3");`,
           }}
         />
 
         <link rel="canonical" href="https://paulapastas.com" />
       </head>
+
       <body className={`${inter.className} flex flex-col min-h-screen`}>
-        {/* Google Tag Manager (noscript) */}
+        {/* GTM (noscript) */}
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-TRQ7MJL5"
             height="0"
             width="0"
             style={{ display: "none", visibility: "hidden" }}
-          ></iframe>
+          />
         </noscript>
 
         {/* Meta Pixel (noscript) */}

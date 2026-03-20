@@ -2,115 +2,35 @@
 
 import { notFound } from "next/navigation"
 import { ImageWrapper } from "@/components/ui/ImageWrapper"
-import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
 import Link from "next/link"
 import {
   ArrowLeft,
-  Clock,
   Users,
   ShoppingBag,
   Star,
   Leaf,
   Award,
   Snowflake,
-  ChevronLeft,
   ChevronRight,
+  Minus,
+  Plus
 } from "lucide-react"
 import ProductCard from "@/components/ProductCard"
-import ComplementaryProductCard from "@/components/ComplementaryProductCard" // Importar el nuevo componente
-import { useState, useEffect, useCallback } from "react" // Importar useState y useEffect para el carrusel
-import { useAuth } from "@/lib/auth-context"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { FirebaseService } from "@/lib/firebase-service"
-import ReviewForm from "@/components/ReviewForm"
-import type { Review as ReviewType } from "@/lib/types"
+import dynamic from 'next/dynamic'
+
+const ReviewForm = dynamic(() => import('@/components/ReviewForm'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-[480px] w-full bg-neutral-100 rounded-2xl" />
+});
+
+import type { Review as ReviewType, Producto } from "@/lib/types"
+import { getProductCanonicalUrl, getCategoryUrl, getSubcategoryUrl } from "@/lib/product-url"
 import { useCart } from "@/lib/cart-context"
-import { Minus, Plus } from "lucide-react"
 
 // Usar la interfaz Review de types.ts en lugar de la local
 
-interface Faq {
-  question: string
-  answer: string
-}
-
-// Las reseñas ahora se cargan dinámicamente desde Firebase
-
-// Datos de ejemplo para FAQ (pueden venir de Firebase en el futuro)
-const faqs: Faq[] = [
-  {
-    question: "¿Qué diferencia hay entre los ravioles de Paula y los de supermercado?",
-    answer:
-      "Los ravioles de Paula Pastas se distinguen en cada detalle frente a los productos industriales. La masa está elaborada 100% con sémola de trigo de grano duro de alta calidad, sin colorantes ni conservantes artificiales. Nuestros rellenos no contienen aditivos: al cortarlos o morderlos, podés ver claramente los ingredientes reales que usamos. A diferencia de muchas opciones comerciales —que emplean harinas refinadas, estabilizantes, colorantes y etiquetas poco claras como \"sabores naturales\" o \"aditivos autorizados\"—, en Paula Pastas te ofrecemos transparencia, pureza y sabor real en tu mesa.",
-  },
-  {
-    question: "¿Cuánto duran en el freezer? ¿Y en la heladera?",
-    answer:
-      "Nuestros ravioles pueden conservarse hasta 2 meses en freezer. Una vez cocidos, duran entre 2 y 3 días en heladera (en recipiente hermético). Sin embargo, recomendamos consumirlos dentro de las primeras 48 horas para preservar su sabor y textura originales.",
-  },
-  {
-    question: "¿Cuántos ravioles se calculan por persona?",
-    answer:
-      "Cada caja de 500 gramos contiene aproximadamente 48 ravioles artesanales, de gran tamaño (4 cm en crudo). Ese contenido representa: 2 porciones abundantes (24 unidades c/u) o 3 porciones moderadas (16 unidades c/u). La cantidad ideal puede variar según el tipo de comida o el apetito de quienes los disfruten.",
-  },
-  {
-    question: "¿Cuál es el sabor más pedido por los clientes?",
-    answer:
-      "Tenemos un podio muy aclamado aunque sin dudas hay un ganador. En primer lugar está el Ossobuco al Malbec, con su sabor profundo y sus horas de cocción lenta, es el favorito indiscutido.",
-  },
-  {
-    question: "¿Tienen ravioles para vegetarianos?",
-    answer:
-      "¡Sí! Tenemos ravioles aptos para vegetarianos: Espinaca Cremosa con Crocante de Nuez. Y próximamente ampliaremos nuestra carta con más opciones veggie. Tip: no te pierdas nuestros Ñoquis de los 29, también aptos para vegetarianos.",
-  },
-  {
-    question: "¿Puedo cocinarlos al horno o fritos, o solo hervidos?",
-    answer:
-      "Nuestros ravioles son aptos para: hervido, frito, salteado, al horno o en air fryer. Con cada compra incluimos nuestro manual de consejos del chef, para que los disfrutes al máximo con cualquier técnica.",
-  },
-  {
-    question: "¿Cómo se cocinan los ravioles congelados?",
-    answer:
-      "Los ravioles se exponen al método de cocción que elijas directo desde el freezer. Nunca se descongelan.",
-  },
-  {
-    question: "¿Dónde comprar ravioles artesanales en Rosario?",
-    answer:
-      "En Paula Pastas elaboramos cada raviol artesanalmente, uno por uno, con el cuidado y la atención que hacen la diferencia. Sí, son los mejores. Obviamente. 😉",
-  },
-]
-
-interface Producto {
-  id: string
-  nombre: string
-  descripcion: string
-  imagen: string
-  precio: number
-  disponible: boolean
-  porciones?: number
-  ingredientes?: string[]
-  destacado?: boolean
-  categoria: string
-  subcategoria: string
-  slug: string
-  seoTitle?: string
-  seoDescription?: string
-  descripcionAcortada?: string
-  seoKeywords?: string[]
-  // Nuevas secciones dinámicas para productos
-  comoPreparar?: {
-    titulo: string
-    texto: string
-  }
-  historiaPlato?: {
-    titulo: string
-    texto: string
-  }
-  // Sección de preguntas frecuentes dinámicas
-  preguntasFrecuentes?: {
-    pregunta: string
-    respuesta: string
-  }[]
-}
 
 interface ProductoPageClientProps {
   categoria: string
@@ -120,6 +40,7 @@ interface ProductoPageClientProps {
   productosRelacionados: Producto[]
   productosComplementarios: Producto[]
 }
+
 
 export default function ProductoPageClient({
   categoria,
@@ -137,94 +58,229 @@ export default function ProductoPageClient({
   const [quantity, setQuantity] = useState(1)
   const { addItem } = useCart()
 
+// Estadísticas de reviews aprobadas
+const [reviewData, setReviewData] = useState<{
+  avg: number
+  count: number
+  reviews: ReviewType[]
+}>({
+  avg: 0,
+  count: 0,
+  reviews: [],
+})
+
+// ✅ FIX BUCLE INFINITO: Memoizamos la función y validamos el estado previo
+const handleStatsChange = useCallback((data: { avg: number; count: number; reviews?: ReviewType[] }) => {
+  setReviewData((prev) => {
+    // Solo actualizamos si los valores realmente cambiaron
+    if (prev.avg === data.avg && prev.count === data.count && prev.reviews.length === (data.reviews?.length || 0)) {
+      return prev;
+    }
+    return {
+      avg: data.avg,
+      count: data.count,
+      reviews: data.reviews ?? [],
+    };
+  });
+}, []);
+
   // Funciones del carrito
   const handleQuantityChange = useCallback((delta: number) => {
     setQuantity(prev => Math.max(1, prev + delta))
   }, [])
 
+  const [isAdded, setIsAdded] = useState(false)
+
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const handleAddToCart = useCallback(() => {
     if (quantity > 0 && producto.disponible) {
       addItem(producto, quantity)
       setQuantity(1) // Resetear cantidad después de agregar
+      setIsAdded(true)
+      
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      
+      timeoutRef.current = setTimeout(() => {
+        setIsAdded(false)
+      }, 2000)
     }
   }, [addItem, producto, quantity])
 
-  const formatPrice = useCallback((price: number) => {
-    return price.toLocaleString('es-AR')
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
   }, [])
 
-  // JSON-LD para datos estructurados del producto
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: producto.nombre,
-    description: producto.descripcion,
-    image: producto.imagen,
-    brand: {
-      "@type": "Brand",
-      name: "Comida Casera",
-    },
-    offers: {
-      "@type": "Offer",
-      price: producto.precio,
-      priceCurrency: "ARS",
-      availability: producto.disponible ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      seller: {
-        "@type": "Organization",
-        name: "Comida Casera",
-      },
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      reviewCount: "127",
-    },
-    breadcrumb: {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          name: "Inicio",
-          item: "https://comidacasera.com",
-        },
-        {
-          "@type": "ListItem",
-          position: 2,
-          name: "Pastas",
-          item: "https://comidacasera.com/pastas",
-        },
-        {
-          "@type": "ListItem",
-          position: 3,
-          name: categoria === "rellenas" ? "Pastas Rellenas" : categoria === "sin-relleno" ? "Sin Relleno" : "Sin TACC",
-          item: `https://comidacasera.com/pastas/${categoria}`,
-        },
-        {
-          "@type": "ListItem",
-          position: 4,
-          name: subcategoria,
-          item: `https://comidacasera.com/pastas/${categoria}/${subcategoria}`,
-        },
-        {
-          "@type": "ListItem",
-          position: 5,
-          name: producto.nombre,
-          item: `https://comidacasera.com/pastas/${categoria}/${subcategoria}/${productoSlug}`,
-        },
-      ],
-    },
+  const formattedPrice = useMemo(() => {
+    return (producto.precio * quantity).toLocaleString('es-AR')
+  }, [producto.precio, quantity])
+
+  const CATEGORY_NAMES: Record<string, string> = {
+    "rellenas": "Pastas Rellenas",
+    "sin-relleno": "Sin Relleno",
+    "sin-tacc": "Sin TACC",
+    "salsas": "Salsas",
   }
+  const categoriaNombre = CATEGORY_NAMES[categoria] || categoria
+  const subcatUrl = getSubcategoryUrl(categoria, subcategoria)
+  const productImages = producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes : [producto.imagen]
+
+  
+  // JSON-LD para datos estructurados del producto
+  const structuredData = useMemo(() => {
+    const canonicalUrl = getProductCanonicalUrl(producto)
+
+    // 1. Lógica de FAQ corregida: Solo si existen en el producto
+    const hasFaqs = producto.preguntasFrecuentes && producto.preguntasFrecuentes.length > 0
+    
+    const faqJsonLd = hasFaqs ? {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: producto.preguntasFrecuentes?.map((faq) => ({
+        "@type": "Question",
+        name: faq.pregunta,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: faq.respuesta,
+        },
+      })),
+    } : null
+
+    const aggregateRating =
+      reviewData.count > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: Number(reviewData.avg.toFixed(1)),
+            reviewCount: reviewData.count,
+            bestRating: 5,
+          }
+        : undefined
+
+    const reviewJsonLd =
+      reviewData.count > 0
+        ? reviewData.reviews.slice(0, 5).map((r) => ({
+            "@type": "Review",
+            author: {
+              "@type": "Person",
+              name: r.userName,
+            },
+            reviewRating: {
+              "@type": "Rating",
+              ratingValue: r.rating,
+              bestRating: 5,
+            },
+            reviewBody: r.testimonial,
+          }))
+        : undefined
+
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: producto.nombre,
+      description: producto.descripcion,
+      image: productImages[0],
+      aggregateRating,
+      review: reviewJsonLd,
+      brand: {
+        "@type": "Brand",
+        name: "Paula Pastas",
+      },
+      offers: {
+        "@type": "Offer",
+        price: producto.precio,
+        priceCurrency: "ARS",
+        availability: producto.disponible
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+        url: canonicalUrl,
+        seller: {
+          "@type": "Organization",
+          name: "Paula Pastas",
+        },
+      }
+    }
+
+    const breadcrumbItems: any[] = [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Pastas",
+        item: "https://paulapastas.com/pastas"
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: categoriaNombre,
+        item: `https://paulapastas.com${getCategoryUrl(categoria)}`
+      }
+    ]
+
+    if (subcatUrl) {
+      breadcrumbItems.push({
+        "@type": "ListItem",
+        position: 3,
+        name: subcategoria,
+        item: `https://paulapastas.com${subcatUrl}`
+      })
+      breadcrumbItems.push({
+        "@type": "ListItem",
+        position: 4,
+        name: producto.nombre,
+        item: canonicalUrl
+      })
+    } else {
+      breadcrumbItems.push({
+        "@type": "ListItem",
+        position: 3,
+        name: producto.nombre,
+        item: canonicalUrl
+      })
+    }
+
+    const breadcrumbJsonLd = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: breadcrumbItems
+    }
+
+    // ✅ SOLUCIÓN AL ERROR: Forzamos el tipo como any[] para permitir esquemas mixtos
+    const schemas: any[] = [jsonLd, breadcrumbJsonLd]
+    if (faqJsonLd) schemas.push(faqJsonLd)
+
+    return JSON.stringify(schemas)
+  }, [
+    categoria,
+    categoriaNombre,
+    subcategoria,
+    subcatUrl,
+    producto.nombre,
+    producto.descripcion,
+    producto.slug,
+    producto.precio,
+    producto.disponible,
+    productImages[0],
+    producto.preguntasFrecuentes,
+    reviewData.avg,
+    reviewData.count,
+    reviewData.reviews,
+  ])
+
+  const backUrl = subcatUrl || getCategoryUrl(categoria)
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-
-      <div className="min-h-screen bg-neutral-50">
-        {/* Breadcrumb */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: typeof structuredData === 'string' ? structuredData : JSON.stringify(structuredData) }}
+      />
+      
+      <div className="min-h-screen bg-neutral-50 pb-28 sm:pb-0">
+        {/* --- Breadcrumb --- */}
         <div className="bg-white border-b border-neutral-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <nav className="flex items-center space-x-2 text-sm">
+            <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
               <Link href="/" className="text-neutral-500 hover:text-primary-600">
                 Inicio
               </Link>
@@ -233,90 +289,63 @@ export default function ProductoPageClient({
                 Pastas
               </Link>
               <span className="text-neutral-400">/</span>
-              <Link href={`/pastas/${categoria}`} className="text-neutral-500 hover:text-primary-600">
-                {categoria === "rellenas"
-                  ? "Pastas Rellenas"
-                  : categoria === "sin-relleno"
-                    ? "Sin Relleno"
-                    : "Sin TACC"}
+              <Link href={getCategoryUrl(categoria)} className="text-neutral-500 hover:text-primary-600">
+                {categoriaNombre}
               </Link>
-              <span className="text-neutral-400">/</span>
-              <Link href={`/pastas/${categoria}/${subcategoria}`} className="text-neutral-500 hover:text-primary-600">
-                {subcategoria}
-              </Link>
+              {subcatUrl && (
+                <>
+                  <span className="text-neutral-400">/</span>
+                  <Link href={subcatUrl} className="text-neutral-500 hover:text-primary-600">
+                    {subcategoria}
+                  </Link>
+                </>
+              )}
               <span className="text-neutral-400">/</span>
               <span className="text-neutral-900 font-medium">{producto.nombre}</span>
             </nav>
           </div>
         </div>
 
+        {/* --- Cuerpo de la página --- */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Back Button */}
+          
+          {/* Botón Volver */}
           <div className="mb-8">
             <Link
-              href={`/pastas/${categoria}/${subcategoria}`}
+              href={backUrl}
               className="inline-flex items-center text-primary-600 hover:text-primary-700 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver a {subcategoria}
+              Volver a {subcatUrl ? subcategoria : categoriaNombre}
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* 1. Encabezado del producto (ya existente) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            {/* Carrusel de Imágenes */}
             <div className="relative">
-              <div className="aspect-square rounded-2xl overflow-hidden">
-                <ImageWrapper
-                  src={producto.imagen || "/placeholder.svg"}
-                  alt={`${producto.nombre} caseros artesanales`}
-                  fill
-                  className="object-cover"
-                  priority={true}
-                  fallback="/placeholder.svg?height=400&width=400&text=Producto"
-                  placeholder={<ProductPlaceholder className="object-cover" />}
-                />
-              </div>
-              {producto.destacado && (
-                <div className="absolute top-4 left-4 bg-primary-600 text-white px-4 py-2 rounded-full font-semibold flex items-center">
-                  <Star className="w-4 h-4 mr-1" />
-                  Destacado
-                </div>
-              )}
-              {/* Opcional: etiquetas visuales como "Sin TACC", "Artesanal" */}
-              {producto.categoria === "sin-tacc" && (
-                <div className="absolute top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                  Sin TACC
-                </div>
-              )}
-              {producto.categoria !== "salsas" && (
-                <div className="absolute bottom-4 left-4 bg-neutral-900 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                  Artesanal
-                </div>
-              )}
+              <ProductImagesCarousel images={productImages} producto={producto} />
             </div>
 
-            {/* Información */}
+            {/* Información del Producto */}
             <div className="space-y-6">
               <div>
                 <span className="text-sm font-medium text-primary-600 uppercase tracking-wide">
                   {categoria.replace("-", " ")} • {subcategoria}
                 </span>
-                <h1 className="font-display text-4xl font-bold text-neutral-900 mt-2">{producto.nombre}</h1>
+                <h1 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mt-2">
+                  {producto.nombre}
+                </h1>
               </div>
 
-              <p className="text-lg text-neutral-600 leading-relaxed whitespace-pre-line">{producto.descripcion}</p>
-              
-              {producto.descripcionAcortada && (
-                <p className="text-base text-neutral-500 leading-relaxed whitespace-pre-line italic">
-                  {producto.descripcionAcortada}
-                </p>
-              )}
+              <p className="text-lg text-neutral-600 leading-relaxed whitespace-pre-line">
+                {producto.descripcion}
+              </p>
 
-              {/* Precio y detalles */}
+              {/* Card de Precio y Selector */}
               <div className="bg-white rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <span className="text-3xl font-bold text-primary-600">${formatPrice(producto.precio * quantity)}</span>
+                    <span className="text-3xl font-bold text-primary-600">${formattedPrice}</span>
                     {producto.porciones && (
                       <div className="text-sm text-neutral-500 mt-1">
                         <Users className="w-4 h-4 inline mr-1" />
@@ -331,7 +360,6 @@ export default function ProductoPageClient({
                   )}
                 </div>
 
-                {/* Selector de cantidad */}
                 <div className="flex items-center justify-center gap-4 mb-4">
                   <button
                     onClick={() => handleQuantityChange(-1)}
@@ -350,395 +378,465 @@ export default function ProductoPageClient({
                 </div>
               </div>
 
-              {/* Botón de compra */}
+              {/* Botón de compra (Desktop) */}
               <button
                 onClick={handleAddToCart}
-                disabled={!producto.disponible}
-                className="w-full bg-primary-600 text-white py-4 rounded-full font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                disabled={!producto.disponible || isAdded}
+                className={`hidden sm:flex w-full py-4 rounded-full font-semibold transition-colors items-center justify-center ${
+                  isAdded
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-primary-600 text-white hover:bg-primary-700"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 <ShoppingBag className="w-5 h-5 mr-2" />
-                {producto.disponible ? "Agregar al Carrito" : "No Disponible"}
+                {!producto.disponible ? "No Disponible" : isAdded ? "¡Agregado al Carrito!" : "Agregar al Carrito"}
               </button>
             </div>
           </div>
 
-          {/* 2. ✅ Sección: "Complementalo con" */}
-          {productosComplementarios.length > 0 && (
-            <section className="mt-16">
-              <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">Complementalo con</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {productosComplementarios.map((complemento) => (
-                  <ComplementaryProductCard key={complemento.id} producto={complemento} />
-                ))}
-              </div>
-            </section>
-          )}
+          {/* Sección Reseñas */}
+          <ReviewsSection
+            productoId={producto.id || ""}
+            productoNombre={producto.nombre}
+            onStatsChange={handleStatsChange}
+          />
 
-          {/* 3. ✅ Acordeones: Ingredientes y Envío */}
-          <section className={`mt-16 grid gap-8 ${producto.ingredientes && producto.ingredientes.length > 0 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-            {/* Ingredientes - Solo mostrar si el producto tiene ingredientes */}
-            {producto.ingredientes && producto.ingredientes.length > 0 && (
-              <details
-                className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer group"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl">
+          {/* Acordeones: Ingredientes y Envío */}
+          <section className={`mt-16 grid gap-8 ${producto.ingredientes?.length > 0 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+            {producto.ingredientes?.length > 0 && (
+              <details className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer group">
+                <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl list-none">
                   Ingredientes
                   <ChevronRight className="w-6 h-6 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
                 </summary>
                 <div className="mt-4 text-neutral-700 leading-relaxed">
                   <ul className="list-disc list-inside space-y-1">
-                    {producto.ingredientes.map((ingrediente, index) => (
-                      <li key={index}>{ingrediente}</li>
-                    ))}
+                    {producto.ingredientes.map((ing, idx) => <li key={idx}>{ing}</li>)}
                   </ul>
                 </div>
               </details>
             )}
 
-            {/* Envío */}
-            <details
-              className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer group"
-              style={{ fontFamily: "var(--font-playfair)" }}
-            >
-              <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl">
+            <details className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer group">
+              <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl list-none">
                 Envío y Conservación
                 <ChevronRight className="w-6 h-6 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
-                </summary>
+              </summary>
               <div className="mt-4 text-neutral-700 leading-relaxed">
-                <p className="mb-2">
-                  Realizamos envíos a Rosario, Funes, Fisherton, Villa Gobernador Gálvez, Alvear y zonas cercanas.
-                  Consulta nuestra sección de{" "}
-                  <Link href="/delivery" className="text-primary-600 hover:underline">
-                    Delivery
-                  </Link>{" "}
-                  para más detalles sobre tiempos y costos de entrega en tu zona.
-                </p>
-                <p>
-                  Nuestras pastas se entregan congeladas y se pueden conservar cocidas en la heladera por 2-3 días o mantener congeladas por 2 meses para mantener su frescura y calidad.
-                </p>
+                <p className="mb-2">Realizamos envíos a Rosario y zonas cercanas.</p>
+                <p>Se entregan congeladas: 2-3 días en heladera o 2 meses en freezer.</p>
               </div>
             </details>
           </section>
 
-          {/* 4. ✅ Descripción del producto */}
-          <section className="mt-16 bg-white rounded-2xl shadow-lg p-8 text-center">
-            <h2 className="font-display text-2xl font-bold text-neutral-900 mb-4">
-              {producto.historiaPlato?.titulo || "Un plato con historia, cocinado a fuego lento."}
-            </h2>
-                          <p className="text-lg text-neutral-700 leading-relaxed mb-8 whitespace-pre-line">
-                {producto.historiaPlato?.texto || producto.descripcion}
-              </p>
-            <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-neutral-700">
-              <div className="flex items-center space-x-2">
-                <Leaf className="w-5 h-5 text-primary-600" />
-                <span>Hecho en pequeños lotes</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Award className="w-5 h-5 text-primary-600" />
-                <span>Sin aditivos</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Snowflake className="w-5 h-5 text-primary-600" />
-                <span>Congelados para conservar frescura</span>
-              </div>
+          {/* Historia del Plato */}
+          <details className="mt-16 bg-white rounded-2xl shadow-lg p-8 cursor-pointer group">
+            <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl list-none">
+              <span>{producto.historiaPlato?.titulo || "Un plato con historia"}</span>
+              <ChevronRight className="w-6 h-6 text-primary-600 transition-transform duration-300 group-open:rotate-90 flex-shrink-0" />
+            </summary>
+            <div className="mt-4 text-lg text-neutral-700 leading-relaxed whitespace-pre-line">
+              {producto.historiaPlato?.texto || "Cocinamos a fuego lento para un sabor auténtico."}
             </div>
-          </section>
+          </details>
 
-          {/* 5. ✅ Sección: "¿Cómo prepararlos?" */}
+          {/* Cómo Preparar */}
           {producto.comoPreparar && (
-            <section className="mt-16 bg-primary-50 rounded-2xl shadow-lg p-8 text-center">
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-8">
-                {producto.comoPreparar.titulo}
-              </h2>
-              <p className="text-lg text-neutral-700 leading-relaxed max-w-4xl mx-auto whitespace-pre-line">
+            <details className="mt-16 bg-primary-50 rounded-2xl shadow-lg p-8 cursor-pointer group">
+              <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl list-none">
+                <span>{producto.comoPreparar.titulo}</span>
+                <ChevronRight className="w-6 h-6 text-primary-600 transition-transform duration-300 group-open:rotate-90 flex-shrink-0" />
+              </summary>
+              <div className="mt-4 text-lg text-neutral-700 leading-relaxed whitespace-pre-line">
                 {producto.comoPreparar.texto}
-              </p>
-            </section>
+              </div>
+            </details>
           )}
 
-          {/* 6. ✅ NUEVA SECCIÓN: "¿Por qué nuestros ravioles son diferentes?" */}
-          <section className="mt-16 bg-white rounded-2xl shadow-lg p-8 text-center">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-8">
-              ¿Por qué nuestros ravioles son diferentes?
-            </h2>
-            <div className="text-lg text-neutral-700 leading-relaxed max-w-4xl mx-auto space-y-6 text-left">
-              <p>
-                Porque no se trata solo de pasta.
-              </p>
-              <p>
-                Cocinamos a fuego lento los rellenos como si fueran el plato principal: ossobuco braseado, carré glaseado, espinaca cremosa con crocante de nuez.
-              </p>
-              <p>
-                Cada raviol está elaborado artesanalmente en Rosario, con sémola seleccionada y sin conservantes.
-              </p>
-              <p>
-                Y lo mejor: en menos de 10 minutos, tenes un plato que podrías servir en un restaurante... pero en tu casa.
-              </p>
-            </div>
-          </section>
-
-          {/* 7. ✅ Sección: Reseñas (Carrusel) */}
-          <ReviewsSection productoId={producto.id || ""} productoNombre={producto.nombre} />
-
-          {/* 7. ✅ Sección: Preguntas Frecuentes (Acordeón) */}
-          <section className="mt-16 bg-white rounded-2xl shadow-lg p-8">
-            <div className="text-center mb-12">
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-                Preguntas frecuentes
-              </h2>
-              <p className="text-lg text-neutral-600">
-                Resolvemos las dudas más comunes sobre nuestros ravioles artesanales y el proceso de compra.
-              </p>
-            </div>
-
-            <div className="space-y-4 max-w-3xl mx-auto">
-              {producto.preguntasFrecuentes && producto.preguntasFrecuentes.length > 0 ? (
-                producto.preguntasFrecuentes.map((faq, index) => (
-                  <details
-                    key={index}
-                    className="bg-neutral-50 rounded-lg shadow-sm p-5 cursor-pointer group"
-                    style={{ fontFamily: "var(--font-playfair)" }}
-                  >
-                    <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg">
-                      {faq.pregunta}
-                      <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
-                    </summary>
-                    <div className="mt-4 text-neutral-700 leading-relaxed whitespace-pre-line">{faq.respuesta}</div>
-                  </details>
-                ))
-              ) : (
-                // Mostrar FAQs estáticas si no hay dinámicas
-                faqs.map((faq, index) => (
-                  <details
-                    key={index}
-                    className="bg-neutral-50 rounded-lg shadow-sm p-5 cursor-pointer group"
-                    style={{ fontFamily: "var(--font-playfair)" }}
-                  >
-                    <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg">
-                      {faq.question}
-                      <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
-                    </summary>
-                    <div className="mt-4 text-neutral-700 leading-relaxed">{faq.answer}</div>
-                  </details>
-                ))
-              )}
-            </div>
-          </section>
-
-          {/* 8. ✅ Sección: Otros productos recomendados */}
-          {productosRelacionados.length > 0 && (
+          {/* Productos Complementarios */}
+          {productosComplementarios.length > 0 && (
             <section className="mt-16">
-              <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">
-                Otros {subcategoria} que te pueden gustar
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {productosRelacionados.map((productoRel) => (
-                  <ProductCard key={productoRel.id} producto={productoRel} />
+              <p className="text-xl sm:text-2xl font-semibold text-neutral-900 mb-8 text-center">Complementalo con</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {productosComplementarios.map((comp) => (
+                  comp.id && <ProductCard key={comp.id} producto={comp} baseUrl={`/${comp.categoria}/${comp.subcategoria}`} />
                 ))}
               </div>
             </section>
           )}
+
+          {/* FAQs */}
+            <section className="mt-16 bg-white rounded-2xl shadow-lg p-8">
+              <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">
+                Preguntas frecuentes
+              </h2>
+              
+              <div className="space-y-4 max-w-3xl mx-auto">
+                {/* ✅ Solo usamos la propiedad de la interfaz Producto */}
+                {producto.preguntasFrecuentes && producto.preguntasFrecuentes.length > 0 ? (
+                  producto.preguntasFrecuentes.map((faq, idx) => (
+                    <details key={idx} className="bg-neutral-50 rounded-lg p-5 cursor-pointer group">
+                      <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg list-none">
+                        {faq.pregunta}
+                        <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                      </summary>
+                      <div className="mt-4 text-neutral-700 leading-relaxed whitespace-pre-line">
+                        {faq.respuesta}
+                      </div>
+                    </details>
+                  ))
+                ) : (
+                  // Opcional: Un mensaje si el producto no tiene FAQs cargadas en Firebase
+                  <p className="text-center text-neutral-500 italic">
+                    No hay preguntas frecuentes disponibles para este producto.
+                  </p>
+                )}
+              </div>
+            </section>
+
+          {/* Productos Relacionados */}
+          {productosRelacionados.length > 0 && (
+            <section className="mt-16">
+              <h3 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">
+                Otros {subcategoria} que te pueden gustar
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {productosRelacionados.map((rel) => <ProductCard key={rel.id} producto={rel} />)}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* --- Sticky Bar Mobile --- */}
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-neutral-200 sm:hidden px-4 py-3 flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleQuantityChange(-1)}
+              disabled={quantity <= 1}
+              className="p-2 rounded-full bg-neutral-100"
+            >
+              <Minus className="w-4 h-4 text-neutral-700" />
+            </button>
+            <span className="text-base font-semibold w-8 text-center">{quantity}</span>
+            <button
+              onClick={() => handleQuantityChange(1)}
+              disabled={!producto.disponible}
+              className="p-2 rounded-full bg-neutral-100"
+            >
+              <Plus className="w-4 h-4 text-neutral-700" />
+            </button>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[11px] text-neutral-500 uppercase">Total</div>
+            <div className="text-lg font-bold text-primary-600">${formattedPrice}</div>
+          </div>
+          <button
+            onClick={handleAddToCart}
+            disabled={!producto.disponible || isAdded}
+            className={`shrink-0 h-11 px-6 rounded-full font-semibold transition-colors ${
+              isAdded ? "bg-green-600 text-white" : "bg-primary-600 text-white"
+            } disabled:opacity-50`}
+          >
+            {isAdded ? "Agregado" : "Agregar"}
+          </button>
         </div>
       </div>
     </>
+  );
+}
+
+function ProductImagesCarousel({
+  images,
+  producto,
+}: {
+  images: string[]
+  producto: Producto
+}) {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const scrollerRef = useRef<HTMLDivElement | null>(null)
+  const rafRef = useRef<ReturnType<typeof window.requestAnimationFrame> | null>(null)
+
+  const handleScroll = () => {
+    if (!scrollerRef.current) return
+    if (rafRef.current) return
+
+    rafRef.current = window.requestAnimationFrame(() => {
+      rafRef.current = null
+      const el = scrollerRef.current
+      if (!el) return
+
+      const width = el.clientWidth
+      if (!width) return
+
+      const idx = Math.round(el.scrollLeft / width)
+      setActiveIndex(Math.max(0, Math.min(images.length - 1, idx)))
+    })
+  }
+
+  const scrollToIndex = (idx: number) => {
+    const el = scrollerRef.current
+    if (!el) return
+    const width = el.clientWidth
+    el.scrollTo({ left: idx * width, behavior: "smooth" })
+  }
+
+  const altBase = `${producto.nombre} caseros artesanales`
+  const isMulti = images.length > 1
+
+  return (
+    <div
+      className="relative aspect-square rounded-2xl overflow-hidden"
+      role="region"
+      aria-label="Carrusel de imágenes del producto"
+    >
+      {isMulti ? (
+        <div
+          ref={scrollerRef}
+          className="h-full w-full overflow-x-auto snap-x snap-mandatory scroll-smooth"
+          onScroll={handleScroll}
+        >
+          {images.map((src, idx) => (
+            <div key={`${src}-${idx}`} className="relative h-full w-full shrink-0 snap-center">
+              <ImageWrapper
+                src={src}
+                alt={`${altBase} - Imagen ${idx + 1}`}
+                fill
+                className="object-cover"
+                priority={idx === 0}
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                loading={idx === 0 ? undefined : "lazy"}
+                fallback="/placeholder.svg?height=400&width=400&text=Producto"
+              />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="relative h-full w-full">
+          <ImageWrapper
+            src={images[0]}
+            alt={altBase}
+            fill
+            className="object-cover"
+            priority
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            fallback="/placeholder.svg?height=400&width=400&text=Producto"
+          />
+        </div>
+      )}
+
+      {producto.destacado && (
+        <div className="absolute top-4 left-4 bg-primary-600 text-white px-4 py-2 rounded-full font-semibold flex items-center">
+          <Star className="w-4 h-4 mr-1" />
+          Destacado
+        </div>
+      )}
+
+      {producto.categoria === "sin-tacc" && (
+        <div className="absolute top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
+          Sin TACC
+        </div>
+      )}
+
+      {producto.categoria !== "salsas" && (
+        <div className="absolute bottom-4 left-4 bg-neutral-900 text-white px-4 py-2 rounded-full text-sm font-semibold">
+          Artesanal
+        </div>
+      )}
+
+      {isMulti && (
+        <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/80 backdrop-blur rounded-full px-3 py-1.5">
+          {images.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => scrollToIndex(idx)}
+              className="w-2.5 h-2.5 rounded-full bg-neutral-300"
+              aria-label={`Ir a la imagen ${idx + 1} de ${images.length}`}
+              aria-current={idx === activeIndex}
+              style={{
+                backgroundColor: idx === activeIndex ? "rgb(37 99 235)" : undefined,
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
-// Componente de reseñas dinámicas (Client Component)
-function ReviewsSection({ productoId, productoNombre }: { productoId: string; productoNombre: string }) {
-  const { user, userData } = useAuth()
+
+function ReviewsSection({
+  productoId,
+  productoNombre,
+  onStatsChange,
+}: {
+  productoId: string
+  productoNombre: string
+  onStatsChange?: (data: { avg: number; count: number; reviews?: ReviewType[] }) => void
+}) {
   const [reviews, setReviews] = useState<ReviewType[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showReviewForm, setShowReviewForm] = useState(false)
-  const [currentReviewIndex, setCurrentReviewIndex] = useState(0)
-  const [itemsPerPage, setItemsPerPage] = useState(1)
   const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set())
 
+  // ✅ REFERENCIA PARA EVITAR BUCLE INFINITO
+  const statsChangeRef = useRef(onStatsChange)
+  
+  // Sincronizamos la ref con la prop por si el padre cambia la función
   useEffect(() => {
-    const loadReviews = async () => {
-      try {
-        const productReviews = await FirebaseService.getReviewsByProduct(productoId)
-        setReviews(productReviews)
-      } catch (error) {
-        console.error("Error cargando reseñas:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
+    statsChangeRef.current = onStatsChange
+  }, [onStatsChange])
 
-    loadReviews()
-  }, [productoId])
+  // ✅ CARGA DE DATOS MEMOIZADA
+  const loadReviews = useCallback(async () => {
+    try {
+      const productReviews = await FirebaseService.getReviewsByProduct(productoId)
+      const approvedReviews = productReviews.filter((r) => r.aprobada === true)
+      
+      setReviews(approvedReviews)
 
-  useEffect(() => {
-    const calculateItemsPerPage = () => {
-      if (window.innerWidth >= 1024) {
-        setItemsPerPage(3)
-      } else if (window.innerWidth >= 768) {
-        setItemsPerPage(2)
+      // ✅ ENVÍO DE STATS USANDO LA REF (No dispara re-renders infinitos)
+      if (approvedReviews.length > 0) {
+        const sum = approvedReviews.reduce((acc, r) => acc + (r.rating || 0), 0)
+        const avg = sum / approvedReviews.length
+        
+        statsChangeRef.current?.({
+          avg,
+          count: approvedReviews.length,
+          reviews: approvedReviews.slice(0, 5),
+        })
       } else {
-        setItemsPerPage(1)
+        statsChangeRef.current?.({ avg: 0, count: 0, reviews: [] })
       }
+    } catch (error) {
+      console.error("Error en reviews:", error)
+    } finally {
+      setIsLoading(false)
     }
+  }, [productoId]) // Solo depende del ID del producto
 
-    calculateItemsPerPage()
-    window.addEventListener("resize", calculateItemsPerPage)
-
-    return () => window.removeEventListener("resize", calculateItemsPerPage)
-  }, [])
-
-  const nextReview = () => {
-    if (reviews.length > 0) {
-      setCurrentReviewIndex((prevIndex) => (prevIndex + 1) % reviews.length)
-    }
-  }
-
-  const prevReview = () => {
-    if (reviews.length > 0) {
-      setCurrentReviewIndex((prevIndex) => (prevIndex - 1 + reviews.length) % reviews.length)
-    }
-  }
+  // ✅ DISPARADOR INICIAL
+  useEffect(() => {
+    loadReviews()
+  }, [loadReviews])
 
   const handleReviewSubmitted = () => {
-    // Recargar las reseñas después de enviar una nueva
-    const loadReviews = async () => {
-      try {
-        const productReviews = await FirebaseService.getReviewsByProduct(productoId)
-        setReviews(productReviews)
-      } catch (error) {
-        console.error("Error recargando reseñas:", error)
-      }
-    }
-    loadReviews()
+    setShowReviewForm(false)
+    loadReviews() 
   }
 
   const toggleReviewExpansion = (reviewId: string) => {
     setExpandedReviews(prev => {
       const newSet = new Set(prev)
-      if (newSet.has(reviewId)) {
-        newSet.delete(reviewId)
-      } else {
-        newSet.add(reviewId)
-      }
+      if (newSet.has(reviewId)) newSet.delete(reviewId)
+      else newSet.add(reviewId)
       return newSet
     })
   }
 
-  const isReviewExpanded = (reviewId: string) => expandedReviews.has(reviewId)
+  // ✅ CÁLCULO DE PROMEDIO PARA EL RENDER (Seguro)
+  const avgRating = reviews.length > 0 
+    ? reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviews.length 
+    : 0
 
-  const canUserReview = user && userData && userData.rol === "cliente"
+  if (isLoading) {
+    return (
+      <section className="mt-16 bg-neutral-100 rounded-2xl p-12 min-h-[450px] animate-pulse">
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div className="h-10 bg-neutral-200 rounded w-1/3 mx-auto"></div>
+          <div className="flex justify-center gap-4">
+            {[1, 2, 3].map(i => <div key={i} className="h-64 bg-white rounded-2xl w-full max-w-[350px]"></div>)}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
-    <section className="py-16 bg-neutral-100 mt-16">
+    <section className="py-16 bg-neutral-100 mt-16 rounded-3xl overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
         <div className="text-center mb-12">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
             Los que ya probaron
           </h2>
-          <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-            La opinión de nuestros clientes es lo más importante.
-          </p>
           
-          {canUserReview && (
-            <button
-              onClick={() => setShowReviewForm(true)}
-              className="mt-6 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
-            >
-              Escribir Reseña
-            </button>
-          )}
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="flex items-center">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={`w-6 h-6 ${star <= Math.round(avgRating) ? "text-yellow-400 fill-current" : "text-neutral-300"}`}
+                />
+              ))}
+            </div>
+            <div className="text-xl font-bold text-neutral-900">
+              {reviews.length > 0 ? avgRating.toFixed(1) : "—"} <span className="text-neutral-600">★</span>
+            </div>
+          </div>
+
+          <p className="text-neutral-600">
+            {reviews.length > 0 ? `${reviews.length} opiniones` : "Aún sin opiniones"}
+          </p>
+
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mt-4 text-sm text-neutral-700 font-medium">
+             <span className="flex items-center gap-1.5"><Snowflake className="w-4 h-4 text-primary-600" /> Congelados</span>
+             <span className="flex items-center gap-1.5"><Award className="w-4 h-4 text-primary-600" /> Sin aditivos</span>
+             <span className="flex items-center gap-1.5"><Leaf className="w-4 h-4 text-primary-600" /> Hecho en Rosario</span>
+          </div>
+
+          <button
+            onClick={() => setShowReviewForm(true)}
+            className="mt-8 px-8 py-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-all shadow-md hover:shadow-lg font-semibold"
+          >
+            Escribir Reseña
+          </button>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="mt-4 text-neutral-600">Cargando reseñas...</p>
-          </div>
-        ) : reviews.length > 0 ? (
+        {reviews.length > 0 ? (
           <div className="relative">
-            <div className="flex items-center justify-center space-x-8">
-              {reviews
-                .slice(currentReviewIndex, currentReviewIndex + itemsPerPage)
-                .map((review, index) => (
+            <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-4">
+              {reviews.map((review) => {
+                const isExpanded = expandedReviews.has(review.id || "")
+                return (
                   <div
                     key={review.id}
-                    className={`bg-white rounded-2xl shadow-lg p-8 text-center w-[350px] flex flex-col overflow-hidden transition-all duration-500 ease-in-out ${
-                      isReviewExpanded(review.id || "") 
-                        ? "h-auto min-h-[280px] shadow-xl border-2 border-primary-200" 
-                        : "h-[280px]"
+                    className={`bg-white rounded-2xl shadow-md p-8 text-center min-w-[85vw] md:min-w-[380px] shrink-0 snap-center flex flex-col transition-all duration-300 ${
+                      isExpanded ? "h-auto border-2 border-primary-100" : "h-[300px]"
                     }`}
-                    style={{ fontFamily: "var(--font-playfair)" }}
                   >
-                    <div className="flex justify-center mb-4">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-6 h-6 ${
-                            i < review.rating ? "text-yellow-400 fill-current" : "text-neutral-300"
-                          }`}
-                        />
+                    <div className="flex justify-center mb-4 text-yellow-400">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star key={star} className={`w-5 h-5 ${star <= review.rating ? "fill-current" : "text-neutral-200"}`} />
                       ))}
                     </div>
-                    
-                    <div className={`flex flex-col ${
-                      !isReviewExpanded(review.id || "") ? "flex-1" : ""
-                    }`}>
-                      <div className={`review-text-container ${
-                        !isReviewExpanded(review.id || "") ? "flex-1 overflow-hidden" : ""
-                      }`}>
-                        <p className={`text-lg text-neutral-700 mb-4 italic text-wrap-safe leading-relaxed ${
-                          !isReviewExpanded(review.id || "") ? "line-clamp-3" : ""
-                        }`}>
-                          "{review.testimonial}"
-                        </p>
-                      </div>
+
+                    <div className="flex-1 flex flex-col justify-center">
+                      <p className={`text-neutral-700 italic leading-relaxed ${!isExpanded ? "line-clamp-4" : ""}`}>
+                        "{review.testimonial}"
+                      </p>
                       
-                      {/* Botón "Ver más" solo si el texto es largo */}
-                      {review.testimonial.length > 120 && (
+                      {review.testimonial.length > 140 && (
                         <button
                           onClick={() => toggleReviewExpansion(review.id || "")}
-                          className={`text-primary-600 hover:text-primary-700 text-sm font-medium mb-4 transition-colors ${
-                            isReviewExpanded(review.id || "") ? "font-semibold" : ""
-                          }`}
+                          className="text-primary-600 text-xs font-bold mt-2 uppercase tracking-wider hover:text-primary-700"
                         >
-                          {isReviewExpanded(review.id || "") ? "Ver menos" : "Ver más"}
+                          {isExpanded ? "Ver menos" : "Ver más"}
                         </button>
                       )}
                     </div>
-                    
-                    <p className="text-neutral-600 font-semibold mt-auto">- {review.userName}</p>
+
+                    <p className="text-neutral-900 font-bold mt-6 border-t border-neutral-50 pt-4">
+                      {review.userName}
+                    </p>
                   </div>
-                ))}
+                )
+              })}
             </div>
-
-            {reviews.length > itemsPerPage && (
-              <>
-                <button
-                  onClick={prevReview}
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-neutral-50 transition-colors"
-                >
-                  <ChevronLeft className="w-6 h-6 text-neutral-600" />
-                </button>
-
-                <button
-                  onClick={nextReview}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-neutral-50 transition-colors"
-                >
-                  <ChevronRight className="w-6 h-6 text-neutral-600" />
-                </button>
-              </>
-            )}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-neutral-600 mb-4">
-              Aún no hay reseñas para este producto.
-            </p>
-            {canUserReview && (
-              <p className="text-neutral-500">
-                ¡Sé el primero en compartir tu experiencia!
-              </p>
-            )}
+          <div className="text-center py-10 bg-white/50 rounded-2xl border-2 border-dashed border-neutral-200">
+            <p className="text-neutral-500 italic">¡Sé el primero en compartir tu experiencia!</p>
           </div>
         )}
       </div>

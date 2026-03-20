@@ -108,11 +108,11 @@ export async function generateMetadata({ params }: SubcategoriaPageProps): Promi
   }
 
   return {
-    title: `${data.nombre} en Rosario | Delivery | Comida Casera`,
+    title: `${data.nombre} en Rosario | Delivery | Paula Pastas`,
     description: data.descripcion,
     keywords: `${data.nombre.toLowerCase()}, ${categoria}, pastas caseras, artesanales, rosario, delivery`,
     openGraph: {
-      title: `${data.nombre} | Comida Casera`,
+      title: `${data.nombre} | Paula Pastas`,
       description: data.descripcion,
       images: [{ url: data.imagen, width: 1200, height: 600, alt: data.nombre }],
       type: "website",
@@ -153,7 +153,7 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
     "@type": "CollectionPage",
     name: data.nombre,
     description: data.descripcion,
-    url: `https://comidacasera.com/pastas/${categoria}/${subcategoria}`,
+    url: `https://paulapastas.com/pastas/${categoria}/${subcategoria}`,
     breadcrumb: {
       "@type": "BreadcrumbList",
       itemListElement: [
@@ -161,25 +161,25 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
           "@type": "ListItem",
           position: 1,
           name: "Inicio",
-          item: "https://comidacasera.com",
+          item: "https://paulapastas.com",
         },
         {
           "@type": "ListItem",
           position: 2,
           name: "Pastas",
-          item: "https://comidacasera.com/pastas",
+          item: "https://paulapastas.com/pastas",
         },
         {
           "@type": "ListItem",
           position: 3,
           name: categoria === "rellenas" ? "Pastas Rellenas" : categoria === "sin-relleno" ? "Sin Relleno" : "Sin TACC",
-          item: `https://comidacasera.com/pastas/${categoria}`,
+          item: `https://paulapastas.com/pastas/${categoria}`,
         },
         {
           "@type": "ListItem",
           position: 4,
           name: data.nombre,
-          item: `https://comidacasera.com/pastas/${categoria}/${subcategoria}`,
+          item: `https://paulapastas.com/pastas/${categoria}/${subcategoria}`,
         },
       ],
     },
@@ -240,7 +240,7 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
           <div className="absolute inset-0 z-0">
             <Image
               src={data.imagen || "/placeholder.svg"}
-              alt={`${data.nombre} caseros artesanales`}
+              alt={`${data.nombre} artesanales en Rosario - Paula Pastas`}
               fill
               className="object-cover"
               priority={true}
@@ -276,30 +276,29 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
           <section>
             <h2 className="font-display text-2xl font-bold text-neutral-900 mb-8">Nuestros {data.nombre}</h2>
 
-            <Suspense
-              fallback={
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-                  <p className="text-neutral-600">Cargando productos...</p>
+            {productos.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {productos.map((producto) => (
+                  <ProductCard
+                    key={producto.id}
+                    producto={producto}
+                    baseUrl={`/pastas/${categoria}/${subcategoria}`}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="w-24 h-24 bg-neutral-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">🍝</span>
                 </div>
-              }
-            >
-              {productos.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {productos.map((producto) => (
-                    <ProductCard key={producto.id} producto={producto} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="w-24 h-24 bg-neutral-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-4xl">🍝</span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-neutral-900 mb-2">Próximamente</h3>
-                  <p className="text-neutral-600">Estamos preparando deliciosos {data.nombre.toLowerCase()} para vos</p>
-                </div>
-              )}
-            </Suspense>
+                <h3 className="text-xl font-semibold text-neutral-900 mb-2">
+                  Próximamente
+                </h3>
+                <p className="text-neutral-600">
+                  Estamos preparando deliciosos {data.nombre.toLowerCase()} para vos
+                </p>
+              </div>
+            )}
           </section>
 
           {/* NUEVA SECCIÓN: "¿Por qué nuestros ravioles son diferentes?" - Solo para ravioles */}
