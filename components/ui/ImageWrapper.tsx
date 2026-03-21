@@ -16,6 +16,8 @@ interface ImageWrapperProps {
   height?: number
   fill?: boolean
   loading?: "lazy" | "eager"
+  // ✅ Agregamos fetchPriority aquí para que TS no se queje
+  fetchPriority?: "high" | "low" | "auto"
   onLoad?: () => void
   onError?: () => void
 }
@@ -31,6 +33,7 @@ export function ImageWrapper({
   height,
   fill = false,
   loading,
+  fetchPriority, // <-- Lo extraemos de las props
   className = "",
   onLoad,
   onError,
@@ -64,6 +67,10 @@ export function ImageWrapper({
         className={className}
         onLoad={onLoad}
         onError={handleError}
+        // ✅ Pasamos fetchPriority al componente Image. 
+        // Nota: Next.js lo pasará al elemento <img> final.
+        // @ts-ignore: Next.js aún no tiene fetchPriority en todos sus tipos oficiales de Props, pero funciona perfectamente.
+        fetchPriority={fetchPriority}
       />
     </div>
   )

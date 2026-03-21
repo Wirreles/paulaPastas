@@ -24,7 +24,7 @@ const ReviewForm = dynamic(() => import('@/components/ReviewForm'), {
   ssr: false,
   loading: () => <div className="animate-pulse h-[480px] w-full bg-neutral-100 rounded-2xl" />
 });
-
+import Script from 'next/script';
 import type { Review as ReviewType, Producto } from "@/lib/types"
 import { getProductCanonicalUrl, getCategoryUrl, getSubcategoryUrl } from "@/lib/product-url"
 import { useCart } from "@/lib/cart-context"
@@ -58,31 +58,31 @@ export default function ProductoPageClient({
   const [quantity, setQuantity] = useState(1)
   const { addItem } = useCart()
 
-// Estadísticas de reviews aprobadas
-const [reviewData, setReviewData] = useState<{
-  avg: number
-  count: number
-  reviews: ReviewType[]
-}>({
-  avg: 0,
-  count: 0,
-  reviews: [],
-})
+  // Estadísticas de reviews aprobadas
+  const [reviewData, setReviewData] = useState<{
+    avg: number
+    count: number
+    reviews: ReviewType[]
+  }>({
+    avg: 0,
+    count: 0,
+    reviews: [],
+  })
 
-// ✅ FIX BUCLE INFINITO: Memoizamos la función y validamos el estado previo
-const handleStatsChange = useCallback((data: { avg: number; count: number; reviews?: ReviewType[] }) => {
-  setReviewData((prev) => {
-    // Solo actualizamos si los valores realmente cambiaron
-    if (prev.avg === data.avg && prev.count === data.count && prev.reviews.length === (data.reviews?.length || 0)) {
-      return prev;
-    }
-    return {
-      avg: data.avg,
-      count: data.count,
-      reviews: data.reviews ?? [],
-    };
-  });
-}, []);
+  // ✅ FIX BUCLE INFINITO: Memoizamos la función y validamos el estado previo
+  const handleStatsChange = useCallback((data: { avg: number; count: number; reviews?: ReviewType[] }) => {
+    setReviewData((prev) => {
+      // Solo actualizamos si los valores realmente cambiaron
+      if (prev.avg === data.avg && prev.count === data.count && prev.reviews.length === (data.reviews?.length || 0)) {
+        return prev;
+      }
+      return {
+        avg: data.avg,
+        count: data.count,
+        reviews: data.reviews ?? [],
+      };
+    });
+  }, []);
 
   // Funciones del carrito
   const handleQuantityChange = useCallback((delta: number) => {
@@ -98,9 +98,9 @@ const handleStatsChange = useCallback((data: { avg: number; count: number; revie
       addItem(producto, quantity)
       setQuantity(1) // Resetear cantidad después de agregar
       setIsAdded(true)
-      
+
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      
+
       timeoutRef.current = setTimeout(() => {
         setIsAdded(false)
       }, 2000)
@@ -127,14 +127,14 @@ const handleStatsChange = useCallback((data: { avg: number; count: number; revie
   const subcatUrl = getSubcategoryUrl(categoria, subcategoria)
   const productImages = producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes : [producto.imagen]
 
-  
+
   // JSON-LD para datos estructurados del producto
   const structuredData = useMemo(() => {
     const canonicalUrl = getProductCanonicalUrl(producto)
 
     // 1. Lógica de FAQ corregida: Solo si existen en el producto
     const hasFaqs = producto.preguntasFrecuentes && producto.preguntasFrecuentes.length > 0
-    
+
     const faqJsonLd = hasFaqs ? {
       "@context": "https://schema.org",
       "@type": "FAQPage",
@@ -151,28 +151,28 @@ const handleStatsChange = useCallback((data: { avg: number; count: number; revie
     const aggregateRating =
       reviewData.count > 0
         ? {
-            "@type": "AggregateRating",
-            ratingValue: Number(reviewData.avg.toFixed(1)),
-            reviewCount: reviewData.count,
-            bestRating: 5,
-          }
+          "@type": "AggregateRating",
+          ratingValue: Number(reviewData.avg.toFixed(1)),
+          reviewCount: reviewData.count,
+          bestRating: 5,
+        }
         : undefined
 
     const reviewJsonLd =
       reviewData.count > 0
         ? reviewData.reviews.slice(0, 5).map((r) => ({
-            "@type": "Review",
-            author: {
-              "@type": "Person",
-              name: r.userName,
-            },
-            reviewRating: {
-              "@type": "Rating",
-              ratingValue: r.rating,
-              bestRating: 5,
-            },
-            reviewBody: r.testimonial,
-          }))
+          "@type": "Review",
+          author: {
+            "@type": "Person",
+            name: r.userName,
+          },
+          reviewRating: {
+            "@type": "Rating",
+            ratingValue: r.rating,
+            bestRating: 5,
+          },
+          reviewBody: r.testimonial,
+        }))
         : undefined
 
     const jsonLd = {
@@ -271,11 +271,18 @@ const handleStatsChange = useCallback((data: { avg: number; count: number; revie
 
   return (
     <>
-      <script
+      {/* ✅ Corrección: Usamos el componente Script de Next.js para evitar errores de parseo */}
+      <Script
+        id="structured-data-product"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: typeof structuredData === 'string' ? structuredData : JSON.stringify(structuredData) }}
+        // strategy="afterInteractive"  <-- ELIMINA ESTO o cámbialo a omitir estrategia
+        dangerouslySetInnerHTML={{
+          __html: typeof structuredData === 'string'
+            ? structuredData
+            : JSON.stringify(structuredData)
+        }}
       />
-      
+
       <div className="min-h-screen bg-neutral-50 pb-28 sm:pb-0">
         {/* --- Breadcrumb --- */}
         <div className="bg-white border-b border-neutral-200">
@@ -308,7 +315,7 @@ const handleStatsChange = useCallback((data: { avg: number; count: number; revie
 
         {/* --- Cuerpo de la página --- */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          
+
           {/* Botón Volver */}
           <div className="mb-8">
             <Link
@@ -372,6 +379,7 @@ const handleStatsChange = useCallback((data: { avg: number; count: number; revie
                   <button
                     onClick={() => handleQuantityChange(1)}
                     className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+                    disabled={!producto.disponible}
                   >
                     <Plus className="w-4 h-4 text-neutral-700" />
                   </button>
@@ -382,11 +390,10 @@ const handleStatsChange = useCallback((data: { avg: number; count: number; revie
               <button
                 onClick={handleAddToCart}
                 disabled={!producto.disponible || isAdded}
-                className={`hidden sm:flex w-full py-4 rounded-full font-semibold transition-colors items-center justify-center ${
-                  isAdded
-                    ? "bg-green-600 text-white hover:bg-green-700"
-                    : "bg-primary-600 text-white hover:bg-primary-700"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`hidden sm:flex w-full py-4 rounded-full font-semibold transition-colors items-center justify-center ${isAdded
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-primary-600 text-white hover:bg-primary-700"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 <ShoppingBag className="w-5 h-5 mr-2" />
                 {!producto.disponible ? "No Disponible" : isAdded ? "¡Agregado al Carrito!" : "Agregar al Carrito"}
@@ -402,8 +409,8 @@ const handleStatsChange = useCallback((data: { avg: number; count: number; revie
           />
 
           {/* Acordeones: Ingredientes y Envío */}
-          <section className={`mt-16 grid gap-8 ${producto.ingredientes?.length > 0 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-            {producto.ingredientes?.length > 0 && (
+          <section className={`mt-16 grid gap-8 ${producto.ingredientes && producto.ingredientes.length > 0 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+            {producto.ingredientes && producto.ingredientes.length > 0 && (
               <details className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer group">
                 <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl list-none">
                   Ingredientes
@@ -466,33 +473,32 @@ const handleStatsChange = useCallback((data: { avg: number; count: number; revie
           )}
 
           {/* FAQs */}
-            <section className="mt-16 bg-white rounded-2xl shadow-lg p-8">
-              <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">
-                Preguntas frecuentes
-              </h2>
-              
-              <div className="space-y-4 max-w-3xl mx-auto">
-                {/* ✅ Solo usamos la propiedad de la interfaz Producto */}
-                {producto.preguntasFrecuentes && producto.preguntasFrecuentes.length > 0 ? (
-                  producto.preguntasFrecuentes.map((faq, idx) => (
-                    <details key={idx} className="bg-neutral-50 rounded-lg p-5 cursor-pointer group">
-                      <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg list-none">
-                        {faq.pregunta}
-                        <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
-                      </summary>
-                      <div className="mt-4 text-neutral-700 leading-relaxed whitespace-pre-line">
-                        {faq.respuesta}
-                      </div>
-                    </details>
-                  ))
-                ) : (
-                  // Opcional: Un mensaje si el producto no tiene FAQs cargadas en Firebase
-                  <p className="text-center text-neutral-500 italic">
-                    No hay preguntas frecuentes disponibles para este producto.
-                  </p>
-                )}
-              </div>
-            </section>
+          <section className="mt-16 bg-white rounded-2xl shadow-lg p-8">
+            <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">
+              Preguntas frecuentes
+            </h2>
+
+            <div className="space-y-4 max-w-3xl mx-auto">
+              {/* ✅ Corrección de Tipado: Usamos solo propiedades válidas de la interfaz */}
+              {producto.preguntasFrecuentes && producto.preguntasFrecuentes.length > 0 ? (
+                producto.preguntasFrecuentes.map((faq, idx) => (
+                  <details key={idx} className="bg-neutral-50 rounded-lg p-5 cursor-pointer group">
+                    <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg list-none">
+                      {faq.pregunta}
+                      <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                    </summary>
+                    <div className="mt-4 text-neutral-700 leading-relaxed whitespace-pre-line">
+                      {faq.respuesta}
+                    </div>
+                  </details>
+                ))
+              ) : (
+                <p className="text-center text-neutral-500 italic">
+                  No hay preguntas frecuentes disponibles para este producto.
+                </p>
+              )}
+            </div>
+          </section>
 
           {/* Productos Relacionados */}
           {productosRelacionados.length > 0 && (
@@ -533,9 +539,8 @@ const handleStatsChange = useCallback((data: { avg: number; count: number; revie
           <button
             onClick={handleAddToCart}
             disabled={!producto.disponible || isAdded}
-            className={`shrink-0 h-11 px-6 rounded-full font-semibold transition-colors ${
-              isAdded ? "bg-green-600 text-white" : "bg-primary-600 text-white"
-            } disabled:opacity-50`}
+            className={`shrink-0 h-11 px-6 rounded-full font-semibold transition-colors ${isAdded ? "bg-green-600 text-white" : "bg-primary-600 text-white"
+              } disabled:opacity-50`}
           >
             {isAdded ? "Agregado" : "Agregar"}
           </button>
@@ -595,6 +600,7 @@ function ProductImagesCarousel({
           className="h-full w-full overflow-x-auto snap-x snap-mandatory scroll-smooth"
           onScroll={handleScroll}
         >
+
           {images.map((src, idx) => (
             <div key={`${src}-${idx}`} className="relative h-full w-full shrink-0 snap-center">
               <ImageWrapper
@@ -602,10 +608,11 @@ function ProductImagesCarousel({
                 alt={`${altBase} - Imagen ${idx + 1}`}
                 fill
                 className="object-cover"
-                priority={idx === 0}
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                loading={idx === 0 ? undefined : "lazy"}
-                fallback="/placeholder.svg?height=400&width=400&text=Producto"
+                priority={idx === 0} // Mantiene la prioridad
+                loading={idx === 0 ? "eager" : "lazy"} // FUERZA carga inmediata
+                fetchPriority={idx === 0 ? "high" : "low"} // Le dice al navegador que es lo más importante
+                sizes="(max-width: 768px) 100vw, 50vw" // Importante para que el navegador elija el tamaño correcto
+                fallback="/placeholder.svg"
               />
             </div>
           ))}
@@ -681,7 +688,7 @@ function ReviewsSection({
 
   // ✅ REFERENCIA PARA EVITAR BUCLE INFINITO
   const statsChangeRef = useRef(onStatsChange)
-  
+
   // Sincronizamos la ref con la prop por si el padre cambia la función
   useEffect(() => {
     statsChangeRef.current = onStatsChange
@@ -692,14 +699,14 @@ function ReviewsSection({
     try {
       const productReviews = await FirebaseService.getReviewsByProduct(productoId)
       const approvedReviews = productReviews.filter((r) => r.aprobada === true)
-      
+
       setReviews(approvedReviews)
 
       // ✅ ENVÍO DE STATS USANDO LA REF (No dispara re-renders infinitos)
       if (approvedReviews.length > 0) {
         const sum = approvedReviews.reduce((acc, r) => acc + (r.rating || 0), 0)
         const avg = sum / approvedReviews.length
-        
+
         statsChangeRef.current?.({
           avg,
           count: approvedReviews.length,
@@ -722,7 +729,7 @@ function ReviewsSection({
 
   const handleReviewSubmitted = () => {
     setShowReviewForm(false)
-    loadReviews() 
+    loadReviews()
   }
 
   const toggleReviewExpansion = (reviewId: string) => {
@@ -735,8 +742,8 @@ function ReviewsSection({
   }
 
   // ✅ CÁLCULO DE PROMEDIO PARA EL RENDER (Seguro)
-  const avgRating = reviews.length > 0 
-    ? reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviews.length 
+  const avgRating = reviews.length > 0
+    ? reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviews.length
     : 0
 
   if (isLoading) {
@@ -755,12 +762,12 @@ function ReviewsSection({
   return (
     <section className="py-16 bg-neutral-100 mt-16 rounded-3xl overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <div className="text-center mb-12">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
             Los que ya probaron
           </h2>
-          
+
           <div className="flex items-center justify-center gap-3 mb-3">
             <div className="flex items-center">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -780,9 +787,9 @@ function ReviewsSection({
           </p>
 
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mt-4 text-sm text-neutral-700 font-medium">
-             <span className="flex items-center gap-1.5"><Snowflake className="w-4 h-4 text-primary-600" /> Congelados</span>
-             <span className="flex items-center gap-1.5"><Award className="w-4 h-4 text-primary-600" /> Sin aditivos</span>
-             <span className="flex items-center gap-1.5"><Leaf className="w-4 h-4 text-primary-600" /> Hecho en Rosario</span>
+            <span className="flex items-center gap-1.5"><Snowflake className="w-4 h-4 text-primary-600" /> Congelados</span>
+            <span className="flex items-center gap-1.5"><Award className="w-4 h-4 text-primary-600" /> Sin aditivos</span>
+            <span className="flex items-center gap-1.5"><Leaf className="w-4 h-4 text-primary-600" /> Hecho en Rosario</span>
           </div>
 
           <button
@@ -801,9 +808,8 @@ function ReviewsSection({
                 return (
                   <div
                     key={review.id}
-                    className={`bg-white rounded-2xl shadow-md p-8 text-center min-w-[85vw] md:min-w-[380px] shrink-0 snap-center flex flex-col transition-all duration-300 ${
-                      isExpanded ? "h-auto border-2 border-primary-100" : "h-[300px]"
-                    }`}
+                    className={`bg-white rounded-2xl shadow-md p-8 text-center min-w-[85vw] md:min-w-[380px] shrink-0 snap-center flex flex-col transition-all duration-300 ${isExpanded ? "h-auto border-2 border-primary-100" : "h-[300px]"
+                      }`}
                   >
                     <div className="flex justify-center mb-4 text-yellow-400">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -815,7 +821,7 @@ function ReviewsSection({
                       <p className={`text-neutral-700 italic leading-relaxed ${!isExpanded ? "line-clamp-4" : ""}`}>
                         "{review.testimonial}"
                       </p>
-                      
+
                       {review.testimonial.length > 140 && (
                         <button
                           onClick={() => toggleReviewExpansion(review.id || "")}

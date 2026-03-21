@@ -37,7 +37,10 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        {/* Google Tag Manager */}
+        {/* Google Tag Manager: 
+            Mantenemos afterInteractive para que el contenedor de etiquetas 
+            esté disponible temprano, pero sin bloquear el renderizado inicial.
+        */}
         <Script
           id="gtm-script"
           strategy="afterInteractive"
@@ -50,14 +53,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           }}
         />
 
-        {/* Google Analytics */}
+        {/* Google Analytics: 
+            Cambiado a lazyOnload. Esto evita que el móvil gaste recursos 
+            descargando analytics mientras intenta pintar el producto.
+        */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-FCTYS7HER2"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
         <Script
           id="google-analytics"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
@@ -66,10 +72,13 @@ gtag('config', 'G-FCTYS7HER2');`,
           }}
         />
 
-        {/* Meta Pixel */}
+        {/* Meta Pixel: 
+            Cambiado a lazyOnload. Los eventos de Facebook suelen ser pesados 
+            y PageSpeed los marca como "código de terceros que bloquea el hilo principal".
+        */}
         <Script
           id="fb-pixel"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `!function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -84,10 +93,13 @@ fbq('track', 'PageView');`,
           }}
         />
 
-        {/* Microsoft Clarity */}
+        {/* Microsoft Clarity: 
+            Cambiado a lazyOnload. Al ser un script de grabación de sesiones, 
+            no es crítico que cargue en el milisegundo cero.
+        */}
         <Script
           id="clarity-script"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `(function(c,l,a,r,i,t,y){
 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
