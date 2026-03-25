@@ -20,10 +20,12 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { FirebaseService } from "@/lib/firebase-service"
 import dynamic from 'next/dynamic'
 
-const ReviewForm = dynamic(() => import('@/components/ReviewForm'), {
-  ssr: false,
-  loading: () => <div className="animate-pulse h-[480px] w-full bg-neutral-100 rounded-2xl" />
+
+const ReviewsSection = dynamic(() => import('./ReviewsSection'), {
+  ssr: false, // Las reviews dependen de Firebase en el cliente
+  loading: () => <div className="mt-16 h-96 animate-pulse bg-neutral-100 rounded-3xl" />
 });
+
 import Script from 'next/script';
 import type { Review as ReviewType, Producto } from "@/lib/types"
 import { getProductCanonicalUrl, getCategoryUrl, getSubcategoryUrl } from "@/lib/product-url"
@@ -72,10 +74,14 @@ export default function ProductoPageClient({
   // ✅ FIX BUCLE INFINITO: Memoizamos la función y validamos el estado previo
   const handleStatsChange = useCallback((data: { avg: number; count: number; reviews?: ReviewType[] }) => {
     setReviewData((prev) => {
-      // Solo actualizamos si los valores realmente cambiaron
-      if (prev.avg === data.avg && prev.count === data.count && prev.reviews.length === (data.reviews?.length || 0)) {
+      // Usamos ?.length y fallback a 0 para comparar de forma segura
+      const newCount = data.reviews?.length || 0;
+      const prevCount = prev.reviews?.length || 0;
+
+      if (prev.avg === data.avg && prev.count === data.count && prevCount === newCount) {
         return prev;
       }
+
       return {
         avg: data.avg,
         count: data.count,
@@ -272,15 +278,12 @@ export default function ProductoPageClient({
   return (
     <>
       {/* ✅ Corrección: Usamos el componente Script de Next.js para evitar errores de parseo */}
-      <Script
+      {/* Cambiamos Script por una etiqueta nativa para evitar que Next.js 
+          procese el JSON-LD como un recurso externo bloqueante */}
+      <script
         id="structured-data-product"
         type="application/ld+json"
-        // strategy="afterInteractive"  <-- ELIMINA ESTO o cámbialo a omitir estrategia
-        dangerouslySetInnerHTML={{
-          __html: typeof structuredData === 'string'
-            ? structuredData
-            : JSON.stringify(structuredData)
-        }}
+        dangerouslySetInnerHTML={{ __html: structuredData }}
       />
 
       <div className="min-h-screen bg-neutral-50 pb-28 sm:pb-0">
@@ -401,13 +404,6 @@ export default function ProductoPageClient({
             </div>
           </div>
 
-          {/* Sección Reseñas */}
-          <ReviewsSection
-            productoId={producto.id || ""}
-            productoNombre={producto.nombre}
-            onStatsChange={handleStatsChange}
-          />
-
           {/* Acordeones: Ingredientes y Envío */}
           <section className={`mt-16 grid gap-8 ${producto.ingredientes && producto.ingredientes.length > 0 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
             {producto.ingredientes && producto.ingredientes.length > 0 && (
@@ -499,6 +495,14 @@ export default function ProductoPageClient({
               )}
             </div>
           </section>
+
+          {/* --- REVIEWS SECTION (Diferido con Dynamic) --- */}
+          {/* Al estar aquí abajo, no bloquea el renderizado de arriba */}
+          <ReviewsSection
+            productoId={producto.id || ""}
+            productoNombre={producto.nombre}
+            onStatsChange={handleStatsChange}
+          />
 
           {/* Productos Relacionados */}
           {productosRelacionados.length > 0 && (
@@ -608,10 +612,10 @@ function ProductImagesCarousel({
                 alt={`${altBase} - Imagen ${idx + 1}`}
                 fill
                 className="object-cover"
-                priority={idx === 0} // Mantiene la prioridad
-                loading={idx === 0 ? "eager" : "lazy"} // FUERZA carga inmediata
-                fetchPriority={idx === 0 ? "high" : "low"} // Le dice al navegador que es lo más importante
-                sizes="(max-width: 768px) 100vw, 50vw" // Importante para que el navegador elija el tamaño correcto
+                priority={idx === 0}
+                loading={idx === 0 ? "eager" : "lazy"}
+                fetchPriority={idx === 0 ? "high" : "low"} // <--- ESTO es clave para el navegador
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px" // Más preciso
                 fallback="/placeholder.svg"
               />
             </div>
@@ -668,193 +672,5 @@ function ProductImagesCarousel({
         </div>
       )}
     </div>
-  )
-}
-
-
-function ReviewsSection({
-  productoId,
-  productoNombre,
-  onStatsChange,
-}: {
-  productoId: string
-  productoNombre: string
-  onStatsChange?: (data: { avg: number; count: number; reviews?: ReviewType[] }) => void
-}) {
-  const [reviews, setReviews] = useState<ReviewType[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [showReviewForm, setShowReviewForm] = useState(false)
-  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set())
-
-  // ✅ REFERENCIA PARA EVITAR BUCLE INFINITO
-  const statsChangeRef = useRef(onStatsChange)
-
-  // Sincronizamos la ref con la prop por si el padre cambia la función
-  useEffect(() => {
-    statsChangeRef.current = onStatsChange
-  }, [onStatsChange])
-
-  // ✅ CARGA DE DATOS MEMOIZADA
-  const loadReviews = useCallback(async () => {
-    try {
-      const productReviews = await FirebaseService.getReviewsByProduct(productoId)
-      const approvedReviews = productReviews.filter((r) => r.aprobada === true)
-
-      setReviews(approvedReviews)
-
-      // ✅ ENVÍO DE STATS USANDO LA REF (No dispara re-renders infinitos)
-      if (approvedReviews.length > 0) {
-        const sum = approvedReviews.reduce((acc, r) => acc + (r.rating || 0), 0)
-        const avg = sum / approvedReviews.length
-
-        statsChangeRef.current?.({
-          avg,
-          count: approvedReviews.length,
-          reviews: approvedReviews.slice(0, 5),
-        })
-      } else {
-        statsChangeRef.current?.({ avg: 0, count: 0, reviews: [] })
-      }
-    } catch (error) {
-      console.error("Error en reviews:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [productoId]) // Solo depende del ID del producto
-
-  // ✅ DISPARADOR INICIAL
-  useEffect(() => {
-    loadReviews()
-  }, [loadReviews])
-
-  const handleReviewSubmitted = () => {
-    setShowReviewForm(false)
-    loadReviews()
-  }
-
-  const toggleReviewExpansion = (reviewId: string) => {
-    setExpandedReviews(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(reviewId)) newSet.delete(reviewId)
-      else newSet.add(reviewId)
-      return newSet
-    })
-  }
-
-  // ✅ CÁLCULO DE PROMEDIO PARA EL RENDER (Seguro)
-  const avgRating = reviews.length > 0
-    ? reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviews.length
-    : 0
-
-  if (isLoading) {
-    return (
-      <section className="mt-16 bg-neutral-100 rounded-2xl p-12 min-h-[450px] animate-pulse">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="h-10 bg-neutral-200 rounded w-1/3 mx-auto"></div>
-          <div className="flex justify-center gap-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-64 bg-white rounded-2xl w-full max-w-[350px]"></div>)}
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  return (
-    <section className="py-16 bg-neutral-100 mt-16 rounded-3xl overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        <div className="text-center mb-12">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-            Los que ya probaron
-          </h2>
-
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="flex items-center">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className={`w-6 h-6 ${star <= Math.round(avgRating) ? "text-yellow-400 fill-current" : "text-neutral-300"}`}
-                />
-              ))}
-            </div>
-            <div className="text-xl font-bold text-neutral-900">
-              {reviews.length > 0 ? avgRating.toFixed(1) : "—"} <span className="text-neutral-600">★</span>
-            </div>
-          </div>
-
-          <p className="text-neutral-600">
-            {reviews.length > 0 ? `${reviews.length} opiniones` : "Aún sin opiniones"}
-          </p>
-
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mt-4 text-sm text-neutral-700 font-medium">
-            <span className="flex items-center gap-1.5"><Snowflake className="w-4 h-4 text-primary-600" /> Congelados</span>
-            <span className="flex items-center gap-1.5"><Award className="w-4 h-4 text-primary-600" /> Sin aditivos</span>
-            <span className="flex items-center gap-1.5"><Leaf className="w-4 h-4 text-primary-600" /> Hecho en Rosario</span>
-          </div>
-
-          <button
-            onClick={() => setShowReviewForm(true)}
-            className="mt-8 px-8 py-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-all shadow-md hover:shadow-lg font-semibold"
-          >
-            Escribir Reseña
-          </button>
-        </div>
-
-        {reviews.length > 0 ? (
-          <div className="relative">
-            <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-4">
-              {reviews.map((review) => {
-                const isExpanded = expandedReviews.has(review.id || "")
-                return (
-                  <div
-                    key={review.id}
-                    className={`bg-white rounded-2xl shadow-md p-8 text-center min-w-[85vw] md:min-w-[380px] shrink-0 snap-center flex flex-col transition-all duration-300 ${isExpanded ? "h-auto border-2 border-primary-100" : "h-[300px]"
-                      }`}
-                  >
-                    <div className="flex justify-center mb-4 text-yellow-400">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star key={star} className={`w-5 h-5 ${star <= review.rating ? "fill-current" : "text-neutral-200"}`} />
-                      ))}
-                    </div>
-
-                    <div className="flex-1 flex flex-col justify-center">
-                      <p className={`text-neutral-700 italic leading-relaxed ${!isExpanded ? "line-clamp-4" : ""}`}>
-                        "{review.testimonial}"
-                      </p>
-
-                      {review.testimonial.length > 140 && (
-                        <button
-                          onClick={() => toggleReviewExpansion(review.id || "")}
-                          className="text-primary-600 text-xs font-bold mt-2 uppercase tracking-wider hover:text-primary-700"
-                        >
-                          {isExpanded ? "Ver menos" : "Ver más"}
-                        </button>
-                      )}
-                    </div>
-
-                    <p className="text-neutral-900 font-bold mt-6 border-t border-neutral-50 pt-4">
-                      {review.userName}
-                    </p>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-10 bg-white/50 rounded-2xl border-2 border-dashed border-neutral-200">
-            <p className="text-neutral-500 italic">¡Sé el primero en compartir tu experiencia!</p>
-          </div>
-        )}
-      </div>
-
-      {showReviewForm && (
-        <ReviewForm
-          productoId={productoId}
-          productoNombre={productoNombre}
-          onClose={() => setShowReviewForm(false)}
-          onReviewSubmitted={handleReviewSubmitted}
-        />
-      )}
-    </section>
   )
 }

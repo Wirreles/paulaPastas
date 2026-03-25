@@ -4,22 +4,31 @@ import { STATIC_FAQS, STATIC_REVIEWS } from "@/lib/constants"
 
 // Renderizado dinámico en cada request para que los productos destacados
 // siempre reflejen el estado actual (sin cache estático de Next.js en build/deploy)
-export const dynamic = 'force-dynamic'
 
 // Impotar componentes del Home
 import HeroSection from "@/components/home/HeroSection"
 import FeaturedProducts from "@/components/home/FeaturedProducts"
 import CategoriesSection from "@/components/home/CategoriesSection"
 import InfoSection from "@/components/home/InfoSection"
-import GallerySection from "@/components/home/GallerySection"
-import WhyChooseUs from "@/components/home/WhyChooseUs"
-import ReviewsCarousel from "@/components/home/ReviewsCarousel"
-import QualitySection from "@/components/home/QualitySection"
-import FaqAccordion from "@/components/home/FaqAccordion"
+// import GallerySection from "@/components/home/GallerySection"
+// import WhyChooseUs from "@/components/home/WhyChooseUs"
+// import ReviewsCarousel from "@/components/home/ReviewsCarousel" 
+// import QualitySection from "@/components/home/QualitySection"
+// import FaqAccordion from "@/components/home/FaqAccordion"
 import ContactCTA from "@/components/home/ContactCTA"
-import { NewsletterForm } from "@/components/ui/NewsletterForm"
+// import { NewsletterForm } from "@/components/ui/NewsletterForm" 
 import { ImagePreloader } from "@/components/ui/ImagePreloader"
 import { ImageDebugInfo } from "@/components/ui/ImageDebugInfo"
+
+import dynamic from 'next/dynamic'
+
+// Secciones no críticas (Carga diferida / Lazy Load)
+const GallerySection = dynamic(() => import("@/components/home/GallerySection"))
+const WhyChooseUs = dynamic(() => import("@/components/home/WhyChooseUs"))
+const ReviewsCarousel = dynamic(() => import("@/components/home/ReviewsCarousel"))
+const QualitySection = dynamic(() => import("@/components/home/QualitySection"))
+const FaqAccordion = dynamic(() => import("@/components/home/FaqAccordion"))
+const NewsletterForm = dynamic(() => import("@/components/ui/NewsletterForm").then(mod => mod.NewsletterForm))
 
 // Metadatos SEO (Reemplaza next/head)
 export const metadata: Metadata = {
