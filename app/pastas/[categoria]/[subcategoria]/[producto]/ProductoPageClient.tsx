@@ -32,7 +32,7 @@ import { getProductCanonicalUrl, getCategoryUrl, getSubcategoryUrl } from "@/lib
 import { useCart } from "@/lib/cart-context"
 
 // Usar la interfaz Review de types.ts en lugar de la local
-
+const imageSizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px";
 
 interface ProductoPageClientProps {
   categoria: string
@@ -577,8 +577,15 @@ function ProductImagesCarousel({
       const width = el.clientWidth
       if (!width) return
 
-      const idx = Math.round(el.scrollLeft / width)
-      setActiveIndex(Math.max(0, Math.min(images.length - 1, idx)))
+      const newIdx = Math.round(el.scrollLeft / width)
+      const safeIdx = Math.max(0, Math.min(images.length - 1, newIdx))
+
+      // ✅ 1 y 2. Corrección: Solo actualizamos si el índice REALMENTE cambió,
+      // y usamos el estado previo para evitar cierres obsoletos (stale closures).
+      setActiveIndex((prevIdx) => {
+        if (prevIdx === safeIdx) return prevIdx; // React aborta la renderización aquí
+        return safeIdx;
+      })
     })
   }
 
@@ -586,7 +593,10 @@ function ProductImagesCarousel({
     const el = scrollerRef.current
     if (!el) return
     const width = el.clientWidth
-    el.scrollTo({ left: idx * width, behavior: "smooth" })
+
+    // ✅ 3. Corrección: Quitamos 'behavior: "smooth"' porque la clase CSS 
+    // 'scroll-smooth' del contenedor ya se encarga de esto por hardware.
+    el.scrollTo({ left: idx * width })
   }
 
   const altBase = `${producto.nombre} caseros artesanales`
@@ -594,28 +604,31 @@ function ProductImagesCarousel({
 
   return (
     <div
-      className="relative aspect-square rounded-2xl overflow-hidden"
+      className="relative aspect-square rounded-2xl overflow-hidden bg-neutral-100" // bg-neutral evita el "hueco blanco"
       role="region"
       aria-label="Carrusel de imágenes del producto"
     >
       {isMulti ? (
         <div
           ref={scrollerRef}
-          className="h-full w-full overflow-x-auto snap-x snap-mandatory scroll-smooth"
+          className="h-full w-full overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar" // no-scrollbar es clave
           onScroll={handleScroll}
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} // Oculta barra en Firefox/IE
         >
-
           {images.map((src, idx) => (
-            <div key={`${src}-${idx}`} className="relative h-full w-full shrink-0 snap-center">
+            <div
+              key={`${src}-${idx}`}
+              className="relative h-full w-full shrink-0 snap-center"
+              style={{ willChange: 'transform' }} // Optimización de GPU
+            >
               <ImageWrapper
                 src={src}
                 alt={`${altBase} - Imagen ${idx + 1}`}
                 fill
                 className="object-cover"
                 priority={idx === 0}
-                loading={idx === 0 ? "eager" : "lazy"}
-                fetchPriority={idx === 0 ? "high" : "low"} // <--- ESTO es clave para el navegador
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px" // Más preciso
+                fetchPriority={idx === 0 ? "high" : "low"}
+                sizes={imageSizes} // Consistente
                 fallback="/placeholder.svg"
               />
             </div>
@@ -628,9 +641,9 @@ function ProductImagesCarousel({
             alt={altBase}
             fill
             className="object-cover"
-            priority // ✅ Activa el pre-load
-            fetchPriority="high" // ✅ Agregado: Prioridad máxima en la cola de red
-            sizes="(max-width: 1024px) 100vw, 50vw"
+            priority
+            fetchPriority="high"
+            sizes={imageSizes} // Consistente
             fallback="/placeholder.svg?height=400&width=400&text=Producto"
           />
         </div>

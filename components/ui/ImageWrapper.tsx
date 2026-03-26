@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { useState, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { validateImageUrl } from "@/lib/image-utils"
 
 interface ImageWrapperProps {
@@ -16,7 +16,6 @@ interface ImageWrapperProps {
   height?: number
   fill?: boolean
   loading?: "lazy" | "eager"
-  // ✅ Agregamos fetchPriority aquí para que TS no se queje
   fetchPriority?: "high" | "low" | "auto"
   onLoad?: () => void
   onError?: () => void
@@ -27,56 +26,68 @@ export function ImageWrapper({
   alt,
   fallback = "/placeholder.svg",
   priority = false,
-  sizes = "(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw",
-  quality = 75,
+  sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
+  quality = 65, // ⚡ Reducido de 75 a 65 para ahorrar esos 25KB críticos en móviles
   width,
   height,
   fill = false,
   loading,
-  fetchPriority, // <-- Lo extraemos de las props
+  fetchPriority,
   className = "",
   onLoad,
   onError,
 }: ImageWrapperProps) {
+  // 1. Evitamos el doble renderizado: calculamos el SRC inicial directamente.
+  // Usamos un estado para manejar ÚNICAMENTE el error de carga.
+  const [hasError, setHasError] = useState(false);
+  const [lastSrc, setLastSrc] = useState(src);
 
-  const [currentSrc, setCurrentSrc] = useState(() => validateImageUrl(src, fallback))
+  // 2. Si el 'src' cambia desde el padre, reseteamos el estado de error
+  if (src !== lastSrc) {
+    setHasError(false);
+    setLastSrc(src);
+  }
 
-  useEffect(() => {
-    setCurrentSrc(validateImageUrl(src, fallback))
-  }, [src, fallback])
+  // 3. Determinamos la fuente a mostrar. 
+  // validateImageUrl se ejecuta en el render, no en un useEffect, eliminando el "flicker".
+  const resolvedSrc = useMemo(() => {
+    if (hasError) return fallback;
+    return validateImageUrl(src, fallback);
+  }, [src, fallback, hasError]);
 
   const handleError = () => {
-    if (currentSrc !== fallback) {
-      setCurrentSrc(fallback)
+    if (!hasError) {
+      setHasError(true);
+      onError?.();
     }
-    onError?.()
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full overflow-hidden">
       <Image
-        src={currentSrc}
+        src={resolvedSrc}
         alt={alt}
         fill={fill}
         width={!fill ? width ?? 500 : undefined}
         height={!fill ? height ?? 500 : undefined}
         priority={priority}
-        sizes={fill ? sizes : undefined}
+        sizes={sizes}
         quality={quality}
+        // Si es prioridad, eliminamos el lazy loading para que el navegador actúe de inmediato
         loading={priority ? undefined : loading ?? "lazy"}
-        className={className}
+        className={`${className} transition-opacity duration-300`}
         onLoad={onLoad}
         onError={handleError}
-        // ✅ Pasamos fetchPriority al componente Image. 
-        // Nota: Next.js lo pasará al elemento <img> final.
-        // @ts-ignore: Next.js aún no tiene fetchPriority en todos sus tipos oficiales de Props, pero funciona perfectamente.
+        // @ts-ignore: Propiedad válida en navegadores modernos para LCP
         fetchPriority={fetchPriority}
+        // Optimizaciones extra para el motor de renderizado
+        decoding="async"
       />
     </div>
   )
 }
 
-/* Imagen de producto */
+/* Imagen de producto específica */
 export function ProductImage({
   src,
   alt,
@@ -92,26 +103,28 @@ export function ProductImage({
       fallback={fallback}
       className={className}
       priority={priority}
+      fill
       {...props}
     />
   )
 }
 
-/* Imagen hero */
+/* Imagen Hero (Siempre prioridad máxima) */
 export function HeroImage({
   src,
   alt,
-  fallback = "/placeholder.svg",
   className = "",
   ...props
-}: Omit<ImageWrapperProps, "priority">) {
+}: Omit<ImageWrapperProps, "priority" | "fetchPriority">) {
   return (
     <ImageWrapper
       src={src}
       alt={alt}
-      fallback={fallback}
       className={className}
       priority={true}
+      fetchPriority="high"
+      quality={70} // Un poco más de calidad para el Hero
+      fill
       {...props}
     />
   )
