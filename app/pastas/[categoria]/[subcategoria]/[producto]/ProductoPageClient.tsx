@@ -628,7 +628,8 @@ function ProductImagesCarousel({
             alt={altBase}
             fill
             className="object-cover"
-            priority
+            priority // ✅ Activa el pre-load
+            fetchPriority="high" // ✅ Agregado: Prioridad máxima en la cola de red
             sizes="(max-width: 1024px) 100vw, 50vw"
             fallback="/placeholder.svg?height=400&width=400&text=Producto"
           />
