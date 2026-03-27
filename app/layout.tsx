@@ -39,7 +39,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="preconnect" href="https://connect.facebook.net" crossOrigin="anonymous" />
       </head>
 
-      <body className={`${inter.className} flex flex-col min-h-screen antialiased`}>
+      <body
+        className={`${inter.className} flex flex-col min-h-screen antialiased`}
+        suppressHydrationWarning
+      >
         {/* Los scripts ahora se cargan de forma diferida mediante este componente */}
         <Analytics />
 

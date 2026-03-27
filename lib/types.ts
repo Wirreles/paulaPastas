@@ -96,25 +96,25 @@ export interface Pack {
 // ZONAS DE ENTREGA
 // ===============================
 
-export interface ZonaEntrega {
-  id?: string
-  nombre: string
+// export interface ZonaEntrega {
+//   id?: string
+//   nombre: string
 
-  slug: "vgg" | "rosario-centro" | "zona-sur" | "zona-oeste"
+//   slug: "vgg" | "rosario-centro" | "zona-sur" | "zona-oeste"
 
-  descripcion: string
-  costoEnvio: number
-  tiempoEntrega: string
+//   descripcion: string
+//   costoEnvio: number
+//   tiempoEntrega: string
 
-  horarios: {
-    dia: string
-    desde: string
-    hasta: string
-  }[]
+//   horarios: {
+//     dia: string
+//     desde: string
+//     hasta: string
+//   }[]
 
-  disponible: boolean
-  barrios: string[]
-}
+//   disponible: boolean
+//   barrios: string[]
+// }
 
 
 // ===============================

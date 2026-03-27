@@ -4,107 +4,96 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { Menu, X, ShoppingBag, User, LogOut, ArrowLeft, ArrowRight } from "lucide-react"
+import { Menu, X, ShoppingBag, User, ArrowLeft, ArrowRight } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useCart } from "@/lib/cart-context"
+
+const NAVIGATION_DATA = [
+  { name: "Inicio", href: "/", id: "inicio" },
+  {
+    name: "Pastas",
+    href: "/pastas",
+    id: "pastas",
+    submenu: [
+      {
+        name: "Rellenas",
+        href: "/pastas/rellenas",
+        id: "rellenas",
+        subcategorias: [
+          { name: "Lasagna", href: "/pastas/rellenas/lasagna/lasagna-estrato" },
+          { name: "Ravioles", href: "/pastas/rellenas/ravioles" },
+          { name: "Sorrentinos", href: "/pastas/rellenas/sorrentinos" },
+        ],
+      },
+      {
+        name: "Sin Relleno",
+        href: "/pastas/sin-relleno",
+        id: "sin-relleno",
+        subcategorias: [
+          { name: "Ñoquis", href: "/pastas/sin-relleno/noquis/nube-de-papa" },
+          { name: "Fideos", href: "/pastas/sin-relleno/fideos" },
+        ],
+      },
+      { name: "Sin TACC", href: "/pastas/sin-tacc", id: "sin-tacc" },
+      { name: "Pack Raviolada", href: "/pack-raviolada", id: "pack" },
+      { name: "Salsas", href: "/salsas", id: "salsas" },
+    ],
+  },
+  { name: "Nosotros", href: "/nosotros", id: "nosotros" },
+  { name: "Delivery", href: "/delivery", id: "delivery" },
+  { name: "Blog", href: "/blog", id: "blog" },
+]
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [menuPath, setMenuPath] = useState<string[]>([])
   const pathname = usePathname()
-  const { user, isAdmin, logout } = useAuth()
+  const { user, isAdmin } = useAuth()
   const { totalItems, toggleCart } = useCart()
 
-  // Effect to control body overflow
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = ""
-    }
-    return () => {
-      document.body.style.overflow = ""
-    }
+    setIsMenuOpen(false)
+    setMenuPath([])
+  }, [pathname])
+
+  useEffect(() => {
+    document.body.style.overflow = isMenuOpen ? "hidden" : ""
+    return () => { document.body.style.overflow = "" }
   }, [isMenuOpen])
 
-  const navigation = [
-    { name: "Inicio", href: "/" },
-    {
-      name: "Pastas",
-      href: "/pastas",
-      id: "pastas",
-      submenu: [
-        {
-          name: "Rellenas",
-          href: "/pastas/rellenas",
-          id: "rellenas",
-          subcategorias: [
-            { name: "Lasagna", href: "/pastas/rellenas/lasagna/lasagna-estrato" },
-            { name: "Ravioles", href: "/pastas/rellenas/ravioles" },
-            { name: "Sorrentinos", href: "/pastas/rellenas/sorrentinos" },
-          ],
-        },
-        {
-          name: "Sin Relleno",
-          href: "/pastas/sin-relleno",
-          id: "sin-relleno",
-          subcategorias: [
-            { name: "Ñoquis", href: "/pastas/sin-relleno/noquis/nube-de-papa" },
-            { name: "Fideos", href: "/pastas/sin-relleno/fideos" },
-          ],
-        },
-        { name: "Sin TACC", href: "/pastas/sin-tacc", id: "sin-tacc" },
-        { name: "Pack", href: "/pack-raviolada", id: "pack" },
-        { name: "Ravioles fritos", href: "/pastas/ravioles-fritos", id: "ravioles-fritos" },
-        { name: "Salsas", href: "/salsas", id: "salsas" },
-      ],
-    },
-    { name: "Nosotros", href: "/nosotros" },
-    { name: "Delivery", href: "/delivery" },
-    { name: "Blog", href: "/blog" },
-  ]
-
   const getMenuItems = (path: string[]) => {
-    let currentItems: any[] = navigation
-
+    let currentItems: any[] = NAVIGATION_DATA
     for (const segment of path) {
       const parent = currentItems.find((item) => item.id === segment)
-      if (parent && parent.submenu) {
-        currentItems = parent.submenu
-      } else if (parent && parent.subcategorias) {
-        currentItems = parent.subcategorias
-      } else {
-        return []
-      }
+      if (parent?.submenu) currentItems = parent.submenu
+      else if (parent?.subcategorias) currentItems = parent.subcategorias
+      else return []
     }
     return currentItems
   }
 
   const currentMenuItems = getMenuItems(menuPath)
   const isSubMenu = menuPath.length > 0
+
   const currentMenuTitle = isSubMenu
     ? getMenuItems(menuPath.slice(0, -1)).find((item) => item.id === menuPath[menuPath.length - 1])?.name || "Menú"
     : "Menú"
 
-  const handleMenuItemClick = (item: any) => {
+  const handleMobileClick = (e: React.MouseEvent, item: any) => {
     if (item.submenu || item.subcategorias) {
+      e.preventDefault()
       setMenuPath([...menuPath, item.id])
-    } else {
-      setIsMenuOpen(false)
     }
-  }
-
-  const handleBackClick = () => {
-    setMenuPath((prevPath) => prevPath.slice(0, -1))
   }
 
   return (
     <header className="sticky top-0 z-50 bg-primary-350 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 sm:h-18 lg:h-20 py-2">
-          {/* Logo - Responsive */}
+
+          {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 sm:space-x-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex items-center justify-center">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
               <Image
                 src="/pplog2.png"
                 alt="Paula Pastas Logo"
@@ -114,50 +103,47 @@ export default function Header() {
                 className="w-full h-full object-contain"
               />
             </div>
-            <div className="block">
-              <span className="font-display text-base sm:text-lg lg:text-xl font-bold text-neutral-900">
+            <div className="leading-tight">
+              <span className="font-display text-base sm:text-lg font-bold text-neutral-900 block">
                 Paula Pastas
               </span>
-              <p className="text-xs text-neutral-600">Pastas Artesanales</p>
+              <p className="text-[10px] sm:text-xs text-neutral-600 uppercase tracking-tighter">Pastas Artesanales</p>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav aria-label="Navegación principal" className="hidden lg:flex items-center space-x-8 xl:space-x-10">
-            {navigation.map((item) => (
-              <div key={item.name} className="relative group">
+          <nav className="hidden lg:flex items-center space-x-4">
+            {NAVIGATION_DATA.map((item) => (
+              <div key={item.id} className="relative group">
                 <Link
                   href={item.href}
-                  aria-current={pathname.startsWith(item.href) ? "page" : undefined}
-                  className={`text-sm font-medium transition-colors hover:text-primary-600 ${pathname.startsWith(item.href)
-                      ? "text-primary-600"
-                      : "text-neutral-700"
+                  className={`px-3 py-2 rounded-full text-sm font-bold transition-all duration-200 hover:bg-white/50 ${pathname === item.href ? "text-primary-800" : "text-neutral-900"
                     }`}
                 >
                   {item.name}
                 </Link>
 
-                {(item.submenu || item.subcategorias) && (
-                  <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-neutral-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                {/* Dropdown Desktop */}
+                {(item.submenu) && (
+                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-neutral-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
                     <div className="py-2">
-                      {(item.submenu || item.subcategorias)?.map((subitem: any) => (
-                        <div key={subitem.name}>
+                      {item.submenu.map((subitem: any) => (
+                        <div key={subitem.id}>
                           <Link
                             href={subitem.href}
-                            className="block px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:text-primary-600"
+                            className="block px-4 py-2 text-sm text-neutral-900 hover:bg-primary-50 hover:text-primary-700 font-bold"
                           >
                             {subitem.name}
                           </Link>
-
                           {subitem.subcategorias && (
-                            <div className="ml-4 border-l border-neutral-200">
-                              {subitem.subcategorias.map((subcategoria: any) => (
+                            <div className="bg-neutral-50 py-1">
+                              {subitem.subcategorias.map((cat: any) => (
                                 <Link
-                                  key={subcategoria.name}
-                                  href={subcategoria.href}
-                                  className="block px-4 py-1 text-xs text-neutral-600 hover:bg-neutral-50 hover:text-primary-600"
+                                  key={cat.name}
+                                  href={cat.href}
+                                  className="block px-8 py-1.5 text-xs text-neutral-600 font-medium hover:text-primary-600"
                                 >
-                                  {subcategoria.name}
+                                  {cat.name}
                                 </Link>
                               ))}
                             </div>
@@ -171,145 +157,69 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Right side actions - Responsive */}
-          <div className="flex items-center space-x-3 sm:space-x-5">
-            {/* Cart - Responsive */}
-            <button
-              onClick={toggleCart}
-              className="p-2 sm:p-3 text-neutral-900 hover:text-primary-600 transition-colors relative"
-            >
-              <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
+          {/* Actions */}
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <button onClick={toggleCart} className="p-2 relative hover:bg-white/50 rounded-full transition-all duration-200">
+              <ShoppingBag className="w-6 h-6 text-neutral-900" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
                   {totalItems}
                 </span>
               )}
             </button>
 
-            {/* User menu - Responsive */}
             {user ? (
-              <div className="relative group">
-                <button className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 text-neutral-900 hover:text-primary-600 transition-colors">
-                  <User className="w-5 h-5 sm:w-6 sm:h-6" />
-                  {isAdmin && (
-                    <span className="hidden sm:inline text-xs bg-primary-100 text-primary-800 px-2 py-1 rounded-full">Admin</span>
-                  )}
-                </button>
-
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-neutral-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <div className="py-2">
-                    {isAdmin ? (
-                      <Link href="/admin" className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
-                        Panel Admin
-                      </Link>
-                    ) : (
-                      <Link href="/dashboard-usuario" className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
-                        Mi Cuenta
-                      </Link>
-                    )}
-                    <button
-                      onClick={logout}
-                      className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 flex items-center space-x-2"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Cerrar Sesión</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <Link href={isAdmin ? "/admin" : "/dashboard-usuario"} className="p-2 hover:bg-white/50 rounded-full transition-all duration-200">
+                <User className="w-6 h-6 text-neutral-900" />
+              </Link>
             ) : (
-              <div className="hidden sm:flex items-center space-x-4">
-                <Link
-                  href="/login"
-                  className="text-sm font-medium text-neutral-700 hover:text-primary-600 transition-colors"
-                >
-                  Iniciar Sesión
-                </Link>
-                <Link
-                  href="/register"
-                  className="text-sm font-medium bg-primary-600 text-white px-3 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-                >
-                  Registrarse
-                </Link>
-              </div>
+              <Link
+                href="/login"
+                className="hidden sm:block px-4 py-2 rounded-full text-sm font-bold text-neutral-900 hover:bg-white/50 transition-all duration-200"
+              >
+                Entrar
+              </Link>
             )}
 
-            {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="lg:hidden p-2 sm:p-3 text-neutral-900 hover:text-primary-600 transition-colors"
-              aria-label="Abrir menú"
+              className="lg:hidden p-2 rounded-lg hover:bg-white/50 transition-colors"
             >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isMenuOpen ? <X className="w-6 h-6 text-neutral-900" /> : <Menu className="w-6 h-6 text-neutral-900" />}
             </button>
           </div>
         </div>
-
-        {/* Mobile Navigation - Improved */}
-        {isMenuOpen && (
-          <div className="fixed top-16 sm:top-18 lg:top-20 left-0 right-0 h-[calc(100vh-4rem)] sm:h-[calc(100vh-4.5rem)] lg:h-[calc(100vh-5rem)] bg-primary-350 lg:hidden z-[999] flex flex-col overflow-y-auto">
-            {/* Top bar of mobile menu */}
-            <div className="bg-primary-900 text-white p-4 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                {isSubMenu && (
-                  <button
-                    onClick={handleBackClick}
-                    className="p-2 text-white hover:text-primary-100 transition-colors"
-                    aria-label="Volver"
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                  </button>
-                )}
-                <h2 className="font-display text-lg sm:text-xl font-bold">{currentMenuTitle}</h2>
-              </div>
-              <button
-                onClick={() => setIsMenuOpen(false)}
-                className="p-2 text-white hover:text-primary-100 transition-colors"
-                aria-label="Cerrar menú"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Menu items - Improved spacing and touch targets */}
-            <nav className="py-4 flex-1">
-              {currentMenuItems.map((item: any) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="flex items-center justify-between px-4 sm:px-6 py-4 text-neutral-900 hover:bg-primary-100 transition-colors min-h-[44px]"
-                  onClick={() => handleMenuItemClick(item)}
-                >
-                  <span className="text-base sm:text-lg font-medium">{item.name}</span>
-                  {(item.submenu || item.subcategorias) && (
-                    <ArrowRight className="w-5 h-5 text-neutral-500" />
-                  )}
-                </Link>
-              ))}
-            </nav>
-
-            {/* Bottom section for mobile - Login/Register buttons */}
-            {!user && (
-              <div className="border-t border-primary-200 p-4 space-y-3">
-                <Link
-                  href="/login"
-                  className="block w-full text-center py-3 px-4 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Iniciar Sesión
-                </Link>
-                <Link
-                  href="/register"
-                  className="block w-full text-center py-3 px-4 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Registrarse
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
       </div>
+
+      {/* Mobile Menu (Mantiene la lógica anterior pero con texto más fuerte) */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 top-16 bg-white z-[999] lg:hidden flex flex-col">
+          <div className="bg-neutral-900 text-white p-4 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {isSubMenu && (
+                <button onClick={() => setMenuPath(prev => prev.slice(0, -1))} className="p-1">
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              )}
+              <h2 className="font-bold uppercase tracking-widest text-sm">{currentMenuTitle}</h2>
+            </div>
+          </div>
+
+          <nav className="flex-1 overflow-y-auto">
+            {currentMenuItems.map((item: any) => (
+              <Link
+                key={item.id || item.name}
+                href={item.href}
+                onClick={(e) => handleMobileClick(e, item)}
+                className="flex items-center justify-between px-6 py-5 border-b border-neutral-50 text-neutral-900 active:bg-neutral-100"
+              >
+                <span className="font-bold text-lg">{item.name}</span>
+                {(item.submenu || item.subcategorias) && <ArrowRight className="w-5 h-5 text-neutral-400" />}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      )}
     </header>
   )
 }

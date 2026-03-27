@@ -18,7 +18,7 @@ import { db, storage } from "./firebase" // Asegúrate de que 'storage' se expor
 import type {
   Producto,
   Pack,
-  ZonaEntrega,
+  // ZonaEntrega,
   Categoria,
   HomeSection,
   Order, // Importar Order
@@ -376,28 +376,28 @@ static async getProductosDestacados(): Promise<Producto[]> {
   }
 
   // Zonas con cache
-  static async getZonas(): Promise<ZonaEntrega[]> {
-    const cacheKey = 'zonas'
-    const cached = cache.get<ZonaEntrega[]>(cacheKey)
-    if (cached) {
-      Logger.debug("📦 Cache hit: getZonas")
-      return cached
-    }
+  // static async getZonas(): Promise<ZonaEntrega[]> {
+  //   const cacheKey = 'zonas'
+  //   const cached = cache.get<ZonaEntrega[]>(cacheKey)
+  //   if (cached) {
+  //     Logger.debug("📦 Cache hit: getZonas")
+  //     return cached
+  //   }
 
-    try {
-      const snapshot = await getDocs(collection(db, "zonas"))
-      const zonas = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...serializeFirestoreData(doc.data())
-      })) as ZonaEntrega[]
+  //   try {
+  //     const snapshot = await getDocs(collection(db, "zonas"))
+  //     const zonas = snapshot.docs.map((doc) => ({
+  //       id: doc.id,
+  //       ...serializeFirestoreData(doc.data())
+  //     })) as ZonaEntrega[]
       
-      cache.set(cacheKey, zonas)
-      return zonas
-    } catch (error) {
-      Logger.error("❌ Error en getZonas:", error)
-      return []
-    }
-  }
+  //     cache.set(cacheKey, zonas)
+  //     return zonas
+  //   } catch (error) {
+  //     Logger.error("❌ Error en getZonas:", error)
+  //     return []
+  //   }
+  // }
 
 
 

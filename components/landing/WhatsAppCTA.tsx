@@ -6,18 +6,23 @@ export default function WhatsAppCTA() {
   const whatsappMessage = "Hola, tengo una consulta sobre las salsas de Comida Casera."
 
   return (
-    <section className="bg-primary-600 py-12 px-4 sm:px-6 lg:px-8 text-center">
-      <h2 className="text-3xl font-bold text-white mb-6">¿Tenés otra consulta?</h2>
-      <a
-        href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <Button className="bg-white text-primary-600 hover:bg-primary-50 hover:text-primary-700 text-lg px-8 py-6 rounded-full shadow-lg transition-all duration-300 flex items-center gap-3">
-          <MessageCircle className="w-6 h-6" />
-          Contactanos a WhatsApp
-        </Button>
-      </a>
+    <section className="py-16 bg-primary-50 text-center">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-6">¿Tenés otra consulta?</h2>
+        <p className="text-xl mb-8 text-neutral-700">
+          Te ayudamos por WhatsApp. Nuestro equipo está listo para responder todas tus preguntas.
+        </p>
+        <a
+          href="https://wa.me/5493413557400"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center px-8 py-4 bg-[#25D366] text-white font-semibold rounded-lg hover:bg-[#1DA851] transition-colors"
+          aria-label="Chatear por WhatsApp con Paula Pastas"
+        >
+          <MessageCircle className="w-5 h-5 mr-2" />
+          Hablemos por WhatsApp
+        </a>
+      </div>
     </section>
   )
 }
