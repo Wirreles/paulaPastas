@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { ArrowRight, Leaf, Award } from "lucide-react"
+import Image from "next/image"
 import { HeroImage } from "@/components/ui/ImageWrapper" // Ajusta la ruta según tu proyecto
-
 export default function HeroSection() {
     const heroImage = "/home-sections/hero-main-image.webp"
 
@@ -9,15 +9,19 @@ export default function HeroSection() {
         <section className="relative flex flex-col lg:flex-row items-center justify-center lg:justify-between min-h-[80vh] lg:h-[70vh] bg-gradient-to-b from-primary-350 to-primary-550 overflow-hidden">
 
             {/* 1. Contenedor de Imagen: Eliminamos 'order-2' para que sea lo primero en el DOM */}
+            {/* Contenedor de Imagen: Priorizamos su renderizado para el LCP */}
             <div className="relative w-full lg:w-1/2 aspect-video lg:h-full">
-                <HeroImage
+                <Image
                     src={heroImage}
                     alt="Pasta artesanal en Rosario, plato de ravioles con salsa"
-                    // sizes optimizado: en móvil es 100vw, en desktop es 50vw
+                    fill
+                    className="object-cover w-full h-full"
+                    priority={true} // Instrucción crítica para el navegador
+                    loading="eager" // Fuerza la carga inmediata
                     sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="object-cover"
                 />
             </div>
+
 
             {/* 2. Contenedor de Texto: Ahora es order-2 en móvil, no afecta al LCP */}
             <div className="relative z-10 text-center lg:text-left w-full lg:w-1/2 max-w-4xl mx-auto lg:mx-0 py-8 lg:py-0 px-4 sm:px-6 lg:px-8">
