@@ -27,7 +27,7 @@ export function ImageWrapper({
   fallback = "/placeholder.svg",
   priority = false,
   sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
-  quality = 65, // ⚡ Reducido de 75 a 65 para ahorrar esos 25KB críticos en móviles
+  quality = 65,
   width,
   height,
   fill = false,
@@ -37,19 +37,14 @@ export function ImageWrapper({
   onLoad,
   onError,
 }: ImageWrapperProps) {
-  // 1. Evitamos el doble renderizado: calculamos el SRC inicial directamente.
-  // Usamos un estado para manejar ÚNICAMENTE el error de carga.
   const [hasError, setHasError] = useState(false);
   const [lastSrc, setLastSrc] = useState(src);
 
-  // 2. Si el 'src' cambia desde el padre, reseteamos el estado de error
   if (src !== lastSrc) {
     setHasError(false);
     setLastSrc(src);
   }
 
-  // 3. Determinamos la fuente a mostrar. 
-  // validateImageUrl se ejecuta en el render, no en un useEffect, eliminando el "flicker".
   const resolvedSrc = useMemo(() => {
     if (hasError) return fallback;
     return validateImageUrl(src, fallback);
@@ -63,7 +58,7 @@ export function ImageWrapper({
   }
 
   return (
-    <div className="relative w-full h-full overflow-hidden">
+    <div className="relative w-full h-full overflow-hidden bg-neutral-100">
       <Image
         src={resolvedSrc}
         alt={alt}
@@ -73,15 +68,17 @@ export function ImageWrapper({
         priority={priority}
         sizes={sizes}
         quality={quality}
-        // Si es prioridad, eliminamos el lazy loading para que el navegador actúe de inmediato
-        loading={priority ? undefined : loading ?? "lazy"}
-        className={`${className} transition-opacity duration-300`}
+        // 1. Si es prioridad, el navegador debe ignorar el 'lazy loading' por completo
+        loading={priority ? undefined : (loading ?? "lazy")}
+        // 2. CRÍTICO: Eliminamos 'transition-opacity' si la imagen es LCP (priority)
+        // Las transiciones retrasan el pintado final detectado por Lighthouse
+        className={`${className} ${!priority ? 'transition-opacity duration-300' : ''}`}
         onLoad={onLoad}
         onError={handleError}
-        // @ts-ignore: Propiedad válida en navegadores modernos para LCP
+        // @ts-ignore
         fetchPriority={fetchPriority}
-        // Optimizaciones extra para el motor de renderizado
-        decoding="async"
+        // 3. Forzamos 'sync' para imágenes prioritarias para eliminar el Render Delay
+        decoding={priority ? "sync" : "async"}
       />
     </div>
   )
@@ -123,7 +120,7 @@ export function HeroImage({
       className={className}
       priority={true}
       fetchPriority="high"
-      quality={70} // Un poco más de calidad para el Hero
+      quality={70}
       fill
       {...props}
     />
