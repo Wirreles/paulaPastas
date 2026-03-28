@@ -35,7 +35,7 @@ export default function NosotrosPage() {
     name: "Paula Pastas",
     description: "Pastas artesanales elaboradas con recetas familiares e ingredientes nobles en Rosario",
     url: "https://paulapastas.com",
-    logo: "https://paulapastas.com/pplog2.png",
+    logo: "https://paulapastas.com/pplog2.webp",
     address: {
       "@type": "PostalAddress",
       addressLocality: "Rosario",
@@ -44,7 +44,7 @@ export default function NosotrosPage() {
     },
     areaServed: [
       "Villa Gobernador Gálvez",
-      "Funes", 
+      "Funes",
       "Alvear",
       "Fisherton",
       "Zona Sur de Rosario"
@@ -84,7 +84,7 @@ export default function NosotrosPage() {
 
   const zonasCobertura = [
     "Villa Gobernador Gálvez",
-    "Funes", 
+    "Funes",
     "Alvear",
     "Fisherton",
     "Zona Sur de Rosario",
@@ -235,7 +235,7 @@ export default function NosotrosPage() {
                   <p className="text-xl font-semibold text-primary-700">
                     ¿El resultado? Una experiencia gourmet sin esfuerzo.
                   </p>
-                  
+
                   <div className="mt-8 space-y-3">
                     <div className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-primary-600 rounded-full"></div>
@@ -322,7 +322,7 @@ export default function NosotrosPage() {
             <p className="text-lg text-neutral-700 mb-8 max-w-2xl mx-auto">
               Explorá nuestras pastas o seguinos en Instagram para ver cómo se viven los "momentos Paula" en otras mesas.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/pastas"

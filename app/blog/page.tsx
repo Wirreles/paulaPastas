@@ -52,7 +52,7 @@ export default async function BlogPage() {
       name: "Paula Pastas",
       logo: {
         "@type": "ImageObject",
-        url: "https://paulapastas.com/pplog2.png",
+        url: "https://paulapastas.com/pplog2.webp",
       },
     },
     breadcrumb: {

@@ -1,27 +1,26 @@
 import Link from "next/link"
-import Image from "next/image"
 import { ArrowRight, Leaf, Award } from "lucide-react"
+import { HeroImage } from "@/components/ui/ImageWrapper" // Ajusta la ruta según tu proyecto
 
 export default function HeroSection() {
     const heroImage = "/home-sections/hero-main-image.webp"
 
     return (
         <section className="relative flex flex-col lg:flex-row items-center justify-center lg:justify-between min-h-[80vh] lg:h-[70vh] bg-gradient-to-b from-primary-350 to-primary-550 overflow-hidden">
-            {/* Contenedor de Imagen: Priorizamos su renderizado para el LCP */}
-            <div className="relative w-full lg:w-1/2 aspect-video lg:h-full order-2 lg:order-1">
-                <Image
+
+            {/* 1. Contenedor de Imagen: Eliminamos 'order-2' para que sea lo primero en el DOM */}
+            <div className="relative w-full lg:w-1/2 aspect-video lg:h-full">
+                <HeroImage
                     src={heroImage}
                     alt="Pasta artesanal en Rosario, plato de ravioles con salsa"
-                    fill
-                    className="object-cover w-full h-full"
-                    priority={true} // Instrucción crítica para el navegador
-                    loading="eager" // Fuerza la carga inmediata
+                    // sizes optimizado: en móvil es 100vw, en desktop es 50vw
                     sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
                 />
             </div>
 
-            {/* Contenedor de Texto */}
-            <div className="relative z-10 text-center lg:text-left w-full lg:w-1/2 max-w-4xl mx-auto lg:mx-0 order-1 lg:order-2 py-8 lg:py-0 px-4 sm:px-6 lg:px-8">
+            {/* 2. Contenedor de Texto: Ahora es order-2 en móvil, no afecta al LCP */}
+            <div className="relative z-10 text-center lg:text-left w-full lg:w-1/2 max-w-4xl mx-auto lg:mx-0 py-8 lg:py-0 px-4 sm:px-6 lg:px-8">
                 <div className="inline-flex items-center gap-2 bg-primary-50/90 rounded-full px-4 py-2 text-sm font-medium text-neutral-700 mb-4">
                     <Leaf className="w-4 h-4 text-primary-600" />
                     <span>Elaboración 100% Artesanal</span>

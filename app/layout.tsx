@@ -5,10 +5,22 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Providers } from "@/components/Providers";
-import Analytics from "@/components/Analytics"; // Importamos el nuevo componente
+import Analytics from "@/components/Analytics";
 
-const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
-const playfair = Playfair_Display({ subsets: ["latin"], display: "swap", variable: "--font-playfair" });
+// 1. Optimización de fuentes: Solo cargamos lo estrictamente necesario
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+  // preload: true // Next.js lo hace por defecto
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-playfair",
+  weight: ["700"] // Si solo usas negrita para títulos, especifícalo aquí
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://paulapastas.com"),
@@ -16,10 +28,10 @@ export const metadata: Metadata = {
   description: "Pastas frescas y salsas caseras hechas con amor y tradición. ¡Pedí online!",
   icons: {
     icon: [
-      { url: "/pplog2.png" },
-      { url: "/pplog2.png", sizes: "192x192", type: "image/png" },
+      { url: "/pplog2.webp" },
+      { url: "/pplog2.webp", sizes: "192x192", type: "image/webp" },
     ],
-    apple: "/pplog2.png",
+    apple: "/pplog2.webp",
   },
   alternates: { canonical: "/" },
   openGraph: {
@@ -34,23 +46,29 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="es" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        {/* CORRECCIÓN: crossorigin -> crossOrigin */}
-        <link rel="preconnect" href="https://connect.facebook.net" crossOrigin="anonymous" />
+        {/* DNS Prefetch es más ligero que Preconnect para analíticas que no son críticas para el LCP */}
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://connect.facebook.net" />
       </head>
 
       <body
         className={`${inter.className} flex flex-col min-h-screen antialiased`}
         suppressHydrationWarning
       >
-        {/* Los scripts ahora se cargan de forma diferida mediante este componente */}
-        <Analytics />
-
         <Providers>
+          {/* El Header es lo primero que se pinta. Asegúrate que sus iconos sean SVGs inline 
+              y no una librería de fuentes pesada como FontAwesome */}
           <Header />
-          <main className="flex-grow">{children}</main>
+
+          <main className="flex-grow">
+            {children}
+          </main>
+
           <Footer />
         </Providers>
+
+        {/* 2. Movemos Analytics al final del body para que no compita con el LCP del contenido */}
+        <Analytics />
 
         <noscript>
           <iframe

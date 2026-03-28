@@ -40,6 +40,7 @@ export function ImageWrapper({
   const [hasError, setHasError] = useState(false);
   const [lastSrc, setLastSrc] = useState(src);
 
+  // Sincronización de estado sin useEffect para evitar ciclos de renderizado extra
   if (src !== lastSrc) {
     setHasError(false);
     setLastSrc(src);
@@ -50,36 +51,42 @@ export function ImageWrapper({
     return validateImageUrl(src, fallback);
   }, [src, fallback, hasError]);
 
-  const handleError = () => {
-    if (!hasError) {
-      setHasError(true);
-      onError?.();
-    }
+  // Componente de imagen puro y duro
+  const imageElement = (
+    <Image
+      src={resolvedSrc}
+      alt={alt}
+      fill={fill}
+      width={!fill ? width ?? 500 : undefined}
+      height={!fill ? height ?? 500 : undefined}
+      priority={priority}
+      sizes={sizes}
+      quality={quality}
+      // Si es LCP, prohibimos cualquier forma de lazy loading
+      loading={priority ? undefined : (loading ?? "lazy")}
+      // Eliminamos transiciones en LCP para que Lighthouse no detecte "retraso de visibilidad"
+      className={`${className} ${!priority ? 'transition-opacity duration-300' : 'opacity-100'}`}
+      onLoad={onLoad}
+      onError={() => setHasError(true)}
+      // Forzamos al navegador a priorizar la descarga y el renderizado (sync)
+      // @ts-ignore
+      fetchPriority={priority ? "high" : fetchPriority}
+      decoding={priority ? "sync" : "async"}
+    />
+  );
+
+  /**
+   * ESTRATEGIA ULTRA-LCP: 
+   * Si es prioridad, renderizamos la imagen SIN el contenedor div relativo.
+   * Esto elimina una capa de cálculo de Layout (Reflow) y acelera el pintado final.
+   */
+  if (priority) {
+    return imageElement;
   }
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-neutral-100">
-      <Image
-        src={resolvedSrc}
-        alt={alt}
-        fill={fill}
-        width={!fill ? width ?? 500 : undefined}
-        height={!fill ? height ?? 500 : undefined}
-        priority={priority}
-        sizes={sizes}
-        quality={quality}
-        // 1. Si es prioridad, el navegador debe ignorar el 'lazy loading' por completo
-        loading={priority ? undefined : (loading ?? "lazy")}
-        // 2. CRÍTICO: Eliminamos 'transition-opacity' si la imagen es LCP (priority)
-        // Las transiciones retrasan el pintado final detectado por Lighthouse
-        className={`${className} ${!priority ? 'transition-opacity duration-300' : ''}`}
-        onLoad={onLoad}
-        onError={handleError}
-        // @ts-ignore
-        fetchPriority={fetchPriority}
-        // 3. Forzamos 'sync' para imágenes prioritarias para eliminar el Render Delay
-        decoding={priority ? "sync" : "async"}
-      />
+    <div className="relative w-full h-full overflow-hidden bg-neutral-100/50">
+      {imageElement}
     </div>
   )
 }
@@ -100,13 +107,13 @@ export function ProductImage({
       fallback={fallback}
       className={className}
       priority={priority}
-      fill
+      fill // Las imágenes de producto suelen requerir fill para el contenedor del card
       {...props}
     />
   )
 }
 
-/* Imagen Hero (Siempre prioridad máxima) */
+/* Imagen Hero (La que define el LCP real) */
 export function HeroImage({
   src,
   alt,
@@ -120,7 +127,8 @@ export function HeroImage({
       className={className}
       priority={true}
       fetchPriority="high"
-      quality={70}
+      loading="eager"
+      quality={75}
       fill
       {...props}
     />

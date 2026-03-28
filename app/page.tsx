@@ -10,14 +10,7 @@ import HeroSection from "@/components/home/HeroSection"
 import FeaturedProducts from "@/components/home/FeaturedProducts"
 import CategoriesSection from "@/components/home/CategoriesSection"
 import InfoSection from "@/components/home/InfoSection"
-// import GallerySection from "@/components/home/GallerySection"
-// import WhyChooseUs from "@/components/home/WhyChooseUs"
-// import ReviewsCarousel from "@/components/home/ReviewsCarousel" 
-// import QualitySection from "@/components/home/QualitySection"
-// import FaqAccordion from "@/components/home/FaqAccordion"
 import ContactCTA from "@/components/home/ContactCTA"
-// import { NewsletterForm } from "@/components/ui/NewsletterForm" 
-import { ImagePreloader } from "@/components/ui/ImagePreloader"
 import { ImageDebugInfo } from "@/components/ui/ImageDebugInfo"
 
 import dynamic from 'next/dynamic'
@@ -153,7 +146,6 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewsJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
-      <ImagePreloader images={imagesToPreload} priority={true} />
 
       {/* Secciones del Home */}
       <HeroSection />

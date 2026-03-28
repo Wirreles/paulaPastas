@@ -14,7 +14,7 @@ export default function Footer() {
             <Link href="/" className="flex items-center space-x-2 group">
               <div className="w-12 h-12 relative">
                 <Image
-                  src="/pplog2.png"
+                  src="/pplog2.webp"
                   alt="Logo Paula Pastas"
                   fill
                   sizes="48px"

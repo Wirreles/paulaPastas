@@ -71,7 +71,7 @@ export default function LoginPage() {
             <div className="flex items-center space-x-3">
               <div className="w-20 h-20 flex items-center justify-center">
                 <img
-                  src="/pplog2.png"
+                  src="/pplog2.webp"
                   alt="Paula Pastas Logo"
                   className="w-full h-full object-contain"
                 />
@@ -82,7 +82,7 @@ export default function LoginPage() {
               </div> */}
             </div>
           </div>
-          
+
           <h2 className="font-display text-3xl font-bold text-neutral-900">¡Bienvenido!</h2>
           <p className="mt-2 text-sm text-neutral-600">Inicia sesión para acceder a tu cuenta</p>
         </div>
