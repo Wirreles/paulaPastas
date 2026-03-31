@@ -22,10 +22,11 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     // Reducimos el TTL a un valor más manejable (1 día) para evitar imágenes "zombies"
-    minimumCacheTTL: 86400 
+    minimumCacheTTL: 31536000
   },
 
   experimental: {
+    optimizePackageImports: ['lucide-react'],
     serverActions: {
       allowedOrigins: ['localhost:3000', 'paulapastas.com'],
     },

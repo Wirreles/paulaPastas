@@ -11,7 +11,7 @@ import ProductCard from "@/components/ProductCard"
 // Componentes de Cliente (Islands)
 import ProductCarousel from "./ProductCarousel"
 import AddToCart from "./AddToCart"
-import ReviewsSection from './ReviewsSection'
+import ReviewsLoader from "./ReviewsLoader";
 
 interface ProductoPageProps {
   params: Promise<{
@@ -162,6 +162,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
 
   return (
     <>
+      <link rel="preload" href={productImages[0]} as="image" fetchPriority="high" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }}
@@ -305,9 +306,9 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
           </section>
 
           {/* Sección de Reviews */}
-          <ReviewsSection
-            productoId={producto.id || ""}
-            productoNombre={producto.nombre}
+          <ReviewsLoader
+            productoId={producto.id!}
+            productoNombre={producto.nombre!}
           />
 
           {/* Productos Relacionados */}

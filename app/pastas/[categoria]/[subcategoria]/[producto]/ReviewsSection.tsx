@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react"
 import { Star, Snowflake, Award, Leaf } from "lucide-react"
+
 import { FirebaseService } from "@/lib/firebase-service"
 import dynamic from 'next/dynamic'
 import type { Review as ReviewType } from "@/lib/types"

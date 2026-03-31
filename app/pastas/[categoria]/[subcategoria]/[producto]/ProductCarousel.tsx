@@ -32,6 +32,7 @@ export default function ProductCarousel({ images, producto }: ProductCarouselPro
                         alt={`${producto.nombre} - vista ${index + 1}`}
                         fill
                         priority={index === 0} // ✅ Crítico para el LCP: Carga la primera imagen de inmediato
+                        fetchPriority={index === 0 ? "high" : "low"}
                         sizes="(max-width: 768px) 100vw, 50vw"
                         className={`object-cover transition-opacity duration-500 ${index === currentIndex ? "opacity-100" : "opacity-0"
                             }`}
