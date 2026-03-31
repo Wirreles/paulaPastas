@@ -50,35 +50,6 @@ export const metadata: Metadata = {
   },
 }
 
-// Serializa un objeto de Firestore a plain object eliminando Timestamps y valores no serializables.
-// Next.js 15 lanza error al pasar objetos con toJSON() (como Timestamp) a Client Components.
-function serializeProducto(p: any) {
-  return {
-    id: p.id ?? null,
-    nombre: p.nombre ?? "",
-    slug: p.slug ?? "",
-    descripcion: p.descripcion ?? "",
-    descripcionAcortada: p.descripcionAcortada ?? "",
-    precio: p.precio ?? 0,
-    categoria: p.categoria ?? "",
-    subcategoria: p.subcategoria ?? "",
-    imagen: p.imagen ?? "",
-    ingredientes: p.ingredientes ?? [],
-    disponible: p.disponible ?? true,
-    destacado: p.destacado ?? false,
-    porciones: p.porciones ?? null,
-    orden: p.orden ?? null,
-    comoPreparar: p.comoPreparar ?? null,
-    historiaPlato: p.historiaPlato ?? null,
-    preguntasFrecuentes: p.preguntasFrecuentes ?? [],
-    seoTitle: p.seoTitle ?? "",
-    seoDescription: p.seoDescription ?? "",
-    seoKeywords: p.seoKeywords ?? [],
-    // fechaCreacion y fechaActualizacion son Timestamps de Firestore (tienen toJSON())
-    // Next.js 15 no puede serializarlos para pasarlos a Client Components → se omiten
-  }
-}
-
 export default async function HomePage() {
   // Fetch de datos en el Servidor
   let productosDestacados: any[] = []
@@ -137,10 +108,6 @@ export default async function HomePage() {
     })),
   }
 
-  // Hero image para el preloader
-  const heroImage = "/home-sections/hero-main-image.webp"
-  const imagesToPreload = [heroImage]
-
   return (
     <div className="min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewsJsonLd) }} />
@@ -175,9 +142,9 @@ export default async function HomePage() {
       </section>
 
       {/* Debug Info solo en Dev */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* {process.env.NODE_ENV === 'development' && (
         <ImageDebugInfo src={heroImage} alt="Hero" componentName="Home Hero" />
-      )}
+      )} */}
     </div>
   )
 }

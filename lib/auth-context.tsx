@@ -1,11 +1,11 @@
 "use client"
 
-import type React from "react"
-
-import { createContext, useContext, useEffect, useState } from "react"
-import { type User, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from "firebase/auth"
+import React, { createContext, useContext, useEffect, useState, useMemo } from "react"
+// 1. IMPORTANTE: Eliminamos los imports pesados de 'firebase/auth' de aquí arriba.
+// Solo dejamos los tipos y lo que sea indispensable.
+import type { User } from "firebase/auth"
 import { doc, getDoc, setDoc } from "firebase/firestore"
-import { auth, db } from "./firebase"
+import { db } from "./firebase"
 import type { Usuario } from "./types"
 
 interface AuthContextType {
@@ -26,92 +26,103 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user)
+    // 2. CARGA DINÁMICA: Firebase Auth se descarga solo cuando el componente se monta.
+    const initAuth = async () => {
+      try {
+        const { getAuth, onAuthStateChanged } = await import("firebase/auth")
+        const { auth } = await import("./firebase") // Importamos la instancia de auth dinámicamente
 
-      if (user) {
-        // Obtener datos adicionales del usuario
-        const userDoc = await getDoc(doc(db, "usuarios", user.uid))
-        if (userDoc.exists()) {
-          setUserData(userDoc.data() as Usuario)
-        }
-      } else {
-        setUserData(null)
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+          setUser(firebaseUser)
+
+          if (firebaseUser) {
+            const userDoc = await getDoc(doc(db, "usuarios", firebaseUser.uid))
+            if (userDoc.exists()) {
+              setUserData(userDoc.data() as Usuario)
+            }
+          } else {
+            setUserData(null)
+          }
+          setLoading(false)
+        })
+
+        return unsubscribe
+      } catch (error) {
+        console.error("Error inicializando Auth:", error)
+        setLoading(false)
       }
+    }
 
-      setLoading(false)
-    })
+    const authPromise = initAuth()
 
-    return () => unsubscribe()
+    // Cleanup: esperamos a que la promesa resuelva para ejecutar el unsubscribe
+    return () => {
+      authPromise.then(unsubscribe => unsubscribe && unsubscribe())
+    }
   }, [])
 
   const login = async (email: string, password: string) => {
+    const { signInWithEmailAndPassword, getAuth } = await import("firebase/auth")
+    const { auth } = await import("./firebase")
+
     const userCredential = await signInWithEmailAndPassword(auth, email, password)
-    const user = userCredential.user
-    
-    // Obtener datos adicionales del usuario inmediatamente después del login
-    const userDoc = await getDoc(doc(db, "usuarios", user.uid))
+    const firebaseUser = userCredential.user
+
+    const userDoc = await getDoc(doc(db, "usuarios", firebaseUser.uid))
     if (userDoc.exists()) {
       setUserData(userDoc.data() as Usuario)
     }
   }
 
   const register = async (email: string, password: string, nombre: string) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-    const user = userCredential.user
+    const { createUserWithEmailAndPassword } = await import("firebase/auth")
+    const { auth } = await import("./firebase")
 
-    // Crear documento en Firestore con rol de cliente por defecto
-    await setDoc(doc(db, "usuarios", user.uid), {
-      uid: user.uid,
-      email: user.email,
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+    const firebaseUser = userCredential.user
+
+    await setDoc(doc(db, "usuarios", firebaseUser.uid), {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
       nombre: nombre,
-      rol: "cliente", // Por defecto todos los registros son clientes
+      rol: "cliente",
       fechaCreacion: new Date(),
     })
   }
 
   const logout = async () => {
     try {
-      // Limpiar datos del estado local
+      const { signOut } = await import("firebase/auth")
+      const { auth } = await import("./firebase")
+
       setUser(null)
       setUserData(null)
-      
-      // Cerrar sesión en Firebase
       await signOut(auth)
-      
-      // Limpiar cualquier dato almacenado en localStorage/sessionStorage
+
       if (typeof window !== 'undefined') {
         localStorage.clear()
         sessionStorage.clear()
       }
-      
-      console.log("✅ Sesión cerrada completamente")
     } catch (error) {
       console.error("Error al cerrar sesión:", error)
-      // Aún así limpiar los datos locales
-      setUser(null)
-      setUserData(null)
-      if (typeof window !== 'undefined') {
-        localStorage.clear()
-        sessionStorage.clear()
-      }
     }
   }
 
-  const isAdmin = userData?.rol === "admin"
+  // 3. OPTIMIZACIÓN DE RENDIMIENTO: Evita re-renders innecesarios en los componentes hijos
+  const isAdmin = useMemo(() => userData?.rol === "admin", [userData])
+
+  const value = useMemo(() => ({
+    user,
+    userData,
+    loading,
+    login,
+    register,
+    logout,
+    isAdmin,
+  }), [user, userData, loading, isAdmin])
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        userData,
-        loading,
-        login,
-        register,
-        logout,
-        isAdmin,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )

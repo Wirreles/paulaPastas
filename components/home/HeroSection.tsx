@@ -18,6 +18,7 @@ export default function HeroSection() {
                     className="object-cover w-full h-full"
                     priority={true} // Instrucción crítica para el navegador
                     loading="eager" // Fuerza la carga inmediata
+                    fetchPriority="high" // Refuerza la prioridad en navegadores modernos
                     sizes="(max-width: 1024px) 100vw, 50vw"
                 />
             </div>
