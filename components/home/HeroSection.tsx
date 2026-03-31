@@ -21,7 +21,15 @@ export default function HeroSection() {
                     sizes="(max-width: 1024px) 100vw, 50vw"
                 />
             </div>
-
+            {/* <div className="relative w-full lg:w-1/2 aspect-video lg:h-full">
+                <HeroImage
+                    src={heroImage}
+                    alt="Pasta artesanal en Rosario, plato de ravioles con salsa"
+                
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
+                />
+            </div> */}
 
             {/* 2. Contenedor de Texto: Ahora es order-2 en móvil, no afecta al LCP */}
             <div className="relative z-10 text-center lg:text-left w-full lg:w-1/2 max-w-4xl mx-auto lg:mx-0 py-8 lg:py-0 px-4 sm:px-6 lg:px-8">

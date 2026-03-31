@@ -1,65 +1,36 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useRef } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { Star, Snowflake, Award, Leaf } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import dynamic from 'next/dynamic'
+import type { Review as ReviewType } from "@/lib/types"
+
+// El ReviewForm sí puede ser dynamic porque estamos dentro de un Client Component
 const ReviewForm = dynamic(() => import('@/components/ReviewForm'), {
     ssr: false,
     loading: () => <div className="animate-pulse h-[480px] w-full bg-neutral-100 rounded-2xl" />
 });
 
-import type { Review as ReviewType } from "@/lib/types"
-
-
 interface ReviewsSectionProps {
     productoId: string
     productoNombre: string
-    onStatsChange?: (data: { avg: number; count: number; reviews?: ReviewType[] }) => void
 }
 
-export default function ReviewsSection({
-    productoId,
-    productoNombre,
-    onStatsChange,
-}: ReviewsSectionProps) {
+export default function ReviewsSection({ productoId, productoNombre }: ReviewsSectionProps) {
     const [reviews, setReviews] = useState<ReviewType[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [showReviewForm, setShowReviewForm] = useState(false)
     const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set())
 
-    // ✅ REFERENCIA PARA EVITAR BUCLE INFINITO
-    const statsChangeRef = useRef(onStatsChange)
-
-    // Sincronizamos la ref con la prop por si el padre cambia la función
-    useEffect(() => {
-        statsChangeRef.current = onStatsChange
-    }, [onStatsChange])
-
-    // ✅ CARGA DE DATOS MEMOIZADA
     const loadReviews = useCallback(async () => {
         try {
             setIsLoading(true)
             const productReviews = await FirebaseService.getReviewsByProduct(productoId)
             const approvedReviews = productReviews.filter((r) => r.aprobada === true)
-
             setReviews(approvedReviews)
-
-            // ✅ ENVÍO DE STATS USANDO LA REF
-            if (approvedReviews.length > 0) {
-                const sum = approvedReviews.reduce((acc, r) => acc + (r.rating || 0), 0)
-                const avg = sum / approvedReviews.length
-
-                statsChangeRef.current?.({
-                    avg,
-                    count: approvedReviews.length,
-                    reviews: approvedReviews.slice(0, 5),
-                })
-            } else {
-                statsChangeRef.current?.({ avg: 0, count: 0, reviews: [] })
-            }
         } catch (error) {
-            console.error("Error en reviews:", error)
+            console.error("Error cargando reviews de Paula Pastas:", error)
         } finally {
             setIsLoading(false)
         }
@@ -115,14 +86,12 @@ export default function ReviewsSection({
                             {[1, 2, 3, 4, 5].map((star) => (
                                 <Star
                                     key={star}
-                                    className={`w-6 h-6 ${star <= Math.round(avgRating) ? "text-yellow-400 fill-current" : "text-neutral-300"
-                                        }`}
+                                    className={`w-6 h-6 ${star <= Math.round(avgRating) ? "text-yellow-400 fill-current" : "text-neutral-300"}`}
                                 />
                             ))}
                         </div>
                         <div className="text-xl font-bold text-neutral-900">
-                            {reviews.length > 0 ? avgRating.toFixed(1) : "—"}{" "}
-                            <span className="text-neutral-600">★</span>
+                            {reviews.length > 0 ? avgRating.toFixed(1) : "—"} <span className="text-neutral-600">★</span>
                         </div>
                     </div>
 
@@ -130,16 +99,11 @@ export default function ReviewsSection({
                         {reviews.length > 0 ? `${reviews.length} opiniones` : "Aún sin opiniones"}
                     </p>
 
+                    {/* Tags de Confianza */}
                     <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mt-4 text-sm text-neutral-700 font-medium">
-                        <span className="flex items-center gap-1.5">
-                            <Snowflake className="w-4 h-4 text-primary-600" /> Congelados
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                            <Award className="w-4 h-4 text-primary-600" /> Sin aditivos
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                            <Leaf className="w-4 h-4 text-primary-600" /> Hecho en Rosario
-                        </span>
+                        <span className="flex items-center gap-1.5"><Snowflake className="w-4 h-4 text-primary-600" /> Congelados</span>
+                        <span className="flex items-center gap-1.5"><Award className="w-4 h-4 text-primary-600" /> Sin aditivos</span>
+                        <span className="flex items-center gap-1.5"><Leaf className="w-4 h-4 text-primary-600" /> Hecho en Rosario</span>
                     </div>
 
                     <button
@@ -150,6 +114,7 @@ export default function ReviewsSection({
                     </button>
                 </div>
 
+                {/* Listado de Reviews */}
                 {reviews.length > 0 ? (
                     <div className="relative">
                         <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-4">
@@ -163,22 +128,14 @@ export default function ReviewsSection({
                                     >
                                         <div className="flex justify-center mb-4 text-yellow-400">
                                             {[1, 2, 3, 4, 5].map((star) => (
-                                                <Star
-                                                    key={star}
-                                                    className={`w-5 h-5 ${star <= review.rating ? "fill-current" : "text-neutral-200"
-                                                        }`}
-                                                />
+                                                <Star key={star} className={`w-5 h-5 ${star <= review.rating ? "fill-current" : "text-neutral-200"}`} />
                                             ))}
                                         </div>
 
                                         <div className="flex-1 flex flex-col justify-center">
-                                            <p
-                                                className={`text-neutral-700 italic leading-relaxed ${!isExpanded ? "line-clamp-4" : ""
-                                                    }`}
-                                            >
+                                            <p className={`text-neutral-700 italic leading-relaxed ${!isExpanded ? "line-clamp-4" : ""}`}>
                                                 "{review.testimonial}"
                                             </p>
-
                                             {review.testimonial.length > 140 && (
                                                 <button
                                                     onClick={() => toggleReviewExpansion(review.id || "")}
@@ -188,10 +145,7 @@ export default function ReviewsSection({
                                                 </button>
                                             )}
                                         </div>
-
-                                        <p className="text-neutral-900 font-bold mt-6 border-t border-neutral-50 pt-4">
-                                            {review.userName}
-                                        </p>
+                                        <p className="text-neutral-900 font-bold mt-6 border-t border-neutral-50 pt-4">{review.userName}</p>
                                     </div>
                                 )
                             })}

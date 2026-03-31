@@ -501,7 +501,7 @@ export default function ProductoPageClient({
           <ReviewsSection
             productoId={producto.id || ""}
             productoNombre={producto.nombre}
-            onStatsChange={handleStatsChange}
+          // onStatsChange={handleStatsChange} 
           />
 
           {/* Productos Relacionados */}
