@@ -41,8 +41,8 @@ const storage = getStorage(app);
 export { app, auth, db, storage };
 
 // Log de desarrollo (opcional)
-if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
-  console.log("🔥 Firebase optimizado (No-Iframe mode)");
-}
+// if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
+//   console.log("🔥 Firebase optimizado (No-Iframe mode)");
+// }
 
 export default app;
