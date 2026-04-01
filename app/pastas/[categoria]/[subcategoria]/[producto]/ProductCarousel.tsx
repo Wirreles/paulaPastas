@@ -25,19 +25,28 @@ export default function ProductCarousel({ images, producto }: ProductCarouselPro
     return (
         <div className="relative group">
             <div className="aspect-square relative overflow-hidden rounded-3xl bg-neutral-100 shadow-inner">
-                {images.map((img, index) => (
-                    <Image
-                        key={img}
-                        src={img}
-                        alt={`${producto.nombre} - vista ${index + 1}`}
-                        fill
-                        priority={index === 0} // ✅ Crítico para el LCP: Carga la primera imagen de inmediato
-                        fetchPriority={index === 0 ? "high" : "low"}
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        className={`object-cover transition-opacity duration-500 ${index === currentIndex ? "opacity-100" : "opacity-0"
-                            }`}
-                    />
-                ))}
+                {images.map((img, index) => {
+                    const isFirst = index === 0;
+                    return (
+                        // Modificación sugerida dentro del map de imágenes:
+                        <Image
+                            key={img}
+                            src={img}
+                            alt={`${producto.nombre} - vista ${index + 1}`}
+                            fill
+                            priority={index === 0} // Prioridad máxima de Next.js
+                            fetchPriority={index === 0 ? "high" : "low"} // Atributo nativo del navegador
+                            loading={index === 0 ? "eager" : "lazy"}
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                            className={`object-cover transition-opacity duration-500 ${index === currentIndex
+                                    ? "opacity-100 z-10"
+                                    : "opacity-0 z-0"
+                                }`}
+                            // Añadimos esto para evitar que la primera imagen parpadee al cargar
+                            style={index === 0 ? { opacity: 1 } : {}}
+                        />
+                    );
+                })}
             </div>
 
             {images.length > 1 && (

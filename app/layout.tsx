@@ -34,6 +34,10 @@ export const metadata: Metadata = {
     apple: "/pplog2.webp",
   },
   alternates: { canonical: "/" },
+  other: {
+    'preconnect': 'https://firestore.googleapis.com',
+    'dns-prefetch': 'https://firestore.googleapis.com',
+  },
   openGraph: {
     url: "https://paulapastas.com",
     siteName: "Paula Pastas",

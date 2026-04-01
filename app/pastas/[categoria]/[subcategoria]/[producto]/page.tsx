@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { cache } from "react"
+import { cache, Suspense } from "react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, ChevronRight } from "lucide-react"
@@ -31,6 +31,58 @@ const getProducto = cache(async (slug: string) => {
   }
 })
 
+// --- Componentes de Servidor Asíncronos para Streaming ---
+
+async function RelacionadosSection({ categoria, subcategoria, currentSlug }: { categoria: string, subcategoria: string, currentSlug: string }) {
+  try {
+    const productos = await FirebaseService.getProductos(categoria)
+    const filtrados = productos
+      .filter((p) => p.subcategoria === subcategoria && p.slug !== currentSlug)
+      .slice(0, 3)
+
+    if (filtrados.length === 0) return null
+
+    return (
+      <section className="mt-16">
+        <h3 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">
+          Otros {subcategoria} que te pueden gustar
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filtrados.map((rel) => <ProductCard key={rel.id} producto={rel} />)}
+        </div>
+      </section>
+    )
+  } catch (error) {
+    console.error("Error en RelacionadosSection:", error)
+    return null
+  }
+}
+
+async function ComplementariosSection() {
+  try {
+    const productos = await FirebaseService.getProductos("salsas")
+    const filtrados = productos.slice(0, 3)
+
+    if (filtrados.length === 0) return null
+
+    return (
+      <section className="mt-16">
+        <p className="text-xl sm:text-2xl font-semibold text-neutral-900 mb-8 text-center">Complementalo con</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filtrados.map((comp) => (
+            comp.id && <ProductCard key={comp.id} producto={comp} baseUrl={`/${comp.categoria}/${comp.subcategoria}`} />
+          ))}
+        </div>
+      </section>
+    )
+  } catch (error) {
+    console.error("Error en ComplementariosSection:", error)
+    return null
+  }
+}
+
+// --- Metadata ---
+
 export async function generateMetadata({ params }: ProductoPageProps): Promise<Metadata> {
   const { categoria, subcategoria, producto: productoSlug } = await params
   const producto = await getProducto(productoSlug)
@@ -45,15 +97,11 @@ export async function generateMetadata({ params }: ProductoPageProps): Promise<M
   return {
     title: producto.seoTitle || `${producto.nombre} | ${subcategoria} | Paula Pastas`,
     description: producto.seoDescription || producto.descripcion,
-    keywords:
-      producto.seoKeywords?.join(", ") ||
-      `${producto.nombre.toLowerCase()}, ${subcategoria}, ${categoria}, pastas caseras, artesanales, rosario, delivery`,
+    keywords: producto.seoKeywords?.join(", ") || `${producto.nombre.toLowerCase()}, ${subcategoria}, ${categoria}, rosario`,
     openGraph: {
       title: `${producto.nombre} | Paula Pastas`,
       description: producto.descripcion,
-      images: producto.imagen
-        ? [{ url: producto.imagen, width: 800, height: 600, alt: producto.nombre }]
-        : [],
+      images: producto.imagen ? [{ url: producto.imagen, width: 800, height: 600, alt: producto.nombre }] : [],
       type: "website",
       locale: "es_AR",
     },
@@ -63,27 +111,7 @@ export async function generateMetadata({ params }: ProductoPageProps): Promise<M
   }
 }
 
-async function getProductosRelacionados(categoria: string, subcategoria: string, currentSlug: string) {
-  try {
-    const productos = await FirebaseService.getProductos(categoria)
-    return productos
-      .filter((p) => p.subcategoria === subcategoria && p.slug !== currentSlug)
-      .slice(0, 3)
-  } catch (error) {
-    console.error("Error fetching productos relacionados:", error)
-    return []
-  }
-}
-
-async function getProductosComplementarios() {
-  try {
-    const productos = await FirebaseService.getProductos("salsas")
-    return productos.slice(0, 3)
-  } catch (error) {
-    console.error("Error fetching productos complementarios:", error)
-    return []
-  }
-}
+// --- Página Principal ---
 
 export default async function ProductoPage({ params }: ProductoPageProps) {
   const { categoria, subcategoria, producto: productoSlug } = await params
@@ -92,11 +120,6 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
   if (!producto) {
     notFound()
   }
-
-  const [productosRelacionados, productosComplementarios] = await Promise.all([
-    getProductosRelacionados(categoria, subcategoria, productoSlug),
-    getProductosComplementarios(),
-  ])
 
   // Lógica de nombres y URLs
   const CATEGORY_NAMES: Record<string, string> = {
@@ -113,7 +136,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
   const backUrl = subcatUrl || getCategoryUrl(categoria)
   const canonicalUrl = getProductCanonicalUrl(producto)
 
-  // --- Generación de JSON-LD (SEO) ---
+  // SEO Schemas
   const hasFaqs = producto.preguntasFrecuentes && producto.preguntasFrecuentes.length > 0
   const faqJsonLd = hasFaqs ? {
     "@context": "https://schema.org",
@@ -121,10 +144,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
     mainEntity: producto.preguntasFrecuentes?.map((faq) => ({
       "@type": "Question",
       name: faq.pregunta,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.respuesta,
-      },
+      acceptedAnswer: { "@type": "Answer", text: faq.respuesta },
     })),
   } : null
 
@@ -149,13 +169,6 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
     { "@type": "ListItem", position: 1, name: "Pastas", item: "https://paulapastas.com/pastas" },
     { "@type": "ListItem", position: 2, name: categoriaNombre, item: `https://paulapastas.com${getCategoryUrl(categoria)}` }
   ]
-
-  if (subcatUrl) {
-    breadcrumbItems.push({ "@type": "ListItem", position: 3, name: subcategoria, item: `https://paulapastas.com${subcatUrl}` })
-    breadcrumbItems.push({ "@type": "ListItem", position: 4, name: producto.nombre, item: canonicalUrl })
-  } else {
-    breadcrumbItems.push({ "@type": "ListItem", position: 3, name: producto.nombre, item: canonicalUrl })
-  }
 
   const schemas = [jsonLd, { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: breadcrumbItems }]
   if (faqJsonLd) schemas.push(faqJsonLd as any)
@@ -221,7 +234,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
             </div>
           </div>
 
-          {/* Ingredientes y Envío */}
+          {/* Información Estática (No bloqueada) */}
           <section className={`mt-16 grid gap-8 ${producto.ingredientes?.length ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
             {producto.ingredientes?.length ? (
               <details className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer group">
@@ -249,79 +262,40 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
             </details>
           </section>
 
-          {/* Historia del Plato */}
-          <details className="mt-16 bg-white rounded-2xl shadow-lg p-8 cursor-pointer group">
-            <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl list-none">
-              <span>{producto.historiaPlato?.titulo || "Un plato con historia"}</span>
-              <ChevronRight className="w-6 h-6 text-primary-600 transition-transform duration-300 group-open:rotate-90 flex-shrink-0" />
-            </summary>
-            <div className="mt-4 text-lg text-neutral-700 leading-relaxed whitespace-pre-line">
-              {producto.historiaPlato?.texto || "Cocinamos a fuego lento para un sabor auténtico."}
-            </div>
-          </details>
+          {/* --- Secciones con Streaming (Suspense) --- */}
 
-          {/* Cómo Preparar */}
-          {producto.comoPreparar && (
-            <details className="mt-16 bg-primary-50 rounded-2xl shadow-lg p-8 cursor-pointer group">
-              <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl list-none">
-                <span>{producto.comoPreparar.titulo}</span>
-                <ChevronRight className="w-6 h-6 text-primary-600 transition-transform duration-300 group-open:rotate-90 flex-shrink-0" />
-              </summary>
-              <div className="mt-4 text-lg text-neutral-700 leading-relaxed whitespace-pre-line">
-                {producto.comoPreparar.texto}
-              </div>
-            </details>
-          )}
+          <Suspense fallback={<div className="h-96 w-full animate-pulse bg-neutral-100 rounded-2xl mt-16" />}>
+            <ComplementariosSection />
+          </Suspense>
 
-          {/* Productos Complementarios */}
-          {productosComplementarios.length > 0 && (
-            <section className="mt-16">
-              <p className="text-xl sm:text-2xl font-semibold text-neutral-900 mb-8 text-center">Complementalo con</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {productosComplementarios.map((comp) => (
-                  comp.id && <ProductCard key={comp.id} producto={comp} baseUrl={`/${comp.categoria}/${comp.subcategoria}`} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* FAQs */}
+          {/* FAQs y Reviews */}
           <section className="mt-16 bg-white rounded-2xl shadow-lg p-8">
             <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">Preguntas frecuentes</h2>
             <div className="space-y-4 max-w-3xl mx-auto">
-              {producto.preguntasFrecuentes?.length ? (
-                producto.preguntasFrecuentes.map((faq, idx) => (
-                  <details key={idx} className="bg-neutral-50 rounded-lg p-5 cursor-pointer group">
-                    <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg list-none">
-                      {faq.pregunta}
-                      <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
-                    </summary>
-                    <div className="mt-4 text-neutral-700 leading-relaxed whitespace-pre-line">{faq.respuesta}</div>
-                  </details>
-                ))
-              ) : (
-                <p className="text-center text-neutral-500 italic">No hay preguntas frecuentes disponibles.</p>
-              )}
+              {producto.preguntasFrecuentes?.map((faq, idx) => (
+                <details key={idx} className="bg-neutral-50 rounded-lg p-5 cursor-pointer group">
+                  <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg list-none">
+                    {faq.pregunta}
+                    <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                  </summary>
+                  <div className="mt-4 text-neutral-700 leading-relaxed whitespace-pre-line">{faq.respuesta}</div>
+                </details>
+              ))}
             </div>
           </section>
 
-          {/* Sección de Reviews */}
           <ReviewsLoader
             productoId={producto.id!}
             productoNombre={producto.nombre!}
           />
 
-          {/* Productos Relacionados */}
-          {productosRelacionados.length > 0 && (
-            <section className="mt-16">
-              <h3 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">
-                Otros {subcategoria} que te pueden gustar
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {productosRelacionados.map((rel) => <ProductCard key={rel.id} producto={rel} />)}
-              </div>
-            </section>
-          )}
+          <Suspense fallback={<div className="h-96 w-full animate-pulse bg-neutral-100 rounded-2xl mt-16" />}>
+            <RelacionadosSection
+              categoria={categoria}
+              subcategoria={subcategoria}
+              currentSlug={productoSlug}
+            />
+          </Suspense>
         </div>
       </div>
     </>
