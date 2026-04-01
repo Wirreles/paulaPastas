@@ -27,9 +27,10 @@ export default function ProductCarousel({ images, producto, children }: ProductC
         <div className="relative group">
             <div className="aspect-square relative overflow-hidden rounded-3xl bg-neutral-100 shadow-inner">
                 {/* LCP Renderizado por el Servidor */}
-                <div className={`absolute inset-0 transition-opacity duration-500 ${
-                    currentIndex === 0 ? "opacity-100 z-10" : "opacity-0 z-0"
-                }`}>
+                <div
+                    className={`absolute inset-0 ${currentIndex === 0 ? "opacity-100 z-10" : "opacity-0 z-0"
+                        }`}
+                >
                     {children}
                 </div>
 
@@ -44,9 +45,8 @@ export default function ProductCarousel({ images, producto, children }: ProductC
                             alt={`${producto.nombre} - vista ${index + 1}`}
                             fill
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                            className={`object-cover transition-opacity duration-500 ${
-                                index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
-                            }`}
+                            className={`object-cover transition-opacity duration-500 ${index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
+                                }`}
                         />
                     );
                 })}

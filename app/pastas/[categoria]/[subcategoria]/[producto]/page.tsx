@@ -176,7 +176,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
 
   return (
     <>
-      <link rel="preload" href={productImages[0]} as="image" fetchPriority="high" />
+      {/* <link rel="preload" href={productImages[0]} as="image" fetchPriority="high" />  */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }}
@@ -223,7 +223,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
                   fetchPriority="high"
                   loading="eager"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                  unoptimized
+                  // unoptimized 
                   className="object-cover"
                 />
               </ProductCarousel>
