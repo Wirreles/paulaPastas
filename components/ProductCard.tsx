@@ -42,7 +42,7 @@ export default function ProductCard({ producto, baseUrl }: ProductCardProps) {
 
   return (
     <article
-      className="bg-white rounded-lg shadow-lg overflow-hidden hover-lift group flex flex-col h-full"
+      className="bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group flex flex-col h-full"
       itemScope
       itemType="https://schema.org/Product"
     >

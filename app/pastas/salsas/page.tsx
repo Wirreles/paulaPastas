@@ -268,7 +268,7 @@ export default function SalsasPage() {
                   const quantity = getQuantity(salsa.id)
                   
                   return (
-                    <article key={salsa.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover-lift group flex flex-col h-full">
+                    <article key={salsa.id} className="bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group flex flex-col h-full">
                       {/* Imagen más grande */}
                       <div className="relative h-64">
                         <Link href={productUrl}>

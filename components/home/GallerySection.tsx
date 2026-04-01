@@ -15,7 +15,7 @@ export default function GallerySection() {
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                     {DISHES_GALLERY.map((img, index) => (
-                        <div key={index} className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
+                        <div key={index} className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                             <Image
                                 src={img.imageUrl}
                                 alt={img.name || `Plato ${index + 1}`}

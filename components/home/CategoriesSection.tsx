@@ -16,7 +16,7 @@ export default function CategoriesSection() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
                     {CATEGORIAS_HOME.map((categoria) => (
                         <Link key={categoria.slug} href={`/pastas/${categoria.slug}`} className="group">
-                            <article className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift">
+                            <article className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                                 <div className="relative h-48">
                                     <Image
                                         src={categoria.imagen || "/placeholder.svg"}

@@ -195,7 +195,7 @@ export default async function RaviolesFritosPage() {
           {/* <section className="mb-16">
             <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">Galería de Imágenes</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
+              <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                 <Image
                   src="/placeholder.svg?height=300&width=400"
                   alt="Ravioles fritos servidos en un plato"
@@ -204,7 +204,7 @@ export default async function RaviolesFritosPage() {
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
               </div>
-              <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
+              <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                 <Image
                   src="/placeholder.svg?height=300&width=400"
                   alt="Ravioles fritos cocinándose en una sartén"
@@ -213,7 +213,7 @@ export default async function RaviolesFritosPage() {
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
               </div>
-              <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
+              <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                 <Image
                   src="/placeholder.svg?height=300&width=400"
                   alt="Ravioles fritos como aperitivo en una picada"
@@ -222,7 +222,7 @@ export default async function RaviolesFritosPage() {
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
               </div>
-              <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg hover-lift">
+              <div className="relative aspect-[3/2] rounded-2xl overflow-hidden shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                 <Image
                   src="/placeholder.svg?height=300&width=400"
                   alt="Primer plano de ravioles fritos con textura crocante"

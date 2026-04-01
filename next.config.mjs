@@ -26,10 +26,11 @@ const nextConfig = {
   },
 
   experimental: {
-    optimizePackageImports: ['lucide-react'],
-    serverActions: {
-      allowedOrigins: ['localhost:3000', 'paulapastas.com'],
-    },
+  optimizePackageImports: ['lucide-react'],
+  optimizeCss: true, // 🔥 ESTO
+  serverActions: {
+    allowedOrigins: ['localhost:3000', 'paulapastas.com'],
+  },
   },
 
   output: 'standalone',

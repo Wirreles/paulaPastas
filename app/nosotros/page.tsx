@@ -173,7 +173,7 @@ export default function NosotrosPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {valores.map((valor, index) => (
-                <div key={index} className="bg-white rounded-2xl p-8 shadow-lg hover-lift">
+                <div key={index} className="bg-white rounded-2xl p-8 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0">
                       <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">

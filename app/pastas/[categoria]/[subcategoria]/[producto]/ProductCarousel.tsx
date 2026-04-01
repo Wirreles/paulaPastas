@@ -9,9 +9,10 @@ interface ProductCarouselProps {
     producto: {
         nombre: string
     }
+    children?: React.ReactNode
 }
 
-export default function ProductCarousel({ images, producto }: ProductCarouselProps) {
+export default function ProductCarousel({ images, producto, children }: ProductCarouselProps) {
     const [currentIndex, setCurrentIndex] = useState(0)
 
     const nextImage = () => {
@@ -25,25 +26,27 @@ export default function ProductCarousel({ images, producto }: ProductCarouselPro
     return (
         <div className="relative group">
             <div className="aspect-square relative overflow-hidden rounded-3xl bg-neutral-100 shadow-inner">
+                {/* LCP Renderizado por el Servidor */}
+                <div className={`absolute inset-0 transition-opacity duration-500 ${
+                    currentIndex === 0 ? "opacity-100 z-10" : "opacity-0 z-0"
+                }`}>
+                    {children}
+                </div>
+
+                {/* Resto de las imágenes interactuadas por Cliente */}
                 {images.map((img, index) => {
-                    const isFirst = index === 0;
+                    if (index === 0) return null; // El Servidor ya cargó la primera
+
                     return (
-                        // Modificación sugerida dentro del map de imágenes:
                         <Image
                             key={img}
                             src={img}
                             alt={`${producto.nombre} - vista ${index + 1}`}
                             fill
-                            priority={index === 0} // Prioridad máxima de Next.js
-                            fetchPriority={index === 0 ? "high" : "low"} // Atributo nativo del navegador
-                            loading={index === 0 ? "eager" : "lazy"}
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                            className={`object-cover transition-opacity duration-500 ${index === currentIndex
-                                    ? "opacity-100 z-10"
-                                    : "opacity-0 z-0"
-                                }`}
-                            // Añadimos esto para evitar que la primera imagen parpadee al cargar
-                            style={index === 0 ? { opacity: 1 } : {}}
+                            className={`object-cover transition-opacity duration-500 ${
+                                index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
+                            }`}
                         />
                     );
                 })}

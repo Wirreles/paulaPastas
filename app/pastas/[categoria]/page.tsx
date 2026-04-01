@@ -229,7 +229,7 @@ export default async function CategoriaPage({ params }: CategoriaPageProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {data.subcategorias.map((subcategoria) => (
                   <Link key={subcategoria.slug} href={`/pastas/${categoria}/${subcategoria.slug}`} className="group">
-                    <article className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift">
+                    <article className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                       <div className="relative h-48">
                         <Image
                           src={subcategoria.imagen || "/placeholder.svg"}

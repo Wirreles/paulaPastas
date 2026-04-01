@@ -220,7 +220,7 @@ export default function PackRavioladaPage() {
                   const quantity = getQuantity(pack.id)
                   
                   return (
-                    <article key={pack.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover-lift group flex flex-col h-full">
+                    <article key={pack.id} className="bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group flex flex-col h-full">
                       {/* Imagen más grande */}
                       <div className="relative h-64">
                         <Link href={productUrl}>
@@ -339,7 +339,7 @@ export default function PackRavioladaPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {beneficios.map((beneficio, index) => (
-                <div key={index} className="bg-white rounded-2xl p-8 shadow-lg hover-lift">
+                <div key={index} className="bg-white rounded-2xl p-8 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0">
                       <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">

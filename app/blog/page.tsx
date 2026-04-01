@@ -178,7 +178,7 @@ export default async function BlogPage() {
               {articulos.map((articulo) => (
                 <article
                   key={articulo.id}
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover-lift group border border-neutral-200"
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group border border-neutral-200"
                 >
                   <div className="relative h-48">
                     <ImageWrapper
@@ -315,7 +315,7 @@ export default async function BlogPage() {
               ].map((categoria, index) => (
                 <div
                   key={index}
-                  className="bg-white rounded-xl p-6 text-center hover-lift cursor-pointer border border-neutral-200"
+                  className="bg-white rounded-xl p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer border border-neutral-200"
                 >
                   <div className="w-12 h-12 mx-auto bg-primary-100 rounded-full flex items-center justify-center mb-4">
                     <categoria.icono className="w-6 h-6 text-primary-600" />

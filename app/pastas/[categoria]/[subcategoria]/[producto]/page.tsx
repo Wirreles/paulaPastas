@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { cache, Suspense } from "react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { ArrowLeft, ChevronRight } from "lucide-react"
 
 import { FirebaseService } from "@/lib/firebase-service"
@@ -213,7 +214,19 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             <div className="relative">
-              <ProductCarousel images={productImages} producto={producto} />
+              <ProductCarousel images={productImages} producto={producto}>
+                <Image
+                  src={productImages[0]}
+                  alt={`${producto.nombre} - vista principal`}
+                  fill
+                  priority
+                  fetchPriority="high"
+                  loading="eager"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                  unoptimized
+                  className="object-cover"
+                />
+              </ProductCarousel>
             </div>
 
             <div className="space-y-6">
