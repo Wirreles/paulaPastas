@@ -1073,6 +1073,63 @@ static async getProductosDestacados(): Promise<Producto[]> {
     }
   }
 
+  static async getReviewSummary(productId: string): Promise<{ avgRating: number; total: number }> {
+  const cacheKey = `review_summary_${productId}`
+
+  // 🔹 Cache hit
+  const cached = cache.get<{ avgRating: number; total: number }>(cacheKey)
+  if (cached) {
+    Logger.debug(`📦 Cache hit: getReviewSummary (${productId})`)
+    return cached
+  }
+
+  try {
+    const reviewsRef = collection(db, "reviews")
+
+    // 🔹 Query optimizada (solo lo necesario)
+    const q = query(
+      reviewsRef,
+      where("productoId", "==", productId),
+      where("aprobada", "==", true)
+    )
+
+    const snapshot = await getDocs(q)
+
+    let total = 0
+    let sum = 0
+
+    snapshot.forEach((doc) => {
+      const data = serializeFirestoreData(doc.data())
+
+      const rating = data.rating || 0
+
+      sum += rating
+      total++
+    })
+
+    const avgRating = total > 0 ? sum / total : 0
+
+    const result = {
+      avgRating,
+      total,
+    }
+
+    // 🔹 Guardar en cache
+    cache.set(cacheKey, result)
+
+    Logger.debug(`✅ Review summary generado (${productId}):`, result)
+
+    return result
+  } catch (error) {
+    Logger.error("❌ Error al obtener resumen de reseñas:", error)
+
+    return {
+      avgRating: 0,
+      total: 0,
+    }
+  }
+}
+
   static async getReviewsByUser(userId: string): Promise<Review[]> {
     try {
       const reviewsRef = collection(db, "reviews")
@@ -1104,6 +1161,7 @@ static async getProductosDestacados(): Promise<Producto[]> {
       // Invalidar cache de reseñas
       cache.invalidate('reviews')
       cache.invalidate('all_reviews')
+      
       Logger.log("✅ Estado de reseña actualizado y cache invalidado:", reviewId)
     } catch (error) {
       Logger.error("Error al actualizar estado de reseña:", error)

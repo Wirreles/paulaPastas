@@ -8,7 +8,7 @@ import { ArrowLeft, ChevronRight } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 import { getProductCanonicalUrl, getCategoryUrl, getSubcategoryUrl } from "@/lib/product-url"
 import ProductCard from "@/components/ProductCard"
-
+import StickyAddToCart from "./StickyAddToCart"
 // Componentes de Cliente (Islands)
 import ProductCarousel from "./ProductCarousel"
 import AddToCart from "./AddToCart"
@@ -37,6 +37,7 @@ const getProducto = cache(async (slug: string) => {
 async function RelacionadosSection({ categoria, subcategoria, currentSlug }: { categoria: string, subcategoria: string, currentSlug: string }) {
   try {
     const productos = await FirebaseService.getProductos(categoria)
+
     const filtrados = productos
       .filter((p) => p.subcategoria === subcategoria && p.slug !== currentSlug)
       .slice(0, 3)
@@ -117,11 +118,13 @@ export async function generateMetadata({ params }: ProductoPageProps): Promise<M
 export default async function ProductoPage({ params }: ProductoPageProps) {
   const { categoria, subcategoria, producto: productoSlug } = await params
   const producto = await getProducto(productoSlug)
-
   if (!producto) {
     notFound()
   }
-
+  const reviewSummary = await FirebaseService.getReviewSummary(producto.id!)
+  const faqsValidas = producto.preguntasFrecuentes?.filter(
+    (faq) => faq.pregunta?.trim() && faq.respuesta?.trim()
+  )
   // Lógica de nombres y URLs
   const CATEGORY_NAMES: Record<string, string> = {
     "rellenas": "Pastas Rellenas",
@@ -231,12 +234,47 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
 
             <div className="space-y-6">
               <div>
-                <span className="text-sm font-medium text-primary-600 uppercase tracking-wide">
-                  {categoria.replace("-", " ")} • {subcategoria}
-                </span>
-                <h1 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mt-2">
+                <h1 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mt-2 leading-tight">
                   {producto.nombre}
                 </h1>
+
+                {/* ⭐ Rating mejorado */}
+                <div className="flex items-center gap-3 mt-3">
+
+                  {/* Estrellas */}
+                  <div className="flex items-center bg-yellow-50 px-3 py-1.5 rounded-full shadow-sm">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <span
+                        key={i}
+                        className={`text-base ${i < Math.round(reviewSummary.avgRating)
+                          ? "text-yellow-500"
+                          : "text-neutral-300"
+                          }`}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Puntaje + cantidad */}
+                  <div className="flex items-center gap-2 text-base md:text-lg">
+                    {reviewSummary.total > 0 ? (
+                      <>
+                        <span className="font-bold text-neutral-900">
+                          {reviewSummary.avgRating.toFixed(1)}
+                        </span>
+                        <span className="text-neutral-400 font-medium">·</span>
+                        <span className="text-neutral-700 font-semibold">
+                          {reviewSummary.total} opiniones
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-neutral-500 italic font-medium">
+                        Sin opiniones todavía
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <p className="text-lg text-neutral-600 leading-relaxed whitespace-pre-line">
@@ -248,27 +286,62 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
           </div>
 
           {/* Información Estática (No bloqueada) */}
-          <section className={`mt-16 grid gap-8 ${producto.ingredientes?.length ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+          <section className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* Ingredientes */}
             {producto.ingredientes?.length ? (
-              <details className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer group">
-                <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl list-none">
+              <details className="bg-white rounded-2xl shadow-md p-5 group transition-all">
+                <summary className="flex justify-between items-center font-semibold text-neutral-900 text-lg cursor-pointer">
                   Ingredientes
-                  <ChevronRight className="w-6 h-6 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                  <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
                 </summary>
-                <div className="mt-4 text-neutral-700 leading-relaxed">
+
+                <div className="mt-4 text-neutral-700 leading-relaxed text-sm md:text-base">
                   <ul className="list-disc list-inside space-y-1">
-                    {producto.ingredientes.map((ing, idx) => <li key={idx}>{ing}</li>)}
+                    {producto.ingredientes.map((ing, idx) => (
+                      <li key={idx}>{ing}</li>
+                    ))}
                   </ul>
                 </div>
               </details>
             ) : null}
 
-            <details className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer group">
-              <summary className="flex justify-between items-center font-bold text-neutral-900 text-xl list-none">
-                Envío y Conservación
-                <ChevronRight className="w-6 h-6 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+            {/* Cómo se prepara */}
+            {producto.comoPreparar?.texto && (
+              <details className="bg-white rounded-2xl shadow-md p-5 group transition-all">
+                <summary className="flex justify-between items-center font-semibold text-neutral-900 text-lg cursor-pointer">
+                  {producto.comoPreparar.titulo || "Cómo se prepara"}
+                  <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                </summary>
+
+                <div className="mt-4 text-neutral-700 leading-relaxed text-sm md:text-base whitespace-pre-line">
+                  {producto.comoPreparar.texto}
+                </div>
+              </details>
+            )}
+
+            {/* Historia del plato */}
+            {producto.historiaPlato?.texto && (
+              <details className="bg-white rounded-2xl shadow-md p-5 group transition-all md:col-span-2">
+                <summary className="flex justify-between items-center font-semibold text-neutral-900 text-lg cursor-pointer">
+                  {producto.historiaPlato.titulo || "Historia del plato"}
+                  <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                </summary>
+
+                <div className="mt-4 text-neutral-700 leading-relaxed text-sm md:text-base whitespace-pre-line">
+                  {producto.historiaPlato.texto}
+                </div>
+              </details>
+            )}
+
+            {/* Envío y conservación (siempre visible) */}
+            <details className="bg-white rounded-2xl shadow-md p-5 group transition-all md:col-span-2">
+              <summary className="flex justify-between items-center font-semibold text-neutral-900 text-lg cursor-pointer">
+                Envío y conservación
+                <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
               </summary>
-              <div className="mt-4 text-neutral-700 leading-relaxed">
+
+              <div className="mt-4 text-neutral-700 leading-relaxed text-sm md:text-base">
                 <p className="mb-2">Realizamos envíos a Rosario y zonas cercanas.</p>
                 <p>Se entregan congeladas: 2-3 días en heladera o 2 meses en freezer.</p>
               </div>
@@ -282,20 +355,28 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
           </Suspense>
 
           {/* FAQs y Reviews */}
-          <section className="mt-16 bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">Preguntas frecuentes</h2>
-            <div className="space-y-4 max-w-3xl mx-auto">
-              {producto.preguntasFrecuentes?.map((faq, idx) => (
-                <details key={idx} className="bg-neutral-50 rounded-lg p-5 cursor-pointer group">
-                  <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg list-none">
-                    {faq.pregunta}
-                    <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
-                  </summary>
-                  <div className="mt-4 text-neutral-700 leading-relaxed whitespace-pre-line">{faq.respuesta}</div>
-                </details>
-              ))}
-            </div>
-          </section>
+          {faqsValidas && faqsValidas.length > 0 && (
+            <section className="mt-16 bg-white rounded-2xl shadow-lg p-8">
+              <h2 className="font-display text-3xl font-bold text-neutral-900 mb-8 text-center">
+                Preguntas frecuentes
+              </h2>
+
+              <div className="space-y-4 max-w-3xl mx-auto">
+                {faqsValidas.map((faq, idx) => (
+                  <details key={idx} className="bg-neutral-50 rounded-lg p-5 cursor-pointer group">
+                    <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg list-none">
+                      {faq.pregunta}
+                      <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                    </summary>
+
+                    <div className="mt-4 text-neutral-700 leading-relaxed whitespace-pre-line">
+                      {faq.respuesta}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </section>
+          )}
 
           <ReviewsLoader
             productoId={producto.id!}
@@ -311,6 +392,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
           </Suspense>
         </div>
       </div>
+      <StickyAddToCart producto={producto} />
     </>
   )
 }
