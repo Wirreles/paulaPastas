@@ -4,16 +4,21 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft, ChevronRight } from "lucide-react"
-
+import dynamic from "next/dynamic"
 import { FirebaseService } from "@/lib/firebase-service"
 import { getProductCanonicalUrl, getCategoryUrl, getSubcategoryUrl } from "@/lib/product-url"
 import ProductCard from "@/components/ProductCard"
 import StickyAddToCart from "./StickyAddToCart"
 // Componentes de Cliente (Islands)
-import ProductCarousel from "./ProductCarousel"
-import AddToCart from "./AddToCart"
-import ReviewsLoader from "./ReviewsLoader";
+const ProductCarousel = dynamic(() => import("./ProductCarousel"), {
+  loading: () => (
+    <div className="w-full aspect-square bg-neutral-100 rounded-2xl animate-pulse" />
+  ),
+})
 
+const AddToCart = dynamic(() => import("./AddToCart"))
+import ReviewsLoader from "./ReviewsLoader";
+import ProductImageLCP from "./ProductImageLCP"
 interface ProductoPageProps {
   params: Promise<{
     categoria: string
@@ -216,20 +221,22 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            <div className="relative">
-              <ProductCarousel images={productImages} producto={producto}>
-                <Image
-                  src={productImages[0]}
-                  alt={`${producto.nombre} - vista principal`}
-                  fill
-                  priority
-                  fetchPriority="high"
-                  loading="eager"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                  // unoptimized 
-                  className="object-cover"
+            <div className="space-y-4">
+
+              {/* 🔥 IMAGEN PRINCIPAL (LCP REAL - SERVER COMPONENT) */}
+              <ProductImageLCP
+                src={productImages[0]}
+                alt={`${producto.nombre} - vista principal`}
+              />
+
+              {/* 🎯 CARRUSEL (CLIENT, NO BLOQUEA LCP) */}
+              {productImages.length > 1 && (
+                <ProductCarousel
+                  images={productImages}
+                  producto={producto}
                 />
-              </ProductCarousel>
+              )}
+
             </div>
 
             <div className="space-y-6">

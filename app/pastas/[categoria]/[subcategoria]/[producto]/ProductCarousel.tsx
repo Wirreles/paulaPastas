@@ -9,77 +9,73 @@ interface ProductCarouselProps {
     producto: {
         nombre: string
     }
-    children?: React.ReactNode
 }
 
-export default function ProductCarousel({ images, producto, children }: ProductCarouselProps) {
-    const [currentIndex, setCurrentIndex] = useState(0)
+export default function ProductCarousel({ images, producto }: ProductCarouselProps) {
+    const [currentIndex, setCurrentIndex] = useState(1) // 🔥 empieza en 1 (evita LCP)
 
     const nextImage = () => {
-        setCurrentIndex((prev) => (prev + 1) % images.length)
+        setCurrentIndex((prev) => (prev + 1) % images.length || 1)
     }
 
     const prevImage = () => {
-        setCurrentIndex((prev) => (prev - 1 + images.length) % images.length)
+        setCurrentIndex((prev) => (prev - 1 <= 0 ? images.length - 1 : prev - 1))
     }
 
+    const safeIndex = currentIndex === 0 ? 1 : currentIndex
+
     return (
-        <div className="relative group">
-            <div className="aspect-square relative overflow-hidden rounded-3xl bg-neutral-100 shadow-inner">
-                {/* LCP Renderizado por el Servidor */}
-                <div
-                    className={`absolute inset-0 ${currentIndex === 0 ? "opacity-100 z-10" : "opacity-0 z-0"
-                        }`}
-                >
-                    {children}
-                </div>
+        <div className="space-y-4">
 
-                {/* Resto de las imágenes interactuadas por Cliente */}
-                {images.map((img, index) => {
-                    if (index === 0) return null; // El Servidor ya cargó la primera
+            <div className="relative w-full aspect-square overflow-hidden rounded-2xl bg-neutral-100">
 
-                    return (
-                        <Image
-                            key={img}
-                            src={img}
-                            alt={`${producto.nombre} - vista ${index + 1}`}
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                            className={`object-cover transition-opacity duration-500 ${index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
-                                }`}
-                        />
-                    );
-                })}
+                <Image
+                    src={images[safeIndex]}
+                    alt={`${producto.nombre} - vista ${safeIndex + 1}`}
+                    fill
+                    loading="lazy"
+                    priority={false}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                    className="object-cover transition-opacity duration-300"
+                />
+
+                {images.length > 1 && (
+                    <>
+                        <button
+                            onClick={prevImage}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur rounded-full shadow-md hover:scale-105 active:scale-95 transition-all p-[clamp(6px,1vw,10px)]"
+                            aria-label="Imagen anterior"
+                        >
+                            <ChevronLeft className="w-[clamp(18px,2.5vw,28px)] h-[clamp(18px,2.5vw,28px)] text-neutral-800" />
+                        </button>
+
+                        <button
+                            onClick={nextImage}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur rounded-full shadow-md hover:scale-105 active:scale-95 transition-all p-[clamp(6px,1vw,10px)]"
+                            aria-label="Siguiente imagen"
+                        >
+                            <ChevronRight className="w-[clamp(18px,2.5vw,28px)] h-[clamp(18px,2.5vw,28px)] text-neutral-800" />
+                        </button>
+                    </>
+                )}
             </div>
 
             {images.length > 1 && (
-                <>
-                    <button
-                        onClick={prevImage}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                        aria-label="Imagen anterior"
-                    >
-                        <ChevronLeft className="w-6 h-6 text-neutral-800" />
-                    </button>
-                    <button
-                        onClick={nextImage}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                        aria-label="Siguiente imagen"
-                    >
-                        <ChevronRight className="w-6 h-6 text-neutral-800" />
-                    </button>
-
-                    <div className="flex justify-center gap-2 mt-4">
-                        {images.map((_, index) => (
+                <div className="flex justify-center gap-2">
+                    {images.slice(1).map((_, index) => {
+                        const realIndex = index + 1
+                        return (
                             <button
-                                key={index}
-                                onClick={() => setCurrentIndex(index)}
-                                className={`w-2 h-2 rounded-full transition-all ${index === currentIndex ? "bg-primary-600 w-4" : "bg-neutral-300"
+                                key={realIndex}
+                                onClick={() => setCurrentIndex(realIndex)}
+                                className={`h-2 rounded-full transition-all ${realIndex === safeIndex
+                                        ? "bg-primary-600 w-5"
+                                        : "bg-neutral-300 w-2 hover:bg-neutral-400"
                                     }`}
                             />
-                        ))}
-                    </div>
-                </>
+                        )
+                    })}
+                </div>
             )}
         </div>
     )
