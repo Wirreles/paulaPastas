@@ -7,36 +7,35 @@ import Footer from "@/components/Footer";
 import { Providers } from "@/components/Providers";
 import Analytics from "@/components/Analytics";
 
-// 1. Optimización de fuentes: Solo cargamos lo estrictamente necesario
+// 🔥 Fonts optimizadas (solo lo necesario)
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
-  // preload: true // Next.js lo hace por defecto
 });
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-playfair",
-  weight: ["700"] // Si solo usas negrita para títulos, especifícalo aquí
+  weight: ["700"],
 });
 
+// 🔥 Metadata limpia (sin hacks que no funcionan)
 export const metadata: Metadata = {
   metadataBase: new URL("https://paulapastas.com"),
-  title: "Paula Pastas - Pastas Artesanales",
-  description: "Pastas frescas y salsas caseras hechas con amor y tradición. ¡Pedí online!",
+  title: {
+    default: "Paula Pastas - Pastas Artesanales",
+    template: "%s | Paula Pastas",
+  },
+  description:
+    "Pastas frescas y salsas caseras hechas con amor y tradición. ¡Pedí online!",
   icons: {
     icon: [
-      { url: "/pplog2.webp" },
+      { url: "/pplog2.webp", sizes: "any" },
       { url: "/pplog2.webp", sizes: "192x192", type: "image/webp" },
     ],
     apple: "/pplog2.webp",
-  },
-  alternates: { canonical: "/" },
-  other: {
-    'preconnect': 'https://firestore.googleapis.com',
-    'dns-prefetch': 'https://firestore.googleapis.com',
   },
   openGraph: {
     url: "https://paulapastas.com",
@@ -44,24 +43,45 @@ export const metadata: Metadata = {
     locale: "es_AR",
     type: "website",
   },
+  // ❌ Sacamos canonical global (evita conflictos SEO)
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
+    <html
+      lang="es"
+      className={`${inter.variable} ${playfair.variable}`}
+    >
       <head>
-        {/* DNS Prefetch es más ligero que Preconnect para analíticas que no son críticas para el LCP */}
-        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-        <link rel="dns-prefetch" href="https://connect.facebook.net" />
+        {/* 🔥 CRÍTICO: mejora LCP real (Firebase) */}
+        <link
+          rel="preconnect"
+          href="https://firestore.googleapis.com"
+          crossOrigin=""
+        />
+        <link
+          rel="dns-prefetch"
+          href="https://firestore.googleapis.com"
+        />
+
+        {/* 🔸 Analíticas (no críticas) */}
+        <link
+          rel="dns-prefetch"
+          href="https://www.googletagmanager.com"
+        />
+        <link
+          rel="dns-prefetch"
+          href="https://connect.facebook.net"
+        />
       </head>
 
       <body
         className={`${inter.className} flex flex-col min-h-screen antialiased`}
-        suppressHydrationWarning
       >
         <Providers>
-          {/* El Header es lo primero que se pinta. Asegúrate que sus iconos sean SVGs inline 
-              y no una librería de fuentes pesada como FontAwesome */}
+          {/* 🔝 Header SSR (rápido para LCP) */}
           <Header />
 
           <main className="flex-grow">
@@ -71,13 +91,16 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Footer />
         </Providers>
 
-        {/* 2. Movemos Analytics al final del body para que no compita con el LCP del contenido */}
+        {/* 🔥 Analytics al final → no bloquea render */}
         <Analytics />
 
+        {/* fallback sin JS */}
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-TRQ7MJL5"
-            height="0" width="0" style={{ display: "none", visibility: "hidden" }}
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
           />
         </noscript>
       </body>
