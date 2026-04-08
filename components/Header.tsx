@@ -1,25 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 
 import HeaderLogo from "./HeaderLogo";
-const HeaderNav = dynamic(() => import("./HeaderNav"), {
-  ssr: true, // importante para SEO
-});
+import HeaderNav from "./HeaderNav";
 import HeaderActions from "./HeaderActions";
 
-// 🔥 MobileMenu lazy (clave)
+// 🔥 MobileMenu lazy real
 const MobileMenu = dynamic(() => import("./MobileMenu"), {
   ssr: false,
-  loading: () => null, // nada → no bloquea render
+  loading: () => null,
 });
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPath, setMenuPath] = useState<string[]>([]);
   const pathname = usePathname();
+
+  // 🔥 evita recreación innecesaria
+  const toggleMenu = useCallback(() => {
+    setIsMenuOpen((prev) => !prev);
+  }, []);
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -37,17 +40,17 @@ export default function Header() {
 
           <HeaderLogo />
 
-          {/* 👇 opcional lazy si querés ultra optimización */}
+          {/* SSR puro → mejor LCP */}
           <HeaderNav />
 
           <HeaderActions
-            onMenuToggle={() => setIsMenuOpen(!isMenuOpen)}
+            onMenuToggle={toggleMenu}
             isMenuOpen={isMenuOpen}
           />
         </div>
       </div>
 
-      {/* 🔥 SOLO monta cuando se abre */}
+      {/* 🔥 SOLO existe cuando se usa */}
       {isMenuOpen && (
         <MobileMenu
           menuPath={menuPath}

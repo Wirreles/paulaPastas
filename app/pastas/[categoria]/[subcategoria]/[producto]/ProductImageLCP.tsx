@@ -1,8 +1,8 @@
-import Image from "next/image"
+import Image from "next/image";
 
 interface Props {
-    src: string
-    alt: string
+    src: string;
+    alt: string;
 }
 
 export default function ProductImageLCP({ src, alt }: Props) {
@@ -14,11 +14,11 @@ export default function ProductImageLCP({ src, alt }: Props) {
                 fill
                 priority
                 fetchPriority="high"
-                loading="eager"
-                unoptimized
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 600px"
                 className="object-cover"
+                placeholder="blur"
+                blurDataURL="data:image/webp;base64,UklGRiIAAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA="
             />
         </div>
-    )
+    );
 }

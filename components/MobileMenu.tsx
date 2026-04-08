@@ -11,7 +11,6 @@ interface Props {
 }
 
 export default function MobileMenu({ menuPath, setMenuPath }: Props) {
-
     const currentMenuItems = useMemo(() => {
         let current: NavItem[] = NAVIGATION_DATA;
 
@@ -37,31 +36,31 @@ export default function MobileMenu({ menuPath, setMenuPath }: Props) {
     };
 
     return (
-        <div className="fixed inset-0 top-16 bg-white z-[999] lg:hidden flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="fixed inset-0 top-16 bg-white z-[999] lg:hidden flex flex-col">
 
             {/* Header */}
             <div className="bg-neutral-900 text-white p-4 flex items-center">
                 {isSubMenu && (
                     <button
                         onClick={() => setMenuPath((prev) => prev.slice(0, -1))}
-                        className="mr-4"
+                        className="mr-4 active:scale-90 transition-transform"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                 )}
-                <h2 className="font-bold uppercase text-xs">
+                <h2 className="font-bold uppercase text-xs tracking-wider">
                     {isSubMenu ? "Volver" : "Menú"}
                 </h2>
             </div>
 
             {/* Items */}
-            <nav className="flex-1 overflow-y-auto">
+            <nav className="flex-1 overflow-y-auto overscroll-contain">
                 {currentMenuItems.map((item: any) => (
                     <Link
                         key={item.id || item.name}
                         href={item.href}
                         onClick={(e) => handleClick(e, item)}
-                        className="flex items-center justify-between px-6 py-5 border-b text-neutral-900"
+                        className="flex items-center justify-between px-6 py-5 border-b border-neutral-100 text-neutral-900 active:bg-neutral-100 transition-colors"
                     >
                         <span className="font-bold text-lg">{item.name}</span>
 

@@ -184,7 +184,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
 
   return (
     <>
-      {/* <link rel="preload" href={productImages[0]} as="image" fetchPriority="high" />  */}
+      <link rel="preload" href={productImages[0]} as="image" fetchPriority="high" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }}

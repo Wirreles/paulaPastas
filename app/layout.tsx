@@ -5,9 +5,14 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Providers } from "@/components/Providers";
-import Analytics from "@/components/Analytics";
+import dynamic from "next/dynamic";
 
-// 🔥 Fonts optimizadas (solo lo necesario)
+// 🔥 Analytics lazy → NO bloquea LCP
+const Analytics = dynamic(() => import("@/components/Analytics"), {
+  ssr: false,
+});
+
+// 🔥 Fonts optimizadas
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
@@ -21,7 +26,6 @@ const playfair = Playfair_Display({
   weight: ["700"],
 });
 
-// 🔥 Metadata limpia (sin hacks que no funcionan)
 export const metadata: Metadata = {
   metadataBase: new URL("https://paulapastas.com"),
   title: {
@@ -43,58 +47,41 @@ export const metadata: Metadata = {
     locale: "es_AR",
     type: "website",
   },
-  // ❌ Sacamos canonical global (evita conflictos SEO)
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html
-      lang="es"
-      className={`${inter.variable} ${playfair.variable}`}
-    >
+    <html lang="es" className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        {/* 🔥 CRÍTICO: mejora LCP real (Firebase) */}
+        {/* 🔥 PRECONNECT BIEN HECHO */}
         <link
           rel="preconnect"
           href="https://firestore.googleapis.com"
           crossOrigin=""
         />
-        <link
-          rel="dns-prefetch"
-          href="https://firestore.googleapis.com"
-        />
+        <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
 
-        {/* 🔸 Analíticas (no críticas) */}
-        <link
-          rel="dns-prefetch"
-          href="https://www.googletagmanager.com"
-        />
-        <link
-          rel="dns-prefetch"
-          href="https://connect.facebook.net"
-        />
+        {/* 🔸 terceros no críticos */}
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://connect.facebook.net" />
       </head>
 
-      <body
-        className={`${inter.className} flex flex-col min-h-screen antialiased`}
-      >
+      <body className={`${inter.className} flex flex-col min-h-screen antialiased`}>
         <Providers>
-          {/* 🔝 Header SSR (rápido para LCP) */}
           <Header />
 
-          <main className="flex-grow">
-            {children}
-          </main>
+          <main className="flex-grow">{children}</main>
 
           <Footer />
         </Providers>
 
-        {/* 🔥 Analytics al final → no bloquea render */}
+        {/* 🔥 Analytics lazy */}
         <Analytics />
 
-        {/* fallback sin JS */}
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-TRQ7MJL5"
