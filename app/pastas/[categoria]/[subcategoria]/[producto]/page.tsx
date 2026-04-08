@@ -8,6 +8,7 @@ import dynamic from "next/dynamic"
 import { FirebaseService } from "@/lib/firebase-service"
 import { getProductCanonicalUrl, getCategoryUrl, getSubcategoryUrl } from "@/lib/product-url"
 import ProductCard from "@/components/ProductCard"
+import ProductCardSkeleton from "@/components/ProductCardSkeleton" // <-- Falta esto
 import StickyAddToCart from "./StickyAddToCart"
 // Componentes de Cliente (Islands)
 const ProductCarousel = dynamic(() => import("./ProductCarousel"), {
@@ -26,6 +27,20 @@ interface ProductoPageProps {
     producto: string
   }>
 }
+
+// --- SKELETONS PARA STREAMING ---
+const SectionSkeleton = ({ titleType = "h3" }: { titleType?: "h3" | "p" }) => (
+  <section className="mt-16">
+    <div className={`mx-auto mb-8 animate-pulse bg-neutral-200 rounded ${titleType === "h3" ? "h-10 w-64" : "h-8 w-48"
+      }`} />
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <ProductCardSkeleton />
+      <ProductCardSkeleton />
+      <ProductCardSkeleton />
+    </div>
+  </section>
+);
 
 // Cacheamos la petición para que generateMetadata y el componente usen la misma instancia
 const getProducto = cache(async (slug: string) => {
@@ -184,7 +199,6 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
 
   return (
     <>
-      <link rel="preload" href={productImages[0]} as="image" fetchPriority="high" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }}
@@ -357,7 +371,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
 
           {/* --- Secciones con Streaming (Suspense) --- */}
 
-          <Suspense fallback={<div className="h-96 w-full animate-pulse bg-neutral-100 rounded-2xl mt-16" />}>
+          <Suspense fallback={<SectionSkeleton titleType="p" />}>
             <ComplementariosSection />
           </Suspense>
 
@@ -390,12 +404,8 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
             productoNombre={producto.nombre!}
           />
 
-          <Suspense fallback={<div className="h-96 w-full animate-pulse bg-neutral-100 rounded-2xl mt-16" />}>
-            <RelacionadosSection
-              categoria={categoria}
-              subcategoria={subcategoria}
-              currentSlug={productoSlug}
-            />
+          <Suspense fallback={<SectionSkeleton titleType="h3" />}>
+            <RelacionadosSection categoria={categoria} subcategoria={subcategoria} currentSlug={productoSlug} />
           </Suspense>
         </div>
       </div>

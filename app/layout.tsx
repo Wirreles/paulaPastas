@@ -24,6 +24,7 @@ const playfair = Playfair_Display({
   weight: ["700"],
 });
 
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://paulapastas.com"),
   title: {
@@ -47,6 +48,7 @@ export const metadata: Metadata = {
   },
 };
 
+
 export default function RootLayout({
   children,
 }: {
@@ -55,15 +57,21 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        {/* 🔥 PRECONNECT BIEN HECHO */}
+        {/* 🔥 LA MEJORA CLAVE: Preconnect al dominio de las imágenes */}
+        <link
+          rel="preconnect"
+          href="https://firebasestorage.googleapis.com"
+          crossOrigin="anonymous"
+        />
+
+        {/* Preconnect a Firestore (Ya lo tenías, mantenelo) */}
         <link
           rel="preconnect"
           href="https://firestore.googleapis.com"
-          crossOrigin=""
+          crossOrigin="anonymous"
         />
-        <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
 
-        {/* 🔸 terceros no críticos */}
+        {/* DNS Prefetch para terceros (Menos prioridad que el preconnect) */}
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://connect.facebook.net" />
       </head>
@@ -71,13 +79,11 @@ export default function RootLayout({
       <body className={`${inter.className} flex flex-col min-h-screen antialiased`}>
         <Providers>
           <Header />
-
           <main className="flex-grow">{children}</main>
-
           <Footer />
         </Providers>
 
-        {/* 🔥 Analytics lazy */}
+        {/* Analytics se carga al final, perfecto */}
         <AnalyticsWrapper />
 
         <noscript>
