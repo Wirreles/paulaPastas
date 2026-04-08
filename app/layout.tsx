@@ -8,9 +8,7 @@ import { Providers } from "@/components/Providers";
 import dynamic from "next/dynamic";
 
 // 🔥 Analytics lazy → NO bloquea LCP
-const Analytics = dynamic(() => import("@/components/Analytics"), {
-  ssr: false,
-});
+import AnalyticsWrapper from "@/components/AnaltyicsWrapper";
 
 // 🔥 Fonts optimizadas
 const inter = Inter({
@@ -80,7 +78,7 @@ export default function RootLayout({
         </Providers>
 
         {/* 🔥 Analytics lazy */}
-        <Analytics />
+        <AnalyticsWrapper />
 
         <noscript>
           <iframe
