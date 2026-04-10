@@ -3,7 +3,7 @@
 import type React from "react"
 import { createContext, useContext, useState, useEffect, useCallback } from "react"
 import type { Producto } from "./types"
-
+import { useMemo } from "react"
 // Definir la interfaz para un ítem del carrito
 export interface CartItem {
   productId: string
@@ -35,27 +35,25 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 
 // Proveedor del contexto del carrito
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
-  const [isLoaded, setIsLoaded] = useState(false) // Para asegurar que localStorage se cargue
 
-  // Cargar el carrito desde localStorage al inicio
+  const [items, setItems] = useState<CartItem[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedCart = localStorage.getItem("comida-casera-cart")
+        return storedCart ? JSON.parse(storedCart) : []
+      } catch {
+        return []
+      }
+    }
+    return []
+  })
+
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const storedCart = localStorage.getItem("comida-casera-cart")
-      if (storedCart) {
-        setItems(JSON.parse(storedCart))
-      }
-      setIsLoaded(true)
-    }
-  }, [])
-
-  // Guardar el carrito en localStorage cada vez que cambian los ítems
-  useEffect(() => {
-    if (isLoaded && typeof window !== "undefined") {
       localStorage.setItem("comida-casera-cart", JSON.stringify(items))
     }
-  }, [items, isLoaded])
+  }, [items])
 
   const addItem = useCallback((product: Producto, quantity: number) => {
     setItems((prevItems) => {
@@ -111,7 +109,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsCartOpen(false)
   }, [])
 
-  const value = {
+  const value = useMemo(() => ({
     items,
     addItem,
     removeItem,
@@ -122,7 +120,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     isCartOpen,
     toggleCart,
     closeCart,
-  }
+  }), [
+    items,
+    addItem,
+    removeItem,
+    updateItemQuantity,
+    clearCart,
+    totalItems,
+    totalPrice,
+    isCartOpen,
+    toggleCart,
+    closeCart,
+  ])
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }

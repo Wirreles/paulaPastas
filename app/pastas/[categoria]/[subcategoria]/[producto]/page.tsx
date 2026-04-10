@@ -9,15 +9,15 @@ import { FirebaseService } from "@/lib/firebase-service"
 import { getProductCanonicalUrl, getCategoryUrl, getSubcategoryUrl } from "@/lib/product-url"
 import ProductCard from "@/components/ProductCard"
 import ProductCardSkeleton from "@/components/ProductCardSkeleton" // <-- Falta esto
-import StickyAddToCart from "./StickyAddToCart"
 // Componentes de Cliente (Islands)
 const ProductCarousel = dynamic(() => import("./ProductCarousel"), {
   loading: () => (
     <div className="w-full aspect-square bg-neutral-100 rounded-2xl animate-pulse" />
   ),
 })
-
-const AddToCart = dynamic(() => import("./AddToCart"))
+import ReviewSummaryLoader from "./ReviewSummaryLoader"
+import AddToCartLoader from "./AddToCartLoader"
+import StickyAddToCartLoader from "./StickyAddToCartLoader"
 import ReviewsLoader from "./ReviewsLoader";
 import ProductImageLCP from "./ProductImageLCP"
 interface ProductoPageProps {
@@ -141,7 +141,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
   if (!producto) {
     notFound()
   }
-  const reviewSummary = await FirebaseService.getReviewSummary(producto.id!)
+  // const reviewSummary = await FirebaseService.getReviewSummary(producto.id!) 
   const faqsValidas = producto.preguntasFrecuentes?.filter(
     (faq) => faq.pregunta?.trim() && faq.respuesta?.trim()
   )
@@ -234,75 +234,42 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            <div className="space-y-4">
 
-              {/* 🔥 IMAGEN PRINCIPAL (LCP REAL - SERVER COMPONENT) */}
+          {/* GRID */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+
+            {/* IMAGEN */}
+            <div className="space-y-4">
               <ProductImageLCP
                 src={productImages[0]}
                 alt={`${producto.nombre} - vista principal`}
               />
 
-              {/* 🎯 CARRUSEL (CLIENT, NO BLOQUEA LCP) */}
               {productImages.length > 1 && (
                 <ProductCarousel
                   images={productImages}
                   producto={producto}
                 />
               )}
-
             </div>
 
+            {/* INFO */}
             <div className="space-y-6">
+
               <div>
                 <h1 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mt-2 leading-tight">
                   {producto.nombre}
                 </h1>
 
-                {/* ⭐ Rating mejorado */}
-                <div className="flex items-center gap-3 mt-3">
-
-                  {/* Estrellas */}
-                  <div className="flex items-center bg-yellow-50 px-3 py-1.5 rounded-full shadow-sm">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <span
-                        key={i}
-                        className={`text-base ${i < Math.round(reviewSummary.avgRating)
-                          ? "text-yellow-500"
-                          : "text-neutral-300"
-                          }`}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Puntaje + cantidad */}
-                  <div className="flex items-center gap-2 text-base md:text-lg">
-                    {reviewSummary.total > 0 ? (
-                      <>
-                        <span className="font-bold text-neutral-900">
-                          {reviewSummary.avgRating.toFixed(1)}
-                        </span>
-                        <span className="text-neutral-400 font-medium">·</span>
-                        <span className="text-neutral-700 font-semibold">
-                          {reviewSummary.total} opiniones
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-neutral-500 italic font-medium">
-                        Sin opiniones todavía
-                      </span>
-                    )}
-                  </div>
-                </div>
+                {/* ⭐ AHORA CLIENT SIDE (NO BLOQUEA) */}
+                <ReviewSummaryLoader productId={producto.id!} />
               </div>
 
               <p className="text-lg text-neutral-600 leading-relaxed whitespace-pre-line">
                 {producto.descripcion}
               </p>
 
-              <AddToCart producto={producto} />
+              <AddToCartLoader producto={producto} />
             </div>
           </div>
 
@@ -409,7 +376,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
           </Suspense>
         </div>
       </div>
-      <StickyAddToCart producto={producto} />
+      <StickyAddToCartLoader producto={producto} />
     </>
   )
 }

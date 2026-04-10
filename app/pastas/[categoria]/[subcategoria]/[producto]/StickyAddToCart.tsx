@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo, useCallback } from "react"
 import { Minus, Plus, ShoppingBag, Check } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { Producto } from "@/lib/types"
@@ -11,19 +11,24 @@ export default function StickyAddToCart({ producto }: { producto: Producto }) {
     const [cantidad, setCantidad] = useState(1)
     const [isAdded, setIsAdded] = useState(false)
 
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+    // 🧠 Memo precio
+    const totalPrice = useMemo(() => {
+        return (producto.precio * cantidad).toLocaleString("es-AR")
+    }, [producto.precio, cantidad])
+
+    // 🧹 Cleanup
     useEffect(() => {
         return () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current)
         }
     }, [])
 
-    const handleAdd = () => {
+    const handleAdd = useCallback(() => {
         if (!producto.disponible) return
 
         addItem(producto, cantidad)
-
         setIsAdded(true)
 
         if (timeoutRef.current) clearTimeout(timeoutRef.current)
@@ -31,7 +36,7 @@ export default function StickyAddToCart({ producto }: { producto: Producto }) {
         timeoutRef.current = setTimeout(() => {
             setIsAdded(false)
         }, 2000)
-    }
+    }, [addItem, producto, cantidad])
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-neutral-200 shadow-lg lg:hidden">
@@ -40,7 +45,7 @@ export default function StickyAddToCart({ producto }: { producto: Producto }) {
                 {/* Cantidad */}
                 <div className="flex items-center bg-neutral-100 rounded-xl p-1">
                     <button
-                        onClick={() => setCantidad(Math.max(1, cantidad - 1))}
+                        onClick={() => setCantidad((prev) => Math.max(1, prev - 1))}
                         disabled={cantidad <= 1}
                         className="p-2 rounded-lg hover:bg-white transition active:scale-90 disabled:opacity-50"
                     >
@@ -52,17 +57,17 @@ export default function StickyAddToCart({ producto }: { producto: Producto }) {
                     </span>
 
                     <button
-                        onClick={() => setCantidad(cantidad + 1)}
+                        onClick={() => setCantidad((prev) => prev + 1)}
                         className="p-2 rounded-lg hover:bg-white transition active:scale-90"
                     >
                         <Plus className="w-4 h-4 text-neutral-600" />
                     </button>
                 </div>
 
-                {/* Precio dinámico */}
+                {/* Precio */}
                 <div className="flex flex-col min-w-[80px]">
                     <span className="text-sm font-bold text-neutral-900">
-                        ${(producto.precio * cantidad).toLocaleString("es-AR")}
+                        ${totalPrice}
                     </span>
                     <span className="text-[10px] text-neutral-500">
                         Total

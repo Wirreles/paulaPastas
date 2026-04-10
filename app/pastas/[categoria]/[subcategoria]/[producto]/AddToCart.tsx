@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import { Minus, Plus, ShoppingBag, Check } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { Producto } from "@/lib/types"
@@ -16,6 +16,12 @@ export default function AddToCart({ producto }: AddToCartProps) {
 
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+    // 🧠 Memoizar cálculo de precio
+    const totalPrice = useMemo(() => {
+        return (producto.precio * cantidad).toLocaleString("es-AR")
+    }, [producto.precio, cantidad])
+
+    // 🧹 Cleanup seguro
     useEffect(() => {
         return () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current)
@@ -23,18 +29,18 @@ export default function AddToCart({ producto }: AddToCartProps) {
     }, [])
 
     const handleAddToCart = useCallback(() => {
-        if (cantidad > 0 && producto.disponible) {
-            addItem(producto, cantidad)
+        if (!producto.disponible || cantidad <= 0) return
 
-            setIsAdded(true)
-            setCantidad(1)
+        addItem(producto, cantidad)
 
-            if (timeoutRef.current) clearTimeout(timeoutRef.current)
+        setIsAdded(true)
+        setCantidad(1)
 
-            timeoutRef.current = setTimeout(() => {
-                setIsAdded(false)
-            }, 2000)
-        }
+        if (timeoutRef.current) clearTimeout(timeoutRef.current)
+
+        timeoutRef.current = setTimeout(() => {
+            setIsAdded(false)
+        }, 2000)
     }, [addItem, producto, cantidad])
 
     return (
@@ -44,7 +50,7 @@ export default function AddToCart({ producto }: AddToCartProps) {
             <div className="flex items-baseline justify-between">
                 <div className="flex flex-col">
                     <span className="text-3xl font-bold text-neutral-900">
-                        ${(producto.precio * cantidad).toLocaleString('es-AR')}
+                        ${totalPrice}
                     </span>
                     <span className="text-xs text-neutral-400 font-medium uppercase tracking-wider">
                         Subtotal (ARS)
@@ -64,7 +70,7 @@ export default function AddToCart({ producto }: AddToCartProps) {
                 {/* Cantidad */}
                 <div className="flex items-center bg-neutral-100 rounded-2xl p-1.5 w-full sm:w-auto justify-between">
                     <button
-                        onClick={() => setCantidad(Math.max(1, cantidad - 1))}
+                        onClick={() => setCantidad((prev) => Math.max(1, prev - 1))}
                         disabled={cantidad <= 1 || !producto.disponible}
                         className="p-2 hover:bg-white rounded-xl transition-all shadow-sm active:scale-90 disabled:opacity-50"
                     >
@@ -76,7 +82,7 @@ export default function AddToCart({ producto }: AddToCartProps) {
                     </span>
 
                     <button
-                        onClick={() => setCantidad(cantidad + 1)}
+                        onClick={() => setCantidad((prev) => prev + 1)}
                         disabled={!producto.disponible}
                         className="p-2 hover:bg-white rounded-xl transition-all shadow-sm active:scale-90 disabled:opacity-50"
                     >
@@ -109,30 +115,14 @@ export default function AddToCart({ producto }: AddToCartProps) {
 
             {/* Métodos de pago */}
             <div className="flex flex-col items-center sm:items-start gap-3 pt-2 sm:pl-1">
-
                 <span className="text-xs sm:text-sm text-neutral-500 font-medium">
                     Medios de pago disponibles
                 </span>
 
                 <div className="flex items-center gap-4 sm:gap-5 md:gap-6 opacity-90">
-
-                    <img
-                        src="/payments/visa.svg"
-                        alt="Visa"
-                        className="h-6 sm:h-7 md:h-8 lg:h-9 w-auto opacity-70 hover:opacity-100 hover:scale-110 transition-all duration-200"
-                    />
-
-                    <img
-                        src="/payments/mastercard.svg"
-                        alt="Mastercard"
-                        className="h-6 sm:h-7 md:h-8 lg:h-9 w-auto opacity-70 hover:opacity-100 hover:scale-110 transition-all duration-200"
-                    />
-
-                    <img
-                        src="/payments/mercadopago.svg"
-                        alt="Mercado Pago"
-                        className="h-6 sm:h-7 md:h-8 lg:h-9 w-auto opacity-70 hover:opacity-100 hover:scale-110 transition-all duration-200"
-                    />
+                    <img src="/payments/visa.svg" alt="Visa" className="h-6 sm:h-7 md:h-8 lg:h-9 w-auto opacity-70 hover:opacity-100 hover:scale-110 transition-all duration-200" />
+                    <img src="/payments/mastercard.svg" alt="Mastercard" className="h-6 sm:h-7 md:h-8 lg:h-9 w-auto opacity-70 hover:opacity-100 hover:scale-110 transition-all duration-200" />
+                    <img src="/payments/mercadopago.svg" alt="Mercado Pago" className="h-6 sm:h-7 md:h-8 lg:h-9 w-auto opacity-70 hover:opacity-100 hover:scale-110 transition-all duration-200" />
                 </div>
             </div>
         </div>
