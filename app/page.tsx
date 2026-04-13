@@ -1,21 +1,18 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { FirebaseService } from "@/lib/firebase-service"
 import { STATIC_FAQS, STATIC_REVIEWS } from "@/lib/constants"
 
-// Renderizado dinámico en cada request para que los productos destacados
-// siempre reflejen el estado actual (sin cache estático de Next.js en build/deploy)
-
-// Impotar componentes del Home
+// Componentes del Home — Hero es estático, se renderiza INMEDIATAMENTE
 import HeroSection from "@/components/home/HeroSection"
-import FeaturedProducts from "@/components/home/FeaturedProducts"
 import CategoriesSection from "@/components/home/CategoriesSection"
 import InfoSection from "@/components/home/InfoSection"
 import ContactCTA from "@/components/home/ContactCTA"
-import { ImageDebugInfo } from "@/components/ui/ImageDebugInfo"
 
 import dynamic from 'next/dynamic'
 
 // Secciones no críticas (Carga diferida / Lazy Load)
+const FeaturedProducts = dynamic(() => import("@/components/home/FeaturedProducts"))
 const GallerySection = dynamic(() => import("@/components/home/GallerySection"))
 const WhyChooseUs = dynamic(() => import("@/components/home/WhyChooseUs"))
 const ReviewsCarousel = dynamic(() => import("@/components/home/ReviewsCarousel"))
@@ -50,29 +47,26 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function HomePage() {
-  // Fetch de datos en el Servidor
+// Componente async para datos de Firebase — se stream con Suspense
+async function HomeData() {
   let productosDestacados: any[] = []
-  let reviewsDestacadas = []
+  let reviewsDestacadas: any[] = []
 
   try {
-    const raw = await FirebaseService.getProductosDestacados()
-    // JSON.parse/stringify: convierte cualquier objeto no serializable (Timestamps de Firestore,
-    // class instances, etc.) a plain objects. Next.js 15 requiere plain objects para pasar
-    // datos de Server Components a Client Components.
-    productosDestacados = JSON.parse(JSON.stringify(raw))
+    // 🔥 Paralelizar queries — antes eran secuenciales
+    const [rawProducts, allReviews] = await Promise.all([
+      FirebaseService.getProductosDestacados(),
+      FirebaseService.getAllReviews(),
+    ])
 
-    // Intentar cargar reseñas destacadas
-    const allReviews = await FirebaseService.getAllReviews()
-    reviewsDestacadas = allReviews.filter(review => review.aprobada && review.destacada)
+    productosDestacados = JSON.parse(JSON.stringify(rawProducts))
+    reviewsDestacadas = allReviews.filter((review: any) => review.aprobada && review.destacada)
   } catch (error) {
     console.error("❌ Error fetching home data:", error)
-    // Fallback simple si falla Firebase
   }
 
-  // Si no hay reseñas en Firebase, usar las estáticas (serializables)
   const finalReviews = reviewsDestacadas.length > 0
-    ? reviewsDestacadas.map(r => ({
+    ? reviewsDestacadas.map((r: any) => ({
       id: r.id || "0",
       name: r.name || r.userName || "Cliente",
       rating: r.rating || 5,
@@ -90,7 +84,7 @@ export default async function HomePage() {
       ratingValue: "4.9",
       reviewCount: "250",
     },
-    review: finalReviews.map((review) => ({
+    review: finalReviews.map((review: any) => ({
       "@type": "Review",
       author: { "@type": "Person", name: review.name },
       reviewRating: { "@type": "Rating", ratingValue: review.rating },
@@ -101,7 +95,7 @@ export default async function HomePage() {
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: STATIC_FAQS.map((faq) => ({
+    mainEntity: STATIC_FAQS.map((faq: any) => ({
       "@type": "Question",
       name: faq.question,
       acceptedAnswer: { "@type": "Answer", text: faq.answer },
@@ -109,30 +103,55 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewsJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
-
-      {/* Secciones del Home */}
-      <HeroSection />
-
       <FeaturedProducts productos={productosDestacados.slice(0, 6)} />
 
-      <CategoriesSection />
+      <ReviewsCarousel reviews={finalReviews.slice(0, 6)} />
+    </>
+  )
+}
 
+// Fallback mientras carga Firebase data
+function HomeDataFallback() {
+  return (
+    <section className="py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="animate-pulse space-y-8">
+          <div className="h-8 bg-primary-100 rounded w-64 mx-auto" />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[1,2,3].map(i => (
+              <div key={i} className="bg-primary-50 rounded-lg h-64" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <div className="min-h-screen">
+      {/* 🔥 Hero se renderiza INMEDIATAMENTE — sin esperar Firebase */}
+      <HeroSection />
+
+      {/* Firebase data se carga en paralelo via Suspense streaming */}
+      <Suspense fallback={<HomeDataFallback />}>
+        <HomeData />
+      </Suspense>
+
+      {/* Secciones estáticas que no necesitan Firebase */}
+      <CategoriesSection />
       <InfoSection />
 
+      {/* Secciones lazy-loaded */}
       <GallerySection />
-
       <WhyChooseUs />
-
-      <ReviewsCarousel reviews={finalReviews.slice(0, 6)} />
-
       <QualitySection />
-
       <FaqAccordion faqs={STATIC_FAQS} />
-
       <ContactCTA />
 
       <section className="py-16 bg-primary-100">
@@ -140,11 +159,6 @@ export default async function HomePage() {
           <NewsletterForm />
         </div>
       </section>
-
-      {/* Debug Info solo en Dev */}
-      {/* {process.env.NODE_ENV === 'development' && (
-        <ImageDebugInfo src={heroImage} alt="Hero" componentName="Home Hero" />
-      )} */}
     </div>
   )
 }
