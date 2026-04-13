@@ -13,8 +13,7 @@ import {
   getDoc,
   setDoc,
 } from "firebase/firestore"
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
-import { db, storage } from "./firebase" // Asegúrate de que 'storage' se exporta desde firebase.ts
+import { db, getLazyStorage } from "./firebase"
 import type {
   Producto,
   Pack,
@@ -411,9 +410,13 @@ static async getProductosDestacados(): Promise<Producto[]> {
     }
   }
 
-  // NUEVO: Método para subir imágenes a Firebase Storage
+  // NUEVO: Método para subir imágenes a Firebase Storage (lazy-loaded)
   static async uploadImage(file: File, path: string): Promise<string> {
     try {
+      const [storage, { ref, uploadBytes, getDownloadURL }] = await Promise.all([
+        getLazyStorage(),
+        import("firebase/storage"),
+      ])
       const storageRef = ref(storage, path)
       const snapshot = await uploadBytes(storageRef, file)
       const downloadURL = await getDownloadURL(snapshot.ref)
@@ -424,9 +427,13 @@ static async getProductosDestacados(): Promise<Producto[]> {
     }
   }
 
-  // NUEVO: Método para eliminar imágenes de Firebase Storage
+  // NUEVO: Método para eliminar imágenes de Firebase Storage (lazy-loaded)
   static async deleteImage(url: string): Promise<void> {
     try {
+      const [storage, { ref, deleteObject }] = await Promise.all([
+        getLazyStorage(),
+        import("firebase/storage"),
+      ])
       // Extraer la ruta del objeto de la URL de descarga
       const decodedUrl = decodeURIComponent(url)
       const pathStartIndex = decodedUrl.indexOf("o/") + 2

@@ -2,8 +2,13 @@ import type { Metadata } from "next"
 import { cache, Suspense } from "react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import Image from "next/image"
-import { ArrowLeft, ChevronRight } from "lucide-react"
+// Iconos inline SVG para evitar client-side bundle de lucide-react en server component
+const ArrowLeftIcon = () => (
+  <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+)
+const ChevronRightIcon = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+)
 import dynamic from "next/dynamic"
 import { FirebaseService } from "@/lib/firebase-service"
 import { getProductCanonicalUrl, getCategoryUrl, getSubcategoryUrl } from "@/lib/product-url"
@@ -15,7 +20,7 @@ const ProductCarousel = dynamic(() => import("./ProductCarousel"), {
     <div className="w-full aspect-square bg-neutral-100 rounded-2xl animate-pulse" />
   ),
 })
-import ReviewSummaryLoader from "./ReviewSummaryLoader"
+import ReviewSummaryServer from "./ReviewSummaryServer"
 import AddToCartLoader from "./AddToCartLoader"
 import StickyAddToCartLoader from "./StickyAddToCartLoader"
 import ReviewsLoader from "./ReviewsLoader";
@@ -229,7 +234,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="mb-8">
             <Link href={backUrl} className="inline-flex items-center text-primary-600 hover:text-primary-700 transition-colors">
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeftIcon />
               Volver a {subcatUrl ? subcategoria : categoriaNombre}
             </Link>
           </div>
@@ -261,8 +266,10 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
                   {producto.nombre}
                 </h1>
 
-                {/* ⭐ AHORA CLIENT SIDE (NO BLOQUEA) */}
-                <ReviewSummaryLoader productId={producto.id!} />
+                {/* ⭐ Server-side con Suspense streaming */}
+                <Suspense fallback={<div className="flex items-center gap-3 mt-3"><div className="h-6 w-24 bg-neutral-200 animate-pulse rounded-full" /><div className="h-5 w-32 bg-neutral-200 animate-pulse rounded" /></div>}>
+                  <ReviewSummaryServer productId={producto.id!} />
+                </Suspense>
               </div>
 
               <p className="text-lg text-neutral-600 leading-relaxed whitespace-pre-line">
@@ -281,7 +288,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
               <details className="bg-white rounded-2xl shadow-md p-5 group transition-all">
                 <summary className="flex justify-between items-center font-semibold text-neutral-900 text-lg cursor-pointer">
                   Ingredientes
-                  <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                  <ChevronRightIcon className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
                 </summary>
 
                 <div className="mt-4 text-neutral-700 leading-relaxed text-sm md:text-base">
@@ -299,7 +306,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
               <details className="bg-white rounded-2xl shadow-md p-5 group transition-all">
                 <summary className="flex justify-between items-center font-semibold text-neutral-900 text-lg cursor-pointer">
                   {producto.comoPreparar.titulo || "Cómo se prepara"}
-                  <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                  <ChevronRightIcon className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
                 </summary>
 
                 <div className="mt-4 text-neutral-700 leading-relaxed text-sm md:text-base whitespace-pre-line">
@@ -313,7 +320,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
               <details className="bg-white rounded-2xl shadow-md p-5 group transition-all md:col-span-2">
                 <summary className="flex justify-between items-center font-semibold text-neutral-900 text-lg cursor-pointer">
                   {producto.historiaPlato.titulo || "Historia del plato"}
-                  <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                  <ChevronRightIcon className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
                 </summary>
 
                 <div className="mt-4 text-neutral-700 leading-relaxed text-sm md:text-base whitespace-pre-line">
@@ -326,7 +333,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
             <details className="bg-white rounded-2xl shadow-md p-5 group transition-all md:col-span-2">
               <summary className="flex justify-between items-center font-semibold text-neutral-900 text-lg cursor-pointer">
                 Envío y conservación
-                <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                <ChevronRightIcon className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
               </summary>
 
               <div className="mt-4 text-neutral-700 leading-relaxed text-sm md:text-base">
@@ -354,7 +361,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
                   <details key={idx} className="bg-neutral-50 rounded-lg p-5 cursor-pointer group">
                     <summary className="flex justify-between items-center font-bold text-neutral-900 text-lg list-none">
                       {faq.pregunta}
-                      <ChevronRight className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
+                      <ChevronRightIcon className="w-5 h-5 text-primary-600 transition-transform duration-300 group-open:rotate-90" />
                     </summary>
 
                     <div className="mt-4 text-neutral-700 leading-relaxed whitespace-pre-line">

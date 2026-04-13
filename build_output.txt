@@ -1,0 +1,93 @@
+.next/types/app/blog/[slug]/page.ts(34,29): error TS2344: Type 'Props' does not satisfy the constraint 'PageProps'.
+  Types of property 'params' are incompatible.
+    Type '{ slug: string; }' is missing the following properties from type 'Promise<any>': then, catch, finally, [Symbol.toStringTag]
+.next/types/app/blog/[slug]/page.ts(38,31): error TS2344: Type 'Props' does not satisfy the constraint 'PageProps'.
+.next/types/app/pastas/[categoria]/[subcategoria]/page.ts(34,29): error TS2344: Type 'SubcategoriaPageProps' does not satisfy the constraint 'PageProps'.
+  Types of property 'params' are incompatible.
+    Type '{ categoria: string; subcategoria: string; }' is missing the following properties from type 'Promise<any>': then, catch, finally, [Symbol.toStringTag]
+.next/types/app/pastas/[categoria]/[subcategoria]/page.ts(38,31): error TS2344: Type 'SubcategoriaPageProps' does not satisfy the constraint 'PageProps'.
+.next/types/app/pastas/[categoria]/page.ts(34,29): error TS2344: Type 'CategoriaPageProps' does not satisfy the constraint 'PageProps'.
+  Types of property 'params' are incompatible.
+    Type '{ categoria: string; }' is missing the following properties from type 'Promise<any>': then, catch, finally, [Symbol.toStringTag]
+.next/types/app/pastas/[categoria]/page.ts(38,31): error TS2344: Type 'CategoriaPageProps' does not satisfy the constraint 'PageProps'.
+.next/types/app/salsas/[salsa]/page.ts(34,29): error TS2344: Type 'SalsaPageProps' does not satisfy the constraint 'PageProps'.
+  Types of property 'params' are incompatible.
+    Type '{ salsa: string; }' is missing the following properties from type 'Promise<any>': then, catch, finally, [Symbol.toStringTag]
+.next/types/app/salsas/[salsa]/page.ts(38,31): error TS2344: Type 'SalsaPageProps' does not satisfy the constraint 'PageProps'.
+app/admin/blog/page.tsx(262,31): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
+  Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
+app/admin/page.tsx(59,36): error TS2367: This comparison appears to be unintentional because the types '"rellenas" | "sin-relleno" | "sin-tacc" | "salsas"' and '"packs"' have no overlap.
+app/blog/[slug]/page.tsx(132,15): error TS2322: Type '{ src: string; alt: string; width: number; height: number; className: string; priority: true; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
+  Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
+app/blog/page.tsx(190,23): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
+  Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
+app/checkout/page.tsx(1102,25): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
+  Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
+app/nosotros/page.tsx(154,21): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
+  Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
+app/nosotros/page.tsx(267,21): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
+  Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
+app/pack-raviolada/page.tsx(61,34): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/pack-raviolada/page.tsx(65,41): error TS2464: A computed property name must be of type 'string', 'number', 'symbol', or 'any'.
+app/pack-raviolada/page.tsx(220,48): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/pack-raviolada/page.tsx(276,67): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/pack-raviolada/page.tsx(284,67): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/page.tsx(56,7): error TS7034: Variable 'reviewsDestacadas' implicitly has type 'any[]' in some locations where its type cannot be determined.
+app/page.tsx(75,7): error TS7005: Variable 'reviewsDestacadas' implicitly has an 'any[]' type.
+app/pastas/[categoria]/[subcategoria]/page.tsx(101,16): error TS7053: Element implicitly has an 'any' type because expression of type 'string | number | symbol' can't be used to index type '{ lasagna: { nombre: string; descripcion: string; imagen: string; }; ravioles: { nombre: string; descripcion: string; imagen: string; }; sorrentinos: { nombre: string; descripcion: string; imagen: string; }; } | { ...; }'.
+  No index signature with a parameter of type 'string' was found on type '{ lasagna: { nombre: string; descripcion: string; imagen: string; }; ravioles: { nombre: string; descripcion: string; imagen: string; }; sorrentinos: { nombre: string; descripcion: string; imagen: string; }; } | { ...; }'.
+app/pastas/[categoria]/[subcategoria]/page.tsx(142,16): error TS7053: Element implicitly has an 'any' type because expression of type 'string | number | symbol' can't be used to index type '{ lasagna: { nombre: string; descripcion: string; imagen: string; }; ravioles: { nombre: string; descripcion: string; imagen: string; }; sorrentinos: { nombre: string; descripcion: string; imagen: string; }; } | { ...; }'.
+  No index signature with a parameter of type 'string' was found on type '{ lasagna: { nombre: string; descripcion: string; imagen: string; }; ravioles: { nombre: string; descripcion: string; imagen: string; }; sorrentinos: { nombre: string; descripcion: string; imagen: string; }; } | { ...; }'.
+app/pastas/page.tsx(109,23): error TS2322: Type '{ key: any; producto: any; productUrl: string; }' is not assignable to type 'IntrinsicAttributes & ProductCardProps'.
+  Property 'productUrl' does not exist on type 'IntrinsicAttributes & ProductCardProps'. Did you mean 'producto'?
+app/pastas/salsas/page.tsx(102,34): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/pastas/salsas/page.tsx(106,41): error TS2464: A computed property name must be of type 'string', 'number', 'symbol', or 'any'.
+app/pastas/salsas/page.tsx(217,19): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; priority: true; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
+  Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
+app/pastas/salsas/page.tsx(268,48): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/pastas/salsas/page.tsx(281,29): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; fallback: string; placeholder: Element; lazyThreshold: number; loading: "lazy"; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
+  Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
+app/pastas/salsas/page.tsx(327,67): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/pastas/salsas/page.tsx(335,67): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/pastas/sin-tacc/page.tsx(101,15): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; priority: true; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
+  Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
+app/salsas/[salsa]/page.tsx(88,7): error TS2322: Type 'import("G:/proyectos/paulapastas/paulaPastas/lib/types").Producto' is not assignable to type 'Producto'.
+  Types of property 'id' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+app/salsas/[salsa]/page.tsx(89,7): error TS2322: Type 'import("G:/proyectos/paulapastas/paulaPastas/lib/types").Producto[]' is not assignable to type 'Producto[]'.
+  Type 'import("G:/proyectos/paulapastas/paulaPastas/lib/types").Producto' is not assignable to type 'Producto'.
+app/salsas/[salsa]/ProductoPageClient.tsx(118,15): error TS2345: Argument of type 'Producto' is not assignable to parameter of type 'import("G:/proyectos/paulapastas/paulaPastas/lib/types").Producto'.
+  Types of property 'categoria' are incompatible.
+    Type 'string' is not assignable to type '"rellenas" | "sin-relleno" | "sin-tacc" | "salsas"'.
+app/salsas/[salsa]/ProductoPageClient.tsx(223,19): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; priority: true; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
+  Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
+app/salsas/[salsa]/ProductoPageClient.tsx(310,66): error TS2322: Type 'Producto' is not assignable to type 'import("G:/proyectos/paulapastas/paulaPastas/lib/types").Producto'.
+app/salsas/[salsa]/ProductoPageClient.tsx(473,53): error TS2322: Type 'Producto' is not assignable to type 'import("G:/proyectos/paulapastas/paulaPastas/lib/types").Producto'.
+components/admin/BlogArticleForm.tsx(50,9): error TS2322: Type 'string | Date' is not assignable to type 'Date'.
+  Type 'string' is not assignable to type 'Date'.
+components/admin/BlogArticleForm.tsx(389,23): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
+  Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
+components/admin/PageBannerForm.tsx(313,23): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
+  Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
+components/admin/ProductForm.tsx(34,5): error TS2322: Type '""' is not assignable to type '"lasagna" | "ravioles" | "sorrentinos" | "fideos" | "ravioles-fritos" | "salsa" | "noquis" | undefined'.
+components/ComplementaryProductCard.tsx(49,13): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
+  Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
+components/landing/NewsletterForm.tsx(22,44): error TS2554: Expected 1 arguments, but got 2.
+scripts/fix-existing-products.ts(85,12): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+scripts/fix-existing-products.ts(85,29): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+scripts/fix-existing-products.ts(86,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+scripts/fix-existing-products.ts(90,30): error TS18046: 'productos' is of type 'unknown'.
+scripts/fix-existing-products.ts(90,62): error TS18046: 'productos' is of type 'unknown'.
+scripts/reconcile-purchase.ts(36,41): error TS18048: 'MP_ACCESS_TOKEN' is possibly 'undefined'.

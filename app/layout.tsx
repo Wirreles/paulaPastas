@@ -5,7 +5,6 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Providers } from "@/components/Providers";
-import dynamic from "next/dynamic";
 
 // 🔥 Analytics lazy → NO bloquea LCP
 import AnalyticsWrapper from "@/components/AnaltyicsWrapper";

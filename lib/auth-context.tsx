@@ -5,7 +5,7 @@ import React, { createContext, useContext, useEffect, useState, useMemo } from "
 // Solo dejamos los tipos y lo que sea indispensable.
 import type { User } from "firebase/auth"
 import { doc, getDoc, setDoc } from "firebase/firestore"
-import { db } from "./firebase"
+import { db, getLazyAuth } from "./firebase"
 import type { Usuario } from "./types"
 
 interface AuthContextType {
@@ -29,8 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 2. CARGA DINÁMICA: Firebase Auth se descarga solo cuando el componente se monta.
     const initAuth = async () => {
       try {
-        const { getAuth, onAuthStateChanged } = await import("firebase/auth")
-        const { auth } = await import("./firebase") // Importamos la instancia de auth dinámicamente
+        const { onAuthStateChanged } = await import("firebase/auth")
+        const auth = await getLazyAuth()
 
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
           setUser(firebaseUser)
@@ -62,8 +62,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = async (email: string, password: string) => {
-    const { signInWithEmailAndPassword, getAuth } = await import("firebase/auth")
-    const { auth } = await import("./firebase")
+    const { signInWithEmailAndPassword } = await import("firebase/auth")
+    const auth = await getLazyAuth()
 
     const userCredential = await signInWithEmailAndPassword(auth, email, password)
     const firebaseUser = userCredential.user
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (email: string, password: string, nombre: string) => {
     const { createUserWithEmailAndPassword } = await import("firebase/auth")
-    const { auth } = await import("./firebase")
+    const auth = await getLazyAuth()
 
     const userCredential = await createUserWithEmailAndPassword(auth, email, password)
     const firebaseUser = userCredential.user
@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       const { signOut } = await import("firebase/auth")
-      const { auth } = await import("./firebase")
+      const auth = await getLazyAuth()
 
       setUser(null)
       setUserData(null)
