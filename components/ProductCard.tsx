@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Eye, Star, Minus, Plus } from "lucide-react"
 import type { Producto } from "@/lib/types"
-import { useState, useCallback, memo } from "react"
+import { useState, useCallback, useMemo, memo } from "react"
 
 import { formatPrice } from "@/lib/utils"
 import { getProductUrl } from "@/lib/product-url"
@@ -13,9 +13,10 @@ import AddToCartButton from "./AddtoCartButton"
 interface ProductCardProps {
   producto: Producto
   baseUrl?: string
+  priority?: boolean
 }
 
-function ProductCard({ producto, baseUrl }: ProductCardProps) {
+function ProductCard({ producto, baseUrl, priority = false }: ProductCardProps) {
 
   const productUrl = baseUrl
     ? `${baseUrl}/${producto.slug}`
@@ -31,26 +32,38 @@ function ProductCard({ producto, baseUrl }: ProductCardProps) {
     setQuantity(1)
   }, [])
 
-  const totalPorciones = producto.porciones
-    ? producto.porciones * quantity
-    : null
+  const totalPorciones = useMemo(() => {
+    return producto.porciones
+      ? producto.porciones * quantity
+      : null
+  }, [producto.porciones, quantity])
 
   return (
-    <article className="bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group flex flex-col h-full">
+    <article
+      itemScope
+      itemType="https://schema.org/Product"
+      className="bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group flex flex-col h-full"
+    >
 
       {/* Imagen */}
       <div className="relative h-64">
-        <Link href={productUrl} prefetch={false}>
+        <Link
+          href={productUrl}
+          prefetch={false}
+          aria-label={`Ver ${producto.nombre}`}
+        >
           <ImageWrapper
             src={producto.imagen}
-            alt={producto.nombre}
+            alt={`${producto.nombre} - pasta artesanal`}
             fill
             sizes="(max-width: 640px) 100vw,
                    (max-width: 1024px) 50vw,
                    (max-width: 1280px) 33vw,
                    25vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
+            className={`object-cover ${priority ? '' : 'group-hover:scale-105 transition-transform duration-300'}`}
+            priority={priority}
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority="auto"
           />
         </Link>
 
@@ -73,8 +86,15 @@ function ProductCard({ producto, baseUrl }: ProductCardProps) {
       {/* Contenido */}
       <div className="p-4 flex flex-col flex-grow">
 
-        <Link href={productUrl} prefetch={false}>
-          <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-primary-600">
+        <Link
+          href={productUrl}
+          prefetch={false}
+          aria-label={`Ver ${producto.nombre}`}
+        >
+          <h3
+            itemProp="name"
+            className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors"
+          >
             {producto.nombre}
           </h3>
         </Link>
@@ -83,10 +103,14 @@ function ProductCard({ producto, baseUrl }: ProductCardProps) {
           {producto.descripcionAcortada || producto.descripcion}
         </p>
 
+        {/* Precio + cantidad */}
         <div className="flex items-center justify-between mb-4">
 
           <div>
-            <span className="text-xl font-bold text-primary-600">
+            <span
+              className="text-xl font-bold text-primary-600"
+              itemProp="price"
+            >
               {formatPrice(producto.precio * quantity)}
             </span>
 
@@ -97,16 +121,33 @@ function ProductCard({ producto, baseUrl }: ProductCardProps) {
             )}
           </div>
 
+          {/* Controles de cantidad */}
           <div className="flex items-center gap-2">
-            <button onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1}>
-              <Minus className="w-4 h-4" />
+
+            <button
+              onClick={() => handleQuantityChange(-1)}
+              disabled={quantity <= 1}
+              aria-label="Reducir cantidad"
+              className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors disabled:opacity-50"
+            >
+              <Minus className="w-4 h-4 text-neutral-700" />
             </button>
 
-            <span className="w-8 text-center">{quantity}</span>
+            <span
+              className="w-8 text-center font-semibold text-neutral-900"
+              aria-live="polite"
+            >
+              {quantity}
+            </span>
 
-            <button onClick={() => handleQuantityChange(1)}>
-              <Plus className="w-4 h-4" />
+            <button
+              onClick={() => handleQuantityChange(1)}
+              aria-label="Aumentar cantidad"
+              className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+            >
+              <Plus className="w-4 h-4 text-neutral-700" />
             </button>
+
           </div>
 
         </div>
@@ -127,7 +168,8 @@ function ProductCard({ producto, baseUrl }: ProductCardProps) {
           <Link
             href={productUrl}
             prefetch={false}
-            className="bg-neutral-900 text-white p-2 rounded-lg flex items-center justify-center"
+            aria-label={`Ver detalles de ${producto.nombre}`}
+            className="bg-neutral-900 text-white p-2 rounded-lg hover:bg-neutral-800 transition-colors flex items-center justify-center"
           >
             <Eye className="w-5 h-5" />
           </Link>

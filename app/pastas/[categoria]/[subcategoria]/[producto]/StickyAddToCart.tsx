@@ -13,12 +13,10 @@ export default function StickyAddToCart({ producto }: { producto: Producto }) {
 
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    // 🧠 Memo precio
     const totalPrice = useMemo(() => {
         return (producto.precio * cantidad).toLocaleString("es-AR")
     }, [producto.precio, cantidad])
 
-    // 🧹 Cleanup
     useEffect(() => {
         return () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current)
@@ -39,29 +37,40 @@ export default function StickyAddToCart({ producto }: { producto: Producto }) {
     }, [addItem, producto, cantidad])
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-neutral-200 shadow-lg lg:hidden">
+        <div
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-neutral-200 shadow-lg lg:hidden"
+            role="region"
+            aria-label="Agregar producto al carrito"
+        >
             <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
 
                 {/* Cantidad */}
                 <div className="flex items-center bg-neutral-100 rounded-xl p-1">
+
                     <button
                         onClick={() => setCantidad((prev) => Math.max(1, prev - 1))}
                         disabled={cantidad <= 1}
+                        aria-label="Reducir cantidad"
                         className="p-2 rounded-lg hover:bg-white transition active:scale-90 disabled:opacity-50"
                     >
                         <Minus className="w-4 h-4 text-neutral-600" />
                     </button>
 
-                    <span className="w-8 text-center font-bold text-neutral-900">
+                    <span
+                        className="w-8 text-center font-bold text-neutral-900"
+                        aria-live="polite"
+                    >
                         {cantidad}
                     </span>
 
                     <button
                         onClick={() => setCantidad((prev) => prev + 1)}
+                        aria-label="Aumentar cantidad"
                         className="p-2 rounded-lg hover:bg-white transition active:scale-90"
                     >
                         <Plus className="w-4 h-4 text-neutral-600" />
                     </button>
+
                 </div>
 
                 {/* Precio */}
@@ -78,6 +87,12 @@ export default function StickyAddToCart({ producto }: { producto: Producto }) {
                 <button
                     onClick={handleAdd}
                     disabled={!producto.disponible || isAdded}
+                    aria-label={
+                        isAdded
+                            ? "Producto agregado al carrito"
+                            : `Agregar ${producto.nombre} al carrito`
+                    }
+                    aria-live="polite"
                     className={`flex-1 font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 ${isAdded
                             ? "bg-green-600 text-white"
                             : "bg-primary-600 hover:bg-primary-700 text-white"
@@ -95,6 +110,7 @@ export default function StickyAddToCart({ producto }: { producto: Producto }) {
                         </>
                     )}
                 </button>
+
             </div>
         </div>
     )
