@@ -36,11 +36,20 @@ export default function FeaturedProducts({ productos }: FeaturedProductsProps) {
             {productos.map((producto) => {
               if (!producto.id) return null
 
+              // ✅ Lógica de redirección dinámica
+              // Si la categoría es 'salsas', la ruta es directa. 
+              // Si no, sigue el esquema de /pastas/categoria/subcategoria
+              const isSalsa = producto.categoria?.toLowerCase() === 'salsas'
+
+              const dynamicBaseUrl = isSalsa
+                ? '/salsas'
+                : `/pastas/${producto.categoria}/${producto.subcategoria}`
+
               return (
                 <ProductCard
                   key={producto.id}
                   producto={producto}
-                  baseUrl={`/pastas/${producto.categoria}/${producto.subcategoria}`}
+                  baseUrl={dynamicBaseUrl}
                 />
               )
             })}
