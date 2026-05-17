@@ -20,6 +20,9 @@ const QualitySection = dynamic(() => import("@/components/home/QualitySection"))
 const FaqAccordion = dynamic(() => import("@/components/home/FaqAccordion"))
 const NewsletterForm = dynamic(() => import("@/components/ui/NewsletterForm").then(mod => mod.NewsletterForm))
 
+// 🚀 AGREGA ESTA LÍNEA (ejemplo: 60 segundos o 3600 para una hora)
+export const revalidate = 60
+
 // Metadatos SEO (Reemplaza next/head)
 export const metadata: Metadata = {
   title: "Paula Pastas - Pastas Artesanales en Rosario | Delivery Premium",
@@ -122,7 +125,7 @@ function HomeDataFallback() {
         <div className="animate-pulse space-y-8">
           <div className="h-8 bg-primary-100 rounded w-64 mx-auto" />
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {[1,2,3].map(i => (
+            {[1, 2, 3].map(i => (
               <div key={i} className="bg-primary-50 rounded-lg h-64" />
             ))}
           </div>
