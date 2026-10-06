@@ -82,11 +82,13 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 3. VALIDAR CUPÓN EN BACKEND (SEGURIDAD)
+    // 3. CALCULAR DESCUENTOS (Transferencia 10% OFF o Cupón si existiera)
     let discountAmount = 0
     let couponAppliedData = null
 
-    if (couponCode) {
+    if (paymentMethod === "transferencia") {
+      discountAmount = Math.round(subtotal * 0.10)
+    } else if (couponCode) {
       const couponQuery = await adminDb
         .collection("cupones")
         .where("codigo", "==", couponCode.trim())
@@ -122,6 +124,7 @@ export async function POST(request: NextRequest) {
     const finalTotal = Math.max(0, subtotal - discountAmount)
 
     // 4. PREPARAR DATOS FINALES PARA FIRESTORE
+    const currentMethod = paymentMethod || 'transferencia'
     const purchaseData = {
       buyerId: buyerId || null,
       buyerEmail,
@@ -129,7 +132,7 @@ export async function POST(request: NextRequest) {
       buyerPhone,
       buyerAddress,
       products: validatedProducts,
-      paymentId: `cash-delivery-${Date.now()}`,
+      paymentId: `${currentMethod}-${Date.now()}`,
       status: 'pending',
       totalAmount: finalTotal,
       originalAmount: subtotal,
@@ -144,7 +147,7 @@ export async function POST(request: NextRequest) {
       addressId: addressId || null,
       addressData: addressData || null,
       orderStatus: 'en_preparacion',
-      paymentMethod: paymentMethod || 'efectivo'
+      paymentMethod: currentMethod
     }
 
     // 5. GUARDAR EN FIRESTORE USANDO ADMIN SDK
@@ -152,7 +155,7 @@ export async function POST(request: NextRequest) {
     await purchaseRef.set(purchaseData)
     const purchaseId = purchaseRef.id
 
-    Logger.log(`✅ Compra en efectivo SEGURA creada vía API (Admin) con ID: ${purchaseId}`)
+    Logger.log(`✅ Compra (${currentMethod}) creada vía API (Admin) con ID: ${purchaseId}`)
 
     // 6. MARCAR CUPÓN COMO USADO (Incremento atómico para evitar race conditions)
     if (couponAppliedData) {

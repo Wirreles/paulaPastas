@@ -157,11 +157,11 @@ export default function HomePage() {
       <FaqAccordion faqs={STATIC_FAQS} />
       <ContactCTA />
 
-      <section className="py-16 bg-primary-100">
+      {/* <section className="py-16 bg-primary-100">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <NewsletterForm />
         </div>
-      </section>
+      </section> */}
     </div>
   )
 }

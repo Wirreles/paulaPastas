@@ -101,12 +101,21 @@ export default function CartSidebar() {
               <p>Disfrutá la experiencia del ritual con todas tus compras.</p>
             </div>
 
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center text-lg font-bold mb-4">
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex justify-between items-center text-lg font-bold">
                 <span>Subtotal:</span>
                 <span>{formatPrice(totalPrice)}</span>
               </div>
-              <p className="text-sm text-neutral-500 mb-4">
+
+              <div className="bg-emerald-50 border border-emerald-200/80 rounded-xl p-3 flex items-center justify-between text-xs sm:text-sm shadow-sm">
+                <div className="flex items-center gap-1.5 text-emerald-900 font-medium">
+                  <span className="font-bold bg-emerald-200 text-emerald-900 px-1.5 py-0.5 rounded text-[11px]">10% OFF</span>
+                  <span>Con Transferencia:</span>
+                </div>
+                <span className="font-bold text-emerald-700 text-base">{formatPrice(Math.round(totalPrice * 0.90))}</span>
+              </div>
+
+              <p className="text-xs text-neutral-500">
                 *El costo de envío se coordina por WhatsApp luego de la compra.
               </p>
               <Link href="/checkout" passHref>

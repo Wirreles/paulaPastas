@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Loader2, CheckCircle, CreditCard, Wallet, MapPin, ChevronDown, X, Truck } from "lucide-react"
+import { Loader2, CheckCircle, CreditCard, Wallet, MapPin, ChevronDown, X, Truck, Copy, Check } from "lucide-react"
 import { ImageWrapper } from "@/components/ui/ImageWrapper"
 import { ProductPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { useToast } from "@/lib/toast-context"
@@ -35,18 +35,6 @@ export default function CheckoutPage() {
   const router = useRouter()
   const { success, error } = useToast()
 
-  /*
-   * SISTEMA DE CUPONES:
-   * 
-   * 1. VALIDACIÓN: El cupón se valida al aplicarlo (fechas, monto mínimo, límite de usos)
-   * 2. APLICACIÓN: Se calcula el descuento y se actualiza el precio final
-   * 3. PERSISTENCIA: La información del cupón se incluye en todos los métodos de pago
-   * 4. MARCADO COMO USADO: 
-   *    - Para otros métodos: Se marca inmediatamente al confirmar la orden
-   *    - Para MercadoPago: Se marca cuando se confirme el pago (webhook o callback)
-   * 5. PREVENCIÓN: Se evita marcar el mismo cupón múltiples veces
-   */
-
   const [step, setStep] = useState(1)
   const [purchaseOption, setPurchaseOption] = useState<"guest" | "logged">(user ? "logged" : "guest")
   const [formData, setFormData] = useState({
@@ -58,23 +46,48 @@ export default function CheckoutPage() {
   })
   const [deliveryOption, setDeliveryOption] = useState<"delivery" | "pickup">("delivery")
   const [selectedDeliverySlot, setSelectedDeliverySlot] = useState<string>("")
-  const [paymentMethod, setPaymentMethod] = useState<string>("mercadopago")
+  const [paymentMethod, setPaymentMethod] = useState<string>("transferencia")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [orderConfirmed, setOrderConfirmed] = useState(false)
   const [purchaseId, setPurchaseId] = useState<string | null>(null)
+  const [whatsappUrl, setWhatsappUrl] = useState<string>("")
+  const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [confirmedOrderSummary, setConfirmedOrderSummary] = useState<{
+    purchaseId: string
+    subtotal: number
+    discount: number
+    total: number
+    whatsappUrl: string
+    paymentMethod: string
+  } | null>(null)
   const [isCreatingPayment, setIsCreatingPayment] = useState(false)
   const [userAddresses, setUserAddresses] = useState<any[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string>("")
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
-  // Estado para cupones
+  const handleCopy = (text: string, field: string) => {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(text)
+    }
+    setCopiedField(field)
+    success("Copiado", `${field.toUpperCase()} copiado al portapapeles`)
+    setTimeout(() => {
+      setCopiedField(null)
+    }, 2500)
+  }
+
+  // Estado para cupones (deshabilitado temporalmente)
   const [couponCode, setCouponCode] = useState("")
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null)
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false)
   const [couponError, setCouponError] = useState("")
   const [couponSuccess, setCouponSuccess] = useState("")
   const [couponMarkedAsUsed, setCouponMarkedAsUsed] = useState(false)
+
+  // Descuento automático por transferencia (10%)
+  const transferDiscount = paymentMethod === "transferencia" ? Math.round(totalPrice * 0.10) : 0
+  const finalPrice = totalPrice - transferDiscount
 
   // Horarios de entrega fijos (ejemplo, idealmente vendrían de Firebase)
   const deliverySlots = [
@@ -156,7 +169,6 @@ export default function CheckoutPage() {
       const result = await FirebaseService.validateCoupon(couponCode.trim(), totalPrice)
 
       if (result.valid && result.cupon) {
-        // Validaciones adicionales
         if (result.cupon.montoMinimo > 0 && totalPrice < result.cupon.montoMinimo) {
           setCouponError(`Monto mínimo requerido: $${result.cupon.montoMinimo}`)
           return
@@ -172,7 +184,6 @@ export default function CheckoutPage() {
           return
         }
 
-        // Aplicar cupón
         setAppliedCoupon(result.cupon)
         setCouponSuccess(`¡Cupón aplicado! Descuento: ${result.cupon.tipoDescuento === 'porcentaje' ? `${result.cupon.descuento}%` : `$${result.cupon.descuento}`}`)
         setCouponCode("")
@@ -187,15 +198,13 @@ export default function CheckoutPage() {
     }
   }
 
-  // Función para remover cupón
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null)
     setCouponSuccess("")
     setCouponError("")
-    setCouponMarkedAsUsed(false) // Resetear el estado del cupón usado
+    setCouponMarkedAsUsed(false)
   }
 
-  // Calcular descuento del cupón
   const calculateCouponDiscount = () => {
     if (!appliedCoupon) return 0
 
@@ -206,10 +215,6 @@ export default function CheckoutPage() {
     }
   }
 
-  // Calcular precio final con descuento
-  const finalPrice = totalPrice - calculateCouponDiscount()
-
-  // Función helper para formatear información del cupón
   const getCouponInfo = () => {
     if (!appliedCoupon) return null
 
@@ -245,7 +250,6 @@ export default function CheckoutPage() {
       }))
     }
 
-    // Limpiar error de dirección cuando se selecciona una
     if (errors.address) {
       setErrors(prev => {
         const newErrors = { ...prev }
@@ -259,7 +263,6 @@ export default function CheckoutPage() {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
 
-    // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = { ...prev }
@@ -269,20 +272,16 @@ export default function CheckoutPage() {
     }
   }
 
-  // Función para limpiar errores
   const clearErrors = () => {
     setErrors({})
   }
 
-  // Validaciones para cada paso
   const validateStep1 = (): boolean => {
     clearErrors()
-
     if (purchaseOption === "logged" && !user) {
       setErrors({ step1: "Debes iniciar sesión para continuar" })
       return false
     }
-
     return true
   }
 
@@ -290,14 +289,12 @@ export default function CheckoutPage() {
     clearErrors()
     const newErrors: { [key: string]: string } = {}
 
-    // Validar nombre
     if (!formData.name.trim()) {
       newErrors.name = "El nombre es requerido"
     } else if (formData.name.trim().length < 2) {
       newErrors.name = "El nombre debe tener al menos 2 caracteres"
     }
 
-    // Validar email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!formData.email.trim()) {
       newErrors.email = "El email es requerido"
@@ -305,14 +302,12 @@ export default function CheckoutPage() {
       newErrors.email = "Ingresa un email válido"
     }
 
-    // Validar teléfono
     if (!formData.phone || !formData.phone.trim()) {
       newErrors.phone = "El teléfono es requerido"
     } else if (formData.phone.trim().length < 8) {
       newErrors.phone = "Ingresa un teléfono válido"
     }
 
-    // Validar dirección (envío a domicilio obligatorio)
     if (user && userAddresses.length > 0) {
       if (!selectedAddressId) {
         newErrors.address = "Selecciona una dirección de entrega"
@@ -349,7 +344,6 @@ export default function CheckoutPage() {
 
   const handleNextStep = () => {
     let isValid = false
-
     switch (step) {
       case 1:
         isValid = validateStep1()
@@ -388,25 +382,21 @@ export default function CheckoutPage() {
     try {
       Logger.debug("🔄 Iniciando pago con MercadoPago")
 
-      // Validar datos requeridos
       if (!formData.name || !formData.email || !formData.phone) {
         error("Datos incompletos", "Por favor completa todos los campos requeridos")
         return
       }
 
-      // Validar dirección solo si es delivery
       let finalAddress = formData.address
       let addressData = null
 
       if (user && userAddresses.length > 0 && selectedAddressId) {
-        // Usuario logueado con direcciones guardadas
         const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
         if (selectedAddress) {
           addressData = selectedAddress
           finalAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
         }
       } else if (!finalAddress) {
-        // Usuario invitado o logueado sin direcciones guardadas
         error("Dirección requerida", "Por favor ingresa tu dirección de entrega")
         return
       }
@@ -416,7 +406,6 @@ export default function CheckoutPage() {
         return
       }
 
-      // Preparar datos para la API - unificado
       const paymentData = {
         items: items.map((item) => {
           if (!item.price || item.price <= 0) {
@@ -441,33 +430,12 @@ export default function CheckoutPage() {
         comments: formData.comments,
         isUserLoggedIn: !!user,
         userId: user?.uid || null,
-        addressData: addressData, // Datos completos de la dirección (si existe)
-        addressId: selectedAddressId || null, // ID de la dirección (si existe)
-        // Agregar información del cupón para MercadoPago
-        couponApplied: appliedCoupon ? {
-          id: appliedCoupon.id,
-          codigo: appliedCoupon.codigo,
-          descuento: appliedCoupon.descuento,
-          tipoDescuento: appliedCoupon.tipoDescuento,
-          descuentoAplicado: calculateCouponDiscount(),
-          totalAmount: finalPrice, // Precio final con descuento
-          originalAmount: totalPrice // Precio original sin descuento
-        } : null,
-        couponCode: appliedCoupon?.codigo || null,
+        addressData: addressData,
+        addressId: selectedAddressId || null,
+        couponApplied: null,
+        couponCode: null,
       }
 
-
-
-      Logger.debug("📦 Datos del pago:", JSON.stringify(paymentData))
-      Logger.debug("🔍 DEBUG: Verificación del cupón antes del envío:")
-      Logger.debug(`  - appliedCoupon existe? ${!!appliedCoupon}`)
-      // Logger.debug("  - appliedCoupon completo:", appliedCoupon) // Omitir objeto complejo si no es necesario
-      Logger.debug(`  - calculateCouponDiscount(): ${calculateCouponDiscount()}`)
-      Logger.debug(`  - totalPrice: ${totalPrice}`)
-      Logger.debug(`  - finalPrice: ${finalPrice}`)
-      // Logger.debug("  - paymentData.couponApplied:", paymentData.couponApplied)
-
-      // Crear pago usando el servicio integrado
       const response = await fetch("/api/mercadopago/create-preference", {
         method: "POST",
         headers: {
@@ -484,11 +452,9 @@ export default function CheckoutPage() {
       const result = await response.json()
       Logger.debug("✅ Respuesta del servicio:", JSON.stringify(result))
 
-      // Redirigir a MercadoPago si se recibió el enlace
       if (result.initPoint) {
         window.location.href = result.initPoint
       } else if (result.sandboxInitPoint) {
-        // Usar sandbox en desarrollo
         window.location.href = result.sandboxInitPoint
       } else {
         throw new Error("No se recibió el enlace de pago del servicio")
@@ -506,22 +472,22 @@ export default function CheckoutPage() {
     if (isSubmitting || isCreatingPayment) return
     setIsSubmitting(true)
     try {
-      // Validar dirección solo si es delivery
       let finalAddress = formData.address
       let addressData = null
 
       if (user && userAddresses.length > 0 && selectedAddressId) {
-        // Usuario logueado con direcciones guardadas
         const selectedAddress = userAddresses.find(addr => addr.id === selectedAddressId)
         if (selectedAddress) {
           addressData = selectedAddress
           finalAddress = `${formatText(selectedAddress.calle)} ${selectedAddress.numero}, ${formatText(selectedAddress.ciudad)}, ${formatText(selectedAddress.provincia)}`
         }
       } else if (!finalAddress) {
-        // Usuario invitado o logueado sin direcciones guardadas
         error("Dirección requerida", "Por favor ingresa tu dirección de entrega")
         return
       }
+
+      const transferDesc = paymentMethod === "transferencia" ? Math.round(totalPrice * 0.10) : 0
+      const calculatedTotal = totalPrice - transferDesc
 
       const purchaseData = {
         buyerId: user?.uid || null,
@@ -539,26 +505,20 @@ export default function CheckoutPage() {
           finalPrice: item.price,
           discountPerUnit: 0
         })),
-        totalAmount: finalPrice,
+        totalAmount: calculatedTotal,
         originalAmount: totalPrice,
-        discountAmount: calculateCouponDiscount(),
-        couponApplied: appliedCoupon ? {
-          id: appliedCoupon.id,
-          codigo: appliedCoupon.codigo,
-          descuento: appliedCoupon.descuento,
-          tipoDescuento: appliedCoupon.tipoDescuento,
-        } : null,
-        couponCode: appliedCoupon?.codigo || null,
+        discountAmount: transferDesc,
+        couponApplied: null,
+        couponCode: null,
         deliveryOption: deliveryOption,
         deliverySlot: deliveryOption === "delivery" ? selectedDeliverySlot : null,
         comments: formData.comments,
         isUserLoggedIn: !!user,
         addressId: selectedAddressId || null,
         addressData: addressData,
-        paymentMethod: paymentMethod
+        paymentMethod: paymentMethod || "transferencia"
       }
 
-      // Llamar a la API para procesar el pedido en efectivo
       const response = await fetch("/api/checkout/process-cash", {
         method: "POST",
         headers: {
@@ -573,14 +533,43 @@ export default function CheckoutPage() {
       }
 
       const result = await response.json()
-      const purchaseId = result.purchaseId
+      const newPurchaseId = result.purchaseId
 
-      Logger.debug("✅ Compra creada vía API: " + purchaseId)
+      // Generar mensaje detallado para WhatsApp
+      const whatsappNumber = "5493413557400"
+      const itemsList = items.map(item => `• ${item.quantity}x ${item.name} (${formatPrice(item.price * item.quantity)})`).join('\n')
+      
+      const messageText = `🍝 *¡Hola Paula Pastas! Acabo de realizar un pedido para pagar por Transferencia (10% OFF):*\n\n` +
+        `📋 *N° de Pedido:* ${newPurchaseId}\n` +
+        `👤 *Cliente:* ${formData.name}\n` +
+        `📱 *Teléfono:* ${formData.phone}\n` +
+        `📍 *Dirección de Entrega:* ${finalAddress}\n` +
+        `⏰ *Horario Preferido:* ${selectedDeliverySlot}\n` +
+        (formData.comments ? `💬 *Comentarios:* ${formData.comments}\n` : '') +
+        `\n🛒 *Productos:*\n${itemsList}\n\n` +
+        `💵 *Subtotal:* ${formatPrice(totalPrice)}\n` +
+        `✨ *Descuento Transferencia (10%):* -${formatPrice(transferDesc)}\n` +
+        `💰 *Total a Transferir:* ${formatPrice(calculatedTotal)}\n\n` +
+        `📎 *Adjunto el comprobante de transferencia a continuación:*`
 
-      setPurchaseId(purchaseId)
+      const generatedWspUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(messageText)}`
+
+      Logger.debug("✅ Compra creada vía API: " + newPurchaseId)
+
+      setPurchaseId(newPurchaseId)
+      setWhatsappUrl(generatedWspUrl)
+      setConfirmedOrderSummary({
+        purchaseId: newPurchaseId,
+        subtotal: totalPrice,
+        discount: transferDesc,
+        total: calculatedTotal,
+        whatsappUrl: generatedWspUrl,
+        paymentMethod: paymentMethod || "transferencia"
+      })
       setOrderConfirmed(true)
       clearCart()
       success("Pedido confirmado", "Tu pedido ha sido recibido con éxito")
+
     } catch (err: unknown) {
       Logger.error("Error al procesar el pedido:", err)
       const errorMessage = err instanceof Error ? err.message : "Hubo un error al procesar tu pedido. Por favor, inténtalo de nuevo."
@@ -591,32 +580,131 @@ export default function CheckoutPage() {
   }
 
   if (orderConfirmed) {
+    const summarySubtotal = confirmedOrderSummary?.subtotal ?? totalPrice
+    const summaryDiscount = confirmedOrderSummary?.discount ?? transferDiscount
+    const summaryTotal = confirmedOrderSummary?.total ?? finalPrice
+    const summaryWspUrl = confirmedOrderSummary?.whatsappUrl ?? whatsappUrl
+    const summaryPurchaseId = confirmedOrderSummary?.purchaseId ?? purchaseId
+
     return (
       <div className="min-h-[calc(100vh-120px)] flex items-center justify-center bg-neutral-50 py-12 px-4 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-md text-center p-8">
-          <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
-          <CardTitle className="text-3xl font-bold mb-4">¡Pedido Confirmado!</CardTitle>
-          <p className="text-neutral-700 mb-4">
-            Tu pedido ha sido recibido con éxito.
-            <br />
-            <span className="font-semibold">Compra: {purchaseId}</span>
+        <Card className="w-full max-w-lg text-center p-8 shadow-xl border-emerald-100">
+          <CheckCircle className="w-20 h-20 text-emerald-600 mx-auto mb-6" />
+          <CardTitle className="text-3xl font-bold text-neutral-900 mb-2">¡Pedido Confirmado!</CardTitle>
+          <p className="text-sm font-semibold text-emerald-800 bg-emerald-50 py-1.5 px-4 rounded-full w-fit mx-auto mb-4 border border-emerald-200">
+            N° de Pedido: {summaryPurchaseId}
           </p>
 
-          {appliedCoupon && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <p className="text-sm text-green-800">
-                <span className="font-semibold">Cupón aplicado:</span> {appliedCoupon.codigo}
-              </p>
-              <p className="text-xs text-green-600">
-                Ahorraste: {formatPrice(calculateCouponDiscount())}
-              </p>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4 text-left space-y-2">
+            <div className="flex justify-between text-sm text-neutral-700">
+              <span>Subtotal:</span>
+              <span>{formatPrice(summarySubtotal)}</span>
             </div>
-          )}
+            {summaryDiscount > 0 && (
+              <div className="flex justify-between text-sm text-emerald-700 font-medium">
+                <span>Descuento Transferencia (10%):</span>
+                <span>-{formatPrice(summaryDiscount)}</span>
+              </div>
+            )}
+            <Separator className="my-2" />
+            <div className="flex justify-between text-base font-bold text-neutral-900">
+              <span>Total a Transferir:</span>
+              <span className="text-emerald-700 font-bold">{formatPrice(summaryTotal)}</span>
+            </div>
+          </div>
 
-          <p className="text-neutral-600 mb-6">
-            En breve nos pondremos en contacto contigo por WhatsApp para coordinar los detalles del envío y el pago.
+          {/* Datos Bancarios para Transferencia */}
+          <div className="bg-white border border-emerald-200 rounded-xl p-4 mb-6 shadow-sm text-left space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">
+                Datos de la Cuenta Bancaria
+              </span>
+              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                Transferencia
+              </span>
+            </div>
+
+            <div className="space-y-2.5 text-xs sm:text-sm">
+              <div className="flex justify-between items-center py-0.5">
+                <span className="text-neutral-500 font-medium">Titular:</span>
+                <span className="font-bold text-neutral-900">Paula Aylen Pacheco</span>
+              </div>
+
+              {/* Alias con botón Copiar */}
+              <div className="flex justify-between items-center bg-neutral-50 p-2.5 rounded-lg border border-neutral-200/70">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-neutral-500 font-semibold uppercase">Alias</span>
+                  <span className="font-mono font-bold text-neutral-900 text-sm sm:text-base select-all">paulapastas</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCopy("paulapastas", "alias")}
+                  className="h-8 px-3 text-xs font-medium gap-1.5 border-emerald-300 text-emerald-800 hover:bg-emerald-50 hover:text-emerald-900 active:scale-95"
+                >
+                  {copiedField === "alias" ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-700 font-semibold">¡Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Copiar</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* CBU con botón Copiar */}
+              <div className="flex justify-between items-center bg-neutral-50 p-2.5 rounded-lg border border-neutral-200/70">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-neutral-500 font-semibold uppercase">CBU</span>
+                  <span className="font-mono font-bold text-neutral-900 text-xs sm:text-sm tracking-tight select-all">0000003100041772766057</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCopy("0000003100041772766057", "cbu")}
+                  className="h-8 px-3 text-xs font-medium gap-1.5 border-emerald-300 text-emerald-800 hover:bg-emerald-50 hover:text-emerald-900 active:scale-95"
+                >
+                  {copiedField === "cbu" ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-700 font-semibold">¡Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Copiar</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-neutral-600 text-sm mb-6 leading-relaxed">
+            Una vez realizada la transferencia, hacé clic en el siguiente botón para abrir WhatsApp con los datos de tu pedido y enviar el comprobante:
           </p>
-          <Button onClick={() => router.push("/")}>Volver al Inicio</Button>
+
+          <div className="flex flex-col gap-3">
+            {summaryWspUrl && (
+              <a
+                href={summaryWspUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-4 px-6 bg-[#25D366] hover:bg-[#1DA851] text-white font-bold rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 text-base shadow-lg"
+              >
+                <span>💬 Abrir WhatsApp y enviar comprobante</span>
+              </a>
+            )}
+            <Button variant="outline" onClick={() => router.push("/")} className="w-full py-3">
+              Volver al Inicio
+            </Button>
+          </div>
         </Card>
       </div>
     )
@@ -996,35 +1084,125 @@ export default function CheckoutPage() {
                     onValueChange={setPaymentMethod}
                     className="flex flex-col space-y-2 sm:space-y-3"
                   >
-                    <div className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 border rounded-lg hover:bg-neutral-50 transition-colors">
+                    <div className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer">
+                      <RadioGroupItem value="transferencia" id="transferencia" className="flex-shrink-0" />
+                      <div className="flex items-center space-x-2 flex-1 min-w-0">
+                        <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 flex-shrink-0" />
+                        <div className="flex flex-col">
+                          <Label htmlFor="transferencia" className="font-bold text-sm sm:text-base cursor-pointer text-emerald-900">
+                            10% Si pagás por Transferencia
+                          </Label>
+                          <span className="text-xs text-neutral-500">
+                            Transferencia bancaria directa con descuento
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ml-auto flex-shrink-0">
+                        <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded-md">
+                          10% OFF
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 border rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer">
                       <RadioGroupItem value="mercadopago" id="mercadopago" className="flex-shrink-0" />
                       <div className="flex items-center space-x-2 flex-1 min-w-0">
                         <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
-                        <Label htmlFor="mercadopago" className="font-medium text-sm sm:text-base">MercadoPago</Label>
+                        <div className="flex flex-col">
+                          <Label htmlFor="mercadopago" className="font-medium text-sm sm:text-base cursor-pointer">
+                            MercadoPago
+                          </Label>
+                          <span className="text-xs text-neutral-500">
+                            Tarjeta de crédito, débito o dinero en cuenta
+                          </span>
+                        </div>
                       </div>
                       <div className="ml-auto text-xs sm:text-sm text-neutral-600 flex-shrink-0">
-                        <span className="hidden sm:inline">Tarjeta, transferencia, efectivo</span>
-                        <span className="sm:hidden">Tarjeta, efectivo</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 border rounded-lg hover:bg-neutral-50 transition-colors">
-                      <RadioGroupItem value="efectivo" id="efectivo" className="flex-shrink-0" />
-                      <div className="flex items-center space-x-2 flex-1 min-w-0">
-                        <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
-                        <Label htmlFor="efectivo" className="font-medium text-sm sm:text-base">Efectivo al momento de la entrega</Label>
-                      </div>
-                      <div className="ml-auto text-xs sm:text-sm text-neutral-600 flex-shrink-0">
-                        Pagás al recibir
+                        <span className="hidden sm:inline">Precio de lista</span>
                       </div>
                     </div>
                   </RadioGroup>
+
+                  {paymentMethod === "transferencia" && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mt-3 sm:mt-4 space-y-3">
+                      <div>
+                        <h4 className="font-semibold text-emerald-900 mb-1 text-sm sm:text-base flex items-center gap-1.5">
+                          <span>✨ Descuento del 10% aplicado</span>
+                        </h4>
+                        <p className="text-xs sm:text-sm text-emerald-800 leading-relaxed">
+                          Podés realizar la transferencia a la siguiente cuenta bancaria y adjuntarnos el comprobante por WhatsApp al confirmar tu compra:
+                        </p>
+                      </div>
+
+                      {/* Caja de Datos Bancarios */}
+                      <div className="bg-white border border-emerald-200/80 rounded-lg p-3 sm:p-4 space-y-2.5 text-xs sm:text-sm">
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="text-neutral-500 font-medium">Titular:</span>
+                          <span className="font-bold text-neutral-900">Paula Aylen Pacheco</span>
+                        </div>
+
+                        {/* Alias con botón Copiar */}
+                        <div className="flex justify-between items-center bg-neutral-50 p-2.5 rounded-lg border border-neutral-200/70">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] text-neutral-500 font-semibold uppercase">Alias</span>
+                            <span className="font-mono font-bold text-neutral-900 text-sm select-all">paulapastas</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopy("paulapastas", "alias")}
+                            className="h-7 px-2.5 text-xs font-medium gap-1.5 border-emerald-300 text-emerald-800 hover:bg-emerald-50 hover:text-emerald-900 active:scale-95"
+                          >
+                            {copiedField === "alias" ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-600" />
+                                <span className="text-emerald-700 font-semibold text-[11px]">¡Copiado!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3 text-emerald-700" />
+                                <span className="text-[11px]">Copiar</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+
+                        {/* CBU con botón Copiar */}
+                        <div className="flex justify-between items-center bg-neutral-50 p-2.5 rounded-lg border border-neutral-200/70">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] text-neutral-500 font-semibold uppercase">CBU</span>
+                            <span className="font-mono font-bold text-neutral-900 text-xs sm:text-sm tracking-tight select-all">0000003100041772766057</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopy("0000003100041772766057", "cbu")}
+                            className="h-7 px-2.5 text-xs font-medium gap-1.5 border-emerald-300 text-emerald-800 hover:bg-emerald-50 hover:text-emerald-900 active:scale-95"
+                          >
+                            {copiedField === "cbu" ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-600" />
+                                <span className="text-emerald-700 font-semibold text-[11px]">¡Copiado!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3 text-emerald-700" />
+                                <span className="text-[11px]">Copiar</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {paymentMethod === "mercadopago" && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mt-3 sm:mt-4">
                       <h4 className="font-semibold text-blue-800 mb-2 text-sm sm:text-base">💳 Pago seguro con MercadoPago</h4>
                       <ul className="text-xs sm:text-sm text-blue-700 space-y-1">
                         <li>• Pagá con tarjeta de crédito o débito</li>
-                        <li>• Transferencia bancaria</li>
                         <li>• Dinero en cuenta de MercadoPago</li>
                         <li>• Pago en efectivo en puntos de pago</li>
                         <li>• Transacción 100% segura</li>
@@ -1043,7 +1221,7 @@ export default function CheckoutPage() {
                     <Button
                       onClick={handleSubmitOrder}
                       disabled={isSubmitting || isCreatingPayment}
-                      className={`w-full sm:w-auto text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3 ${paymentMethod === "mercadopago" ? "bg-blue-600 hover:bg-blue-700" : ""
+                      className={`w-full sm:w-auto text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3 ${paymentMethod === "mercadopago" ? "bg-blue-600 hover:bg-blue-700" : "bg-primary-600 hover:bg-primary-700 text-white"
                         }`}
                     >
                       {isCreatingPayment ? (
@@ -1055,8 +1233,8 @@ export default function CheckoutPage() {
                       ) : isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
-                          <span className="hidden sm:inline">Finalizando...</span>
-                          <span className="sm:hidden">Finalizando...</span>
+                          <span className="hidden sm:inline">Confirmando pedido...</span>
+                          <span className="sm:hidden">Confirmando...</span>
                         </>
                       ) : (
                         <>
@@ -1068,8 +1246,7 @@ export default function CheckoutPage() {
                             </>
                           ) : (
                             <>
-                              <span className="hidden sm:inline">Finalizar compra</span>
-                              <span className="sm:hidden">Finalizar</span>
+                              <span>Confirmar Pedido</span>
                             </>
                           )}
                         </>
@@ -1114,81 +1291,6 @@ export default function CheckoutPage() {
               </div>
               <Separator className="my-6" />
 
-              {/* Sección de Cupón */}
-              <div className="space-y-3 sm:space-y-4">
-                <h4 className="font-semibold text-neutral-900 text-sm sm:text-base">¿Tenés un cupón?</h4>
-
-                {!appliedCoupon ? (
-                  <div className="space-y-2 sm:space-y-3">
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Input
-                        type="text"
-                        placeholder="Código del cupón"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        className="flex-1 text-sm sm:text-base"
-                        disabled={isValidatingCoupon}
-                      />
-                      <Button
-                        onClick={handleApplyCoupon}
-                        disabled={!couponCode.trim() || isValidatingCoupon}
-                        size="sm"
-                        className="whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4"
-                      >
-                        {isValidatingCoupon ? (
-                          <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
-                        ) : (
-                          "Aplicar"
-                        )}
-                      </Button>
-                    </div>
-
-                    {couponError && (
-                      <p className="text-xs sm:text-sm text-red-600 bg-red-50 p-2 rounded">
-                        {couponError}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2 flex-1 min-w-0">
-                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-green-800 text-xs sm:text-sm break-all">
-                            Cupón: {getCouponInfo()?.code}
-                          </p>
-                          <p className="text-xs sm:text-sm text-green-600 mt-1">
-                            {getCouponInfo()?.discountType}: {getCouponInfo()?.discountValue}
-                          </p>
-                          {getCouponInfo()?.savings && (
-                            <p className="text-xs text-green-500 font-medium mt-1">
-                              {getCouponInfo()?.savings}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleRemoveCoupon}
-                        className="text-green-600 hover:text-green-700 hover:bg-green-100 flex-shrink-0 p-1 sm:p-2"
-                      >
-                        <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {couponSuccess && (
-                  <p className="text-xs sm:text-sm text-green-600 bg-green-50 p-2 rounded">
-                    {couponSuccess}
-                  </p>
-                )}
-              </div>
-
-              <Separator className="my-6" />
-
               {/* Resumen de precios */}
               <div className="space-y-2 sm:space-y-3">
                 <div className="flex justify-between text-xs sm:text-sm text-neutral-600">
@@ -1196,23 +1298,23 @@ export default function CheckoutPage() {
                   <span>{formatPrice(totalPrice)}</span>
                 </div>
 
-                {appliedCoupon && (
-                  <div className="flex justify-between text-xs sm:text-sm text-green-600">
-                    <span className="truncate pr-2">Descuento ({appliedCoupon.codigo}):</span>
-                    <span className="flex-shrink-0">-{formatPrice(calculateCouponDiscount())}</span>
+                {paymentMethod === "transferencia" && (
+                  <div className="flex justify-between text-xs sm:text-sm text-emerald-700 font-medium bg-emerald-50 p-2 rounded-lg border border-emerald-200/60">
+                    <span className="truncate pr-2 font-semibold">10% Transferencia:</span>
+                    <span className="flex-shrink-0 font-bold">-{formatPrice(transferDiscount)}</span>
                   </div>
                 )}
 
                 <Separator />
                 <div className="flex justify-between items-center text-base sm:text-lg font-bold text-neutral-900">
                   <span>Total del Pedido:</span>
-                  <span>{formatPrice(finalPrice)}</span>
+                  <span className={paymentMethod === "transferencia" ? "text-emerald-700" : ""}>{formatPrice(finalPrice)}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
-    </div >
+    </div>
   )
 }

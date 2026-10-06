@@ -391,8 +391,8 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
             </section>
           )}
 
-          {/* NUEVA SECCIÓN: "Mantente informado" - Solo para ravioles */}
-          {subcategoria === "ravioles" && (
+          {/* NUEVA SECCIÓN: "Mantente informado" - Solo para ravioles (Deshabilitado temporalmente) */}
+          {/* {subcategoria === "ravioles" && (
             <section className="mt-16 bg-primary-50 rounded-2xl shadow-lg p-8 text-center">
               <div className="max-w-3xl mx-auto">
                 <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-6">Mantente informado</h2>
@@ -420,7 +420,7 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
                 </form>
               </div>
             </section>
-          )}
+          )} */}
         </div>
       </div>
     </>

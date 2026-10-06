@@ -21,6 +21,10 @@ export default function AddToCart({ producto }: AddToCartProps) {
         return (producto.precio * cantidad).toLocaleString("es-AR")
     }, [producto.precio, cantidad])
 
+    const transferPrice = useMemo(() => {
+        return Math.round(producto.precio * cantidad * 0.90).toLocaleString("es-AR")
+    }, [producto.precio, cantidad])
+
     // 🧹 Cleanup
     useEffect(() => {
         return () => {
@@ -55,18 +59,30 @@ export default function AddToCart({ producto }: AddToCartProps) {
             </div>
 
             {/* Precio */}
-            <div className="flex items-baseline justify-between">
-                <div className="flex flex-col">
-                    <span className="text-3xl font-bold text-neutral-900">
-                        ${totalPrice}
-                    </span>
-                    <span className="text-xs text-neutral-400 font-medium uppercase tracking-wider">
-                        Subtotal (ARS)
-                    </span>
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+                <div className="flex flex-col gap-1.5">
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold text-neutral-900">
+                            ${totalPrice}
+                        </span>
+                        <span className="text-xs text-neutral-400 font-medium uppercase tracking-wider">
+                            Subtotal (ARS)
+                        </span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200/80 w-fit">
+                        <span>${transferPrice}</span>
+                        <span className="text-[11px] font-bold text-emerald-900 bg-emerald-200/80 px-1.5 py-0.5 rounded">
+                            10% OFF
+                        </span>
+                        <span className="text-xs text-emerald-700 font-medium">
+                            pagando por Transferencia
+                        </span>
+                    </div>
                 </div>
 
                 {!producto.disponible && (
-                    <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
+                    <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium w-fit">
                         No disponible
                     </span>
                 )}

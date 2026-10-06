@@ -49,8 +49,8 @@ export default async function SalsasPage() {
       {/* Sección 5: Contacto rápido (CTA WhatsApp) */}
       <WhatsAppCTA />
 
-      {/* Sección 6: Suscripción al newsletter */}
-      <NewsletterForm />
+      {/* Sección 6: Suscripción al newsletter (Deshabilitado temporalmente) */}
+      {/* <NewsletterForm /> */}
     </div>
   )
 }

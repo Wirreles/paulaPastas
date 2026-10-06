@@ -17,8 +17,8 @@ export default function AdminNavigation() {
     // { href: "/admin/page-banners", label: "Banners", icon: "🖼️", priority: "medium" }, // Deshabilitado: banners ahora son estáticos
     { href: "/admin/blog", label: "Blog", icon: "📝", priority: "low" },
     { href: "/admin/reviews", label: "Reseñas", icon: "⭐", priority: "low" },
-    { href: "/admin/newsletter", label: "Newsletter", icon: "📧", priority: "low" },
-    { href: "/admin/cupones", label: "Cupones", icon: "🎫", priority: "low" },
+    // { href: "/admin/newsletter", label: "Newsletter", icon: "📧", priority: "low" }, // Deshabilitado temporalmente
+    // { href: "/admin/cupones", label: "Cupones", icon: "🎫", priority: "low" }, // Deshabilitado temporalmente
   ]
 
   const NavLink = ({ item, isActive, className = "" }: { item: any, isActive: boolean, className?: string }) => (

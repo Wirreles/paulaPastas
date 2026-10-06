@@ -444,8 +444,8 @@ export default function SalsasPage() {
           </div>
         </section>
 
-        {/* 6. Newsletter */}
-        <section className="py-16 bg-primary-100">
+        {/* 6. Newsletter (Deshabilitado temporalmente) */}
+        {/* <section className="py-16 bg-primary-100">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="font-display text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
               Mantenete informada
@@ -474,7 +474,7 @@ export default function SalsasPage() {
               </button>
             </form>
           </div>
-        </section>
+        </section> */}
       </div>
     </>
   )

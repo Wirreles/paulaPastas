@@ -238,7 +238,7 @@ export default async function BlogPage() {
         </section>
 
         {/* 3. Newsletter */}
-        <section className="py-16 bg-primary-100">
+        {/*<section className="py-16 bg-primary-100">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className="bg-white rounded-2xl p-12 shadow-lg">
               <div className="w-16 h-16 mx-auto bg-primary-100 rounded-full flex items-center justify-center mb-6">
@@ -276,7 +276,7 @@ export default async function BlogPage() {
               </p>
             </div>
           </div>
-        </section>
+        </section>*/}
 
         {/* 4. Categorías destacadas */}
         <section className="py-16 bg-neutral-50">

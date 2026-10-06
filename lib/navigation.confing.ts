@@ -40,7 +40,7 @@ export const NAVIGATION_DATA: NavItem[] = [
           { name: "Fideos", href: "/pastas/sin-relleno/fideos" },
         ],
       },
-      { name: "Sin TACC", href: "/pastas/sin-tacc", id: "sin-tacc" },
+      // { name: "Sin TACC", href: "/pastas/sin-tacc", id: "sin-tacc" },
       { name: "Pack Raviolada", href: "/pack-raviolada", id: "pack" },
       { name: "Salsas", href: "/salsas", id: "salsas" },
     ],

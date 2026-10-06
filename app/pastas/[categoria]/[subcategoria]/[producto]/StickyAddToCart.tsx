@@ -17,6 +17,10 @@ export default function StickyAddToCart({ producto }: { producto: Producto }) {
         return (producto.precio * cantidad).toLocaleString("es-AR")
     }, [producto.precio, cantidad])
 
+    const transferPrice = useMemo(() => {
+        return Math.round(producto.precio * cantidad * 0.90).toLocaleString("es-AR")
+    }, [producto.precio, cantidad])
+
     useEffect(() => {
         return () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current)
@@ -74,12 +78,12 @@ export default function StickyAddToCart({ producto }: { producto: Producto }) {
                 </div>
 
                 {/* Precio */}
-                <div className="flex flex-col min-w-[80px]">
+                <div className="flex flex-col min-w-[90px]">
                     <span className="text-sm font-bold text-neutral-900">
                         ${totalPrice}
                     </span>
-                    <span className="text-[10px] text-neutral-500">
-                        Total
+                    <span className="text-[10px] text-emerald-700 font-semibold">
+                        ${transferPrice} transf.
                     </span>
                 </div>
 
