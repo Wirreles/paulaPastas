@@ -4,18 +4,18 @@ import Image from "next/image"
 import { ChevronDown, MessageCircle, ArrowRight, Truck, Clock, MapPin, Package } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Delivery de Pastas Artesanales | Paula Pastas - Rosario y Alrededores",
-  description: "De nuestra cocina artesanal a tu mesa, sin demoras ni complicaciones. Enviamos nuestras pastas congeladas premium con cadena de frío segura y horarios flexibles en Rosario.",
-  keywords: "delivery pastas, delivery rosario, pastas artesanales delivery, envío a domicilio, cadena de frío, paula pastas, rosario delivery",
+  title: "Delivery de Pastas Artesanales | Paula Pastas - Bialet Massé y Punilla",
+  description: "De nuestra cocina artesanal a tu mesa, sin demoras ni complicaciones. Enviamos nuestras pastas congeladas premium con cadena de frío segura y horarios flexibles en Bialet Massé, Carlos Paz, Cosquín y Valle de Punilla.",
+  keywords: "delivery pastas, delivery bialet masse, pastas artesanales delivery, carlos paz, cosquin, santa maria de punilla, cordoba, valle de punilla, envío a domicilio, cadena de frío, paula pastas",
   openGraph: {
     title: "Delivery de Pastas Artesanales | Paula Pastas",
-    description: "De nuestra cocina artesanal a tu mesa. Enviamos pastas congeladas premium con cadena de frío segura en Rosario y alrededores.",
+    description: "De nuestra cocina artesanal a tu mesa. Enviamos pastas congeladas premium con cadena de frío segura en Bialet Massé, Carlos Paz, Cosquín y Valle de Punilla.",
     images: [
       {
         url: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=630&fit=crop",
         width: 1200,
         height: 630,
-        alt: "Delivery de pastas artesanales Paula Pastas",
+        alt: "Delivery de pastas artesanales Paula Pastas en Bialet Massé y Punilla",
       },
     ],
     type: "website",
@@ -32,26 +32,33 @@ export default function DeliveryPage() {
     "@context": "https://schema.org",
     "@type": "Service",
     name: "Delivery de Pastas Artesanales",
-    description: "Servicio de delivery de pastas artesanales en Rosario y alrededores",
+    description: "Servicio de delivery de pastas artesanales en Bialet Massé, Carlos Paz, Cosquín y Valle de Punilla",
     url: "https://paulapastas.com/delivery",
     provider: {
       "@type": "Organization",
       name: "Paula Pastas",
+      telephone: "+54 9 341 355-7400",
       address: {
         "@type": "PostalAddress",
-        addressLocality: "Rosario",
-        addressRegion: "Santa Fe",
+        streetAddress: "San Pablo s/n (entre Av. Cassaffousth y Tránsito Cáceres)",
+        addressLocality: "Bialet Massé",
+        addressRegion: "Córdoba",
+        postalCode: "5158",
         addressCountry: "AR",
+      },
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: -31.3194549769404,
+        longitude: -64.50525418079864,
       },
     },
     areaServed: [
-      "Rosario",
-      "Villa Gobernador Gálvez",
-      "Funes",
-      "Fisherton",
-      "Alvear",
-      "Zona Sur de Rosario",
-      "Zona Oeste de Rosario"
+      "Bialet Massé",
+      "Villa Carlos Paz",
+      "Cosquín",
+      "Santa María de Punilla",
+      "Córdoba Capital",
+      "Valle de Punilla"
     ],
     serviceType: "Food Delivery",
     breadcrumb: {
@@ -76,8 +83,8 @@ export default function DeliveryPage() {
   // Datos de FAQ - Actualizados con el contenido del home
   const faqs = [
     {
-      pregunta: "¿Dónde comprar pastas artesanales en Rosario? ¿Hacen envíos?",
-      respuesta: "Realizamos envíos a Rosario, Funes, Fisherton, Villa Gobernador Gálvez, Alvear y zonas cercanas. Si tenés dudas sobre tu barrio, consultanos por WhatsApp y te confirmamos la cobertura."
+      pregunta: "¿Dónde comprar pastas artesanales en Bialet Massé y Valle de Punilla? ¿Hacen envíos?",
+      respuesta: "Realizamos envíos a Bialet Massé, Villa Carlos Paz, Cosquín, Santa María de Punilla, Córdoba Capital y todo el Valle de Punilla. Si tenés dudas sobre tu zona, consultanos por WhatsApp y te confirmamos la cobertura."
     },
     {
       pregunta: "¿Cómo se garantiza la cadena de frío en los envíos?",
@@ -93,7 +100,7 @@ export default function DeliveryPage() {
     },
     {
       pregunta: "¿Qué días entregan pedidos?",
-      respuesta: "Realizamos entregas de lunes a sábados, con cronograma variable según la zona. En Rosario, los envíos fijos se realizan martes, jueves, viernes y sábados. En zonas aledañas, consultar disponibilidad. Si necesitás una entrega fuera de los días establecidos en Rosario, podemos coordinarla con anticipación según disponibilidad."
+      respuesta: "Realizamos entregas con cronograma coordinado según la localidad en Bialet Massé, Villa Carlos Paz, Cosquín, Santa María de Punilla y zonas del Valle de Punilla. Si necesitás una entrega para un día u horario específico, podés coordinarla con anticipación por WhatsApp."
     },
     {
       pregunta: "¿Qué métodos de pago aceptan?",
@@ -105,7 +112,7 @@ export default function DeliveryPage() {
     },
     {
       pregunta: "¿Hacen envíos a otras ciudades?",
-      respuesta: "Por el momento concentramos nuestras entregas en Rosario y alrededores para garantizar la máxima frescura y calidad de nuestras pastas congeladas."
+      respuesta: "Por el momento concentramos nuestras entregas en Bialet Massé, Villa Carlos Paz, Cosquín, Santa María de Punilla y alrededores del Valle de Punilla para garantizar la máxima frescura y calidad de nuestras pastas congeladas."
     }
   ]
 
@@ -132,7 +139,7 @@ export default function DeliveryPage() {
           <div className="absolute inset-0 z-0">
             <Image
               src="/banners/banner-delivery.webp"
-              alt="Delivery de pastas artesanales en Rosario"
+              alt="Delivery de pastas artesanales en Bialet Massé y Punilla"
               fill
               className="object-cover"
               priority={true}
@@ -143,7 +150,7 @@ export default function DeliveryPage() {
 
           <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
             <h1 className="font-display text-5xl md:text-7xl font-bold mb-6">
-              Delivery de pastas artesanales en Rosario y alrededores
+              Delivery de pastas artesanales en Bialet Massé y alrededores
             </h1>
             <div className="bg-black/40 backdrop-blur-sm rounded-lg p-8 max-w-3xl mx-auto">
               <p className="text-xl md:text-2xl text-neutral-100 leading-relaxed mb-4">

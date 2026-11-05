@@ -5,12 +5,12 @@ import { HeroPlaceholder } from "@/components/ui/ImagePlaceholder"
 import { Heart, Clock, MapPin, Star, Instagram, ArrowRight } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Sobre Nosotros - Paula Pastas | Artesanía, Sabor y Memoria en Rosario",
-  description: "Conocé la historia de Paula Pastas. Nacimos en Rosario con una idea simple: que una buena pasta puede transformar un día cualquiera en un momento especial. Recetas familiares, ingredientes nobles y espíritu artesanal.",
-  keywords: "paula pastas, sobre nosotros, historia, rosario, pastas artesanales, recetas familiares, cocina casera, delivery rosario",
+  title: "Sobre Nosotros - Paula Pastas | Artesanía, Sabor y Memoria en Bialet Massé",
+  description: "Conocé la historia de Paula Pastas. Nacimos con una idea simple: que una buena pasta puede transformar un día cualquiera en un momento especial. Recetas familiares, ingredientes nobles y espíritu artesanal en Bialet Massé y Valle de Punilla.",
+  keywords: "paula pastas, sobre nosotros, historia, bialet masse, cordoba, valle de punilla, pastas artesanales, recetas familiares, cocina casera, delivery bialet masse, carlos paz, cosquin",
   openGraph: {
-    title: "Sobre Nosotros - Paula Pastas | Artesanía y Sabor en Rosario",
-    description: "Descubrí la historia detrás de Paula Pastas. Recetas familiares, ingredientes nobles y el espíritu artesanal que hace únicas nuestras pastas en Rosario.",
+    title: "Sobre Nosotros - Paula Pastas | Artesanía y Sabor en Bialet Massé",
+    description: "Descubrí la historia detrás de Paula Pastas. Recetas familiares, ingredientes nobles y el espíritu artesanal que hace únicas nuestras pastas en Bialet Massé y Valle de Punilla.",
     images: [
       {
         url: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1200&h=630&fit=crop",
@@ -33,21 +33,30 @@ export default function NosotrosPage() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Paula Pastas",
-    description: "Pastas artesanales elaboradas con recetas familiares e ingredientes nobles en Rosario",
+    description: "Pastas artesanales elaboradas con recetas familiares e ingredientes nobles en Bialet Massé, Córdoba",
     url: "https://paulapastas.com",
     logo: "https://paulapastas.com/pplog2.webp",
+    telephone: "+54 9 341 355-7400",
     address: {
       "@type": "PostalAddress",
-      addressLocality: "Rosario",
-      addressRegion: "Santa Fe",
+      streetAddress: "San Pablo s/n (entre Av. Cassaffousth y Tránsito Cáceres)",
+      addressLocality: "Bialet Massé",
+      addressRegion: "Córdoba",
+      postalCode: "5158",
       addressCountry: "AR",
     },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: -31.3194549769404,
+      longitude: -64.50525418079864,
+    },
     areaServed: [
-      "Villa Gobernador Gálvez",
-      "Funes",
-      "Alvear",
-      "Fisherton",
-      "Zona Sur de Rosario"
+      "Bialet Massé",
+      "Villa Carlos Paz",
+      "Cosquín",
+      "Santa María de Punilla",
+      "Córdoba Capital",
+      "Valle de Punilla"
     ],
     foundingDate: "2020",
     founder: {
@@ -73,7 +82,7 @@ export default function NosotrosPage() {
     {
       icon: MapPin,
       titulo: "Cerca tuyo",
-      descripcion: "Somos una marca local con mirada de autor. Rosario es nuestra cocina."
+      descripcion: "Somos una marca local con mirada de autor. El Valle de Punilla es nuestra cocina."
     },
     {
       icon: Star,
@@ -83,13 +92,12 @@ export default function NosotrosPage() {
   ]
 
   const zonasCobertura = [
-    "Villa Gobernador Gálvez",
-    "Funes",
-    "Alvear",
-    "Fisherton",
-    "Zona Sur de Rosario",
-    "Centro de Rosario",
-    "Zona Oeste"
+    "Bialet Massé",
+    "Villa Carlos Paz",
+    "Cosquín",
+    "Santa María de Punilla",
+    "Córdoba Capital",
+    "Valle de Punilla"
   ]
 
   return (
@@ -139,7 +147,7 @@ export default function NosotrosPage() {
                     En Paula Pastas combinamos recetas familiares, ingredientes nobles y un espíritu inquieto que busca reinventar lo clásico sin perder la raíz artesanal.
                   </p>
                   <p className="text-lg font-medium text-primary-700">
-                    Desde Rosario, para tu mesa.
+                    Desde Bialet Massé, para tu mesa.
                   </p>
                 </div>
               </div>
@@ -151,7 +159,6 @@ export default function NosotrosPage() {
                     fill
                     className="object-cover"
                     fallback="/placeholder.svg?height=600&width=600&text=Cocina"
-                    placeholder={<HeroPlaceholder className="object-cover" />}
                   />
                 </div>
               </div>
@@ -264,7 +271,6 @@ export default function NosotrosPage() {
                     fill
                     className="object-cover"
                     fallback="/placeholder.svg?height=450&width=600&text=Pasta"
-                    placeholder={<HeroPlaceholder className="object-cover" />}
                   />
                 </div>
               </div>
@@ -283,7 +289,7 @@ export default function NosotrosPage() {
                 Presencia local y compromiso
               </h2>
               <p className="text-lg text-neutral-600">
-                Desde nuestra cocina en Rosario llegamos a cada rincón de la ciudad y alrededores
+                Desde nuestra cocina en Bialet Massé llegamos a cada rincón del Valle de Punilla y alrededores
               </p>
             </div>
 
