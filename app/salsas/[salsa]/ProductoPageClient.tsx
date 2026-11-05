@@ -47,7 +47,7 @@ const faqs: Faq[] = [
   },
   {
     question: "¿Qué zonas cubren con el delivery?",
-    answer: "Realizamos envíos a Rosario, Funes, Fisherton, Villa Gobernador Gálvez, Alvear y zonas cercanas. Si tenés dudas sobre tu barrio, contactanos por WhatsApp.",
+    answer: "Realizamos envíos a Bialet Massé, Villa Carlos Paz, Cosquín, Santa María de Punilla, Córdoba Capital y todo el Valle de Punilla. Si tenés dudas sobre tu zona, contactanos por WhatsApp.",
   },
 ]
 
@@ -346,7 +346,7 @@ export default function ProductoPageClient({
                 </summary>
               <div className="mt-4 text-neutral-700 leading-relaxed">
                 <p className="mb-2">
-                  Realizamos envíos a Rosario, Funes, Fisherton, Villa Gobernador Gálvez, Alvear y zonas cercanas.
+                  Realizamos envíos a Bialet Massé, Villa Carlos Paz, Cosquín, Santa María de Punilla, Córdoba Capital y todo el Valle de Punilla.
                   Consulta nuestra sección de{" "}
                   <Link href="/delivery" className="text-primary-600 hover:underline">
                     Delivery
@@ -409,7 +409,7 @@ export default function ProductoPageClient({
                 Cocinamos a fuego lento cada ingrediente como si fuera el plato principal: tomates maduros, cebollas caramelizadas, hierbas frescas y especias seleccionadas.
               </p>
               <p>
-                Cada salsa está elaborada artesanalmente en Rosario, con ingredientes frescos y sin conservantes.
+                Cada salsa está elaborada artesanalmente en Bialet Massé, con ingredientes frescos y sin conservantes.
               </p>
               <p>
                 Y lo mejor: en menos de 5 minutos, tenes una salsa que podrías servir en un restaurante... pero en tu casa.

@@ -10,12 +10,12 @@ import ProductCard from "@/components/ProductCard"
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: "Ravioles Fritos en Rosario | Una Experiencia Única | Paula Pastas",
+  title: "Ravioles Fritos en Bialet Massé y Punilla | Una Experiencia Única | Paula Pastas",
   description:
-    "Descubrí los ravioles fritos de Paula Pastas: crocantes por fuera, cremosos por dentro. Perfectos para picadas y encuentros. ¡Delivery en Rosario!",
-  keywords: "ravioles fritos, pasta frita, picadas, entradas, delivery rosario, paula pastas",
+    "Descubrí los ravioles fritos de Paula Pastas: crocantes por fuera, cremosos por dentro. Perfectos para picadas y encuentros. ¡Delivery en Bialet Massé y Valle de Punilla!",
+  keywords: "ravioles fritos, pasta frita, picadas, entradas, delivery bialet masse, punilla, carlos paz, cosquin, paula pastas",
   openGraph: {
-    title: "Ravioles Fritos en Rosario | Paula Pastas",
+    title: "Ravioles Fritos en Bialet Massé y Punilla | Paula Pastas",
     description: "Crocantes y deliciosos ravioles fritos para tus picadas y eventos.",
     images: [
       {
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     locale: "es_AR",
   },
   alternates: {
-    canonical: "https://comidacasera.com/pastas/ravioles-fritos",
+    canonical: "https://paulapastas.com/pastas/ravioles-fritos",
   },
 }
 
@@ -93,9 +93,9 @@ export default async function RaviolesFritosPage() {
   // Preguntas frecuentes sobre ravioles fritos y el proceso de compra
   const faqs = [
     {
-      question: "¿Dónde comprar pastas artesanales en Rosario? ¿Hacen envíos?",
+      question: "¿Dónde comprar pastas artesanales en Bialet Massé y Valle de Punilla? ¿Hacen envíos?",
       answer:
-        "Realizamos envíos a Rosario, Funes, Fisherton, Villa Gobernador Gálvez, Alvear y zonas cercanas. Si tenés dudas sobre tu barrio, consultanos por WhatsApp y te confirmamos la cobertura.",
+        "Realizamos envíos a Bialet Massé, Villa Carlos Paz, Cosquín, Santa María de Punilla, Córdoba Capital y todo el Valle de Punilla. Si tenés dudas sobre tu zona, consultanos por WhatsApp y te confirmamos la cobertura.",
     },
     {
       question: "¿Los ravioles fritos son lo mismo que los tradicionales?",

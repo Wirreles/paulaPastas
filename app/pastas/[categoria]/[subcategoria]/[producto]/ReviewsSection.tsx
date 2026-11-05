@@ -121,7 +121,7 @@ export default function ReviewsSection({
                             <Award className="w-4 h-4 text-primary-600" /> Sin aditivos
                         </span>
                         <span className="flex items-center gap-1">
-                            <Leaf className="w-4 h-4 text-primary-600" /> Hecho en Rosario
+                            <Leaf className="w-4 h-4 text-primary-600" /> Hecho en Bialet Massé
                         </span>
                     </div>
 

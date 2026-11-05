@@ -124,7 +124,7 @@ export async function generateMetadata({ params }: ProductoPageProps): Promise<M
   return {
     title: producto.seoTitle || `${producto.nombre} | ${subcategoria} | Paula Pastas`,
     description: producto.seoDescription || producto.descripcion,
-    keywords: producto.seoKeywords?.join(", ") || `${producto.nombre.toLowerCase()}, ${subcategoria}, ${categoria}, rosario`,
+    keywords: producto.seoKeywords?.join(", ") || `${producto.nombre.toLowerCase()}, ${subcategoria}, ${categoria}, bialet masse, punilla, cordoba`,
     openGraph: {
       title: `${producto.nombre} | Paula Pastas`,
       description: producto.descripcion,
@@ -343,7 +343,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
               </summary>
 
               <div className="mt-4 text-neutral-700 leading-relaxed text-sm md:text-base">
-                <p className="mb-2">Realizamos envíos a Rosario y zonas cercanas.</p>
+                <p className="mb-2">Realizamos envíos a Bialet Massé, Valle de Punilla y zonas cercanas.</p>
                 <p>Se entregan congeladas: 2-3 días en heladera o 2 meses en freezer.</p>
               </div>
             </details>

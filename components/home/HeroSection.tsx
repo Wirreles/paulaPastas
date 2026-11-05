@@ -13,7 +13,7 @@ export default function HeroSection() {
             <div className="relative w-full lg:w-1/2 aspect-video lg:h-full">
                 <Image
                     src={heroImage}
-                    alt="Pasta artesanal en Rosario, plato de ravioles con salsa"
+                    alt="Pasta artesanal en Bialet Massé, plato de ravioles con salsa"
                     fill
                     className="object-cover w-full h-full"
                     priority={true} // Instrucción crítica para el navegador
@@ -25,7 +25,7 @@ export default function HeroSection() {
             {/* <div className="relative w-full lg:w-1/2 aspect-video lg:h-full">
                 <HeroImage
                     src={heroImage}
-                    alt="Pasta artesanal en Rosario, plato de ravioles con salsa"
+                    alt="Pasta artesanal en Bialet Massé, plato de ravioles con salsa"
                 
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     className="object-cover"
@@ -40,7 +40,7 @@ export default function HeroSection() {
                 </div>
 
                 <h1 className="font-display text-4xl md:text-6xl font-bold text-neutral-900 mb-4 leading-tight">
-                    Fábrica de pastas artesanales en Rosario
+                    Fábrica de pastas artesanales en Bialet Massé
                 </h1>
 
                 <p className="text-lg md:text-xl mb-8 text-neutral-700 max-w-xl mx-auto lg:mx-0">

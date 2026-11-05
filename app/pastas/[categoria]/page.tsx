@@ -73,17 +73,17 @@ export async function generateMetadata({ params }: CategoriaPageProps): Promise<
 
   if (!data) {
     return {
-      title: "Categoría no encontrada | Comida Casera",
+      title: "Categoría no encontrada | Paula Pastas",
       description: "La categoría solicitada no existe.",
     }
   }
 
   return {
-    title: `${data.nombre} Artesanales en Rosario | Comida Casera`,
+    title: `${data.nombre} Artesanales en Bialet Massé y Punilla | Paula Pastas`,
     description: data.descripcion,
-    keywords: `${data.nombre.toLowerCase()}, pastas caseras, artesanales, rosario, delivery`,
+    keywords: `${data.nombre.toLowerCase()}, pastas caseras, artesanales, bialet masse, punilla, cordoba, delivery`,
     openGraph: {
-      title: `${data.nombre} Artesanales | Comida Casera`,
+      title: `${data.nombre} Artesanales | Paula Pastas`,
       description: data.descripcion,
       images: [{ url: data.imagen, width: 1200, height: 600, alt: data.nombre }],
       type: "website",

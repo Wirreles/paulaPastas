@@ -6,13 +6,13 @@ import { ArrowRight, Leaf, Award, Factory, ChevronRight } from "lucide-react"
 import { FirebaseService } from "@/lib/firebase-service"
 
 export const metadata: Metadata = {
-  title: "Pastas sin TACC Artesanales en Rosario | Paula Pastas",
+  title: "Pastas sin TACC Artesanales en Bialet Massé y Punilla | Paula Pastas",
   description:
-    "Si estás buscando pastas sin gluten con sabor casero y gourmet en Rosario, llegaste al lugar indicado. En Paula Pastas nos importa acompañar tu mesa.",
-  keywords: "pastas sin tacc, sin gluten, celíacos, pastas artesanales, rosario, delivery",
+    "Si estás buscando pastas sin gluten con sabor casero y gourmet en Bialet Massé y Valle de Punilla, llegaste al lugar indicado. En Paula Pastas nos importa acompañar tu mesa.",
+  keywords: "pastas sin tacc, sin gluten, celíacos, pastas artesanales, bialet masse, punilla, cordoba, delivery",
   openGraph: {
     title: "Pastas sin TACC Artesanales | Paula Pastas",
-    description: "Pastas sin gluten con sabor casero y gourmet en Rosario.",
+    description: "Pastas sin gluten con sabor casero y gourmet en Bialet Massé y Valle de Punilla.",
     images: [
       {
         url: "/placeholder.svg?height=600&width=1200",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     locale: "es_AR",
   },
   alternates: {
-    canonical: "https://comidacasera.com/pastas/sin-tacc",
+    canonical: "https://paulapastas.com/pastas/sin-tacc",
   },
 }
 
@@ -104,10 +104,10 @@ export default async function PastasSinTaccPage() {
 
           <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
             <h1 className="font-display text-4xl md:text-6xl font-bold text-neutral-900 mb-4">
-              {banner?.title || "Pastas sin TACC artesanales en Rosario"}
+              {banner?.title || "Pastas sin TACC artesanales en Bialet Massé y Punilla"}
             </h1>
             <p className="text-xl md:text-2xl text-neutral-700 max-w-3xl mx-auto">
-              {banner?.subtitle || "Si estás buscando pastas sin gluten con sabor casero y gourmet en Rosario, llegaste al lugar indicado. En Paula Pastas nos importa acompañar tu mesa."}
+              {banner?.subtitle || "Si estás buscando pastas sin gluten con sabor casero y gourmet en Bialet Massé y Valle de Punilla, llegaste al lugar indicado. En Paula Pastas nos importa acompañar tu mesa."}
             </p>
           </div>
         </section>
@@ -116,7 +116,7 @@ export default async function PastasSinTaccPage() {
           {/* 2. ✅ Sección informativa (sin título) */}
           <section className="bg-white rounded-2xl shadow-lg p-8 mb-16 text-center max-w-4xl mx-auto">
             <p className="text-lg text-neutral-700 leading-relaxed">
-              Sabemos lo difícil que puede ser encontrar pastas sin TACC en Rosario que no sacrifiquen sabor ni textura.
+              Sabemos lo difícil que puede ser encontrar pastas sin TACC en Bialet Massé y Valle de Punilla que no sacrifiquen sabor ni textura.
               En Paula Pastas apostamos por una cocina artesanal que combina calidad, creatividad y tradición.
             </p>
             <p className="text-lg text-neutral-700 leading-relaxed mt-4">

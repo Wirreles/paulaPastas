@@ -34,7 +34,7 @@ export default function WhyChooseUs() {
                         </div>
                         <h3 className="text-xl font-semibold text-neutral-900 mb-2">Delivery Confiable</h3>
                         <p className="text-neutral-600">
-                            Recibe tus pastas en la comodidad de tu hogar, con entregas rápidas y seguras en Rosario.
+                            Recibe tus pastas en la comodidad de tu hogar, con entregas rápidas y seguras en Bialet Massé y Valle de Punilla.
                         </p>
                     </div>
                 </div>

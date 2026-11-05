@@ -8,10 +8,10 @@ import WhatsAppCTA from "@/components/landing/WhatsAppCTA"
 import NewsletterForm from "@/components/landing/NewsletterForm"
 
 export const metadata: Metadata = {
-  title: "Salsas Caseras Artesanales | Comida Casera",
+  title: "Salsas Caseras Artesanales en Bialet Massé y Punilla | Paula Pastas",
   description:
     "Descubre nuestras salsas caseras, hechas con ingredientes frescos y sin conservantes. Perfectas para acompañar tus pastas.",
-  keywords: ["salsas caseras", "salsas artesanales", "salsas para pasta", "comida casera", "rosario"],
+  keywords: ["salsas caseras", "salsas artesanales", "salsas para pasta", "paula pastas", "bialet masse", "punilla", "cordoba"],
 }
 
 export default async function SalsasPage() {

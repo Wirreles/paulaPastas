@@ -52,7 +52,7 @@ const raviolesFaqs = [
       "Los ravioles se exponen al método de cocción que elijas directo desde el freezer. Nunca se descongelan.",
   },
   {
-    question: "¿Dónde comprar ravioles artesanales en Rosario?",
+    question: "¿Dónde comprar ravioles artesanales en Bialet Massé y Valle de Punilla?",
     answer:
       "En Paula Pastas elaboramos cada raviol artesanalmente, uno por uno, con el cuidado y la atención que hacen la diferencia. Sí, son los mejores. Obviamente. 😉",
   },
@@ -98,19 +98,20 @@ const subcategoriaData = {
 
 export async function generateMetadata({ params }: SubcategoriaPageProps): Promise<Metadata> {
   const { categoria, subcategoria } = await params
-  const data = subcategoriaData[categoria as keyof typeof subcategoriaData]?.[subcategoria as keyof any]
+  const categoriaObj = subcategoriaData[categoria as keyof typeof subcategoriaData] as Record<string, any> | undefined;
+  const data = categoriaObj?.[subcategoria];
 
   if (!data) {
     return {
-      title: "Subcategoría no encontrada | Comida Casera",
+      title: "Subcategoría no encontrada | Paula Pastas",
       description: "La subcategoría solicitada no existe.",
     }
   }
 
   return {
-    title: `${data.nombre} en Rosario | Delivery | Paula Pastas`,
+    title: `${data.nombre} en Bialet Massé y Punilla | Delivery | Paula Pastas`,
     description: data.descripcion,
-    keywords: `${data.nombre.toLowerCase()}, ${categoria}, pastas caseras, artesanales, rosario, delivery`,
+    keywords: `${data.nombre.toLowerCase()}, ${categoria}, pastas caseras, artesanales, bialet masse, punilla, cordoba, delivery`,
     openGraph: {
       title: `${data.nombre} | Paula Pastas`,
       description: data.descripcion,
@@ -139,7 +140,8 @@ async function getProductosPorSubcategoria(categoria: string, subcategoria: stri
 
 export default async function SubcategoriaPage({ params }: SubcategoriaPageProps) {
   const { categoria, subcategoria } = await params
-  const data = subcategoriaData[categoria as keyof typeof subcategoriaData]?.[subcategoria as keyof any]
+  const categoriaObj = subcategoriaData[categoria as keyof typeof subcategoriaData] as Record<string, any> | undefined;
+  const data = categoriaObj?.[subcategoria];
 
   if (!data) {
     notFound()
@@ -240,7 +242,7 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
           <div className="absolute inset-0 z-0">
             <Image
               src={data.imagen || "/placeholder.svg"}
-              alt={`${data.nombre} artesanales en Rosario - Paula Pastas`}
+              alt={`${data.nombre} artesanales en Bialet Massé y Punilla - Paula Pastas`}
               fill
               className="object-cover"
               priority={true}
@@ -331,7 +333,7 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
                       Elaboración tradicional
                     </h3>
                     <p className="text-neutral-700 leading-relaxed">
-                      Cada raviol está elaborado artesanalmente en Rosario, con sémola seleccionada y sin conservantes. Y lo mejor: en menos de 10 minutos, tenes un plato que podrías servir en un restaurante... pero en tu casa.
+                      Cada raviol está elaborado artesanalmente en Bialet Massé, con sémola seleccionada y sin conservantes. Y lo mejor: en menos de 10 minutos, tenes un plato que podrías servir en un restaurante... pero en tu casa.
                     </p>
                   </div>
                 </div>

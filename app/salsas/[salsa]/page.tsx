@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: SalsaPageProps): Promise<Meta
     description: producto.seoDescription || producto.descripcion,
     keywords:
       producto.seoKeywords?.join(", ") ||
-      `${producto.nombre.toLowerCase()}, salsa, salsas caseras, pastas caseras, artesanales, rosario, delivery`,
+      `${producto.nombre.toLowerCase()}, salsa, salsas caseras, pastas caseras, artesanales, bialet masse, punilla, cordoba, delivery`,
     openGraph: {
       title: `${producto.nombre} | Paula Pastas`,
       description: producto.descripcion,

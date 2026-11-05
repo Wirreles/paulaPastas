@@ -80,9 +80,9 @@ export default function PastasPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "Pastas Artesanales en Rosario",
+    name: "Pastas Artesanales en Bialet Massé y Punilla",
     description:
-      "Comprá pastas artesanales caseras. Ravioles, sorrentinos, ñoquis y más con envío en Rosario.",
+      "Comprá pastas artesanales caseras. Ravioles, sorrentinos, ñoquis y más con envío en Bialet Massé y Valle de Punilla.",
     url: "https://paulapastas.com/pastas",
   };
 
@@ -98,7 +98,7 @@ export default function PastasPage() {
         <section className="relative h-[25vh] min-h-[200px] flex items-center justify-center">
           <Image
             src="/banners/banner-pastas.webp"
-            alt="Pastas artesanales caseras en Rosario"
+            alt="Pastas artesanales caseras en Bialet Massé y Punilla"
             fill
             priority
             fetchPriority="high"
