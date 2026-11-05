@@ -52,14 +52,7 @@ async function fixExistingProducts() {
           } else {
             subcategoria = "fideos" // default
           }
-        } else if (producto.categoria === "sin-tacc") {
-          if (producto.nombre.toLowerCase().includes("raviol")) {
-            subcategoria = "ravioles"
-          } else {
-            subcategoria = "fideos" // default
-          }
         }
-
         if (subcategoria) {
           await updateDoc(doc(db, "productos", id), {
             subcategoria: subcategoria,
@@ -77,7 +70,7 @@ async function fixExistingProducts() {
     // Verificar los productos después de la corrección
     console.log("\n📋 Verificando productos por subcategoría:")
     const finalSnapshot = await getDocs(productosRef)
-    const categorias = {}
+    const categorias: Record<string, string[]> = {};
 
     finalSnapshot.docs.forEach((doc) => {
       const producto = doc.data()
@@ -87,7 +80,8 @@ async function fixExistingProducts() {
     })
 
     Object.entries(categorias).forEach(([key, productos]) => {
-      console.log(`${key}: ${productos.length} productos - ${productos.join(", ")}`)
+      const prods = productos as string[];
+      console.log(`${key}: ${prods.length} productos - ${prods.join(", ")}`)
     })
   } catch (error) {
     console.error("❌ Error corrigiendo productos:", error)

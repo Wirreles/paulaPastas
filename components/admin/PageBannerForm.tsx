@@ -80,7 +80,7 @@ export default function PageBannerForm({ banner, onClose, onSave }: PageBannerFo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!formData.name || !formData.title || !formData.subtitle) {
       toast({
         title: "Error de validación",
@@ -198,7 +198,6 @@ export default function PageBannerForm({ banner, onClose, onSave }: PageBannerFo
                   <option value="">Seleccionar categoría</option>
                   <option value="rellenas">Rellenas</option>
                   <option value="sin-relleno">Sin Relleno</option>
-                  <option value="sin-tacc">Sin TACC</option>
                 </select>
               </div>
 
@@ -300,17 +299,16 @@ export default function PageBannerForm({ banner, onClose, onSave }: PageBannerFo
               <label className="block text-sm font-medium text-neutral-700 mb-1">
                 Imagen del Banner
               </label>
-              
+
               {imagePreview && (
                 <div className="mb-4 relative">
                   <div className="w-full h-48 relative rounded-lg overflow-hidden bg-neutral-100">
-                    <ImageWrapper 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      fill 
+                    <ImageWrapper
+                      src={imagePreview}
+                      alt="Preview"
+                      fill
                       className="object-cover"
                       fallback="/placeholder.svg?height=192&width=400&text=Preview"
-                      placeholder={<ProductPlaceholder className="object-cover" />}
                     />
                   </div>
                   <button

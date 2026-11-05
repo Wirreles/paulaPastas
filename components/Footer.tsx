@@ -59,7 +59,6 @@ export default function Footer() {
               <li><Link href="/pastas/rellenas/lasagna" className="hover:text-white transition-colors">Lasagna Artesanal</Link></li>
               <li><Link href="/pastas/rellenas/sorrentinos" className="hover:text-white transition-colors">Sorrentinos</Link></li>
               <li><Link href="/pastas/sin-relleno/noquis" className="hover:text-white transition-colors">Ñoquis de Papa</Link></li>
-              <li><Link href="/pastas/sin-tacc" className="hover:text-white transition-colors">Pastas Sin TACC</Link></li>
               <li><Link href="/pack-raviolada" className="hover:text-white transition-colors font-medium text-white">Pack Raviolada</Link></li>
             </ul>
           </nav>

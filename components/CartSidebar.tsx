@@ -92,7 +92,7 @@ export default function CartSidebar() {
                 Zonas de entrega:
               </div>
               <p className="mb-1">
-                Rosario y alrededores (para garantizar que el producto llegue fresco y en el tiempo perfecto).
+                Bialet Massé, Punilla y alrededores (para garantizar que el producto llegue fresco y en el tiempo perfecto).
               </p>
               <div className="flex items-center gap-2 font-semibold mt-3 mb-2">
                 <CheckCircle className="w-4 h-4" />

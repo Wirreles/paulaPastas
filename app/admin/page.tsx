@@ -54,9 +54,8 @@ export default function AdminPage() {
     total: productos.length,
     rellenas: productos.filter((p) => p.categoria === "rellenas").length,
     sinRelleno: productos.filter((p) => p.categoria === "sin-relleno").length,
-    sinTacc: productos.filter((p) => p.categoria === "sin-tacc").length,
     salsas: productos.filter((p) => p.categoria === "salsas").length,
-    packs: productos.filter((p) => p.categoria === "packs").length,
+    packs: productos.filter((p) => (p.categoria as string) === "packs").length,
     destacados: productos.filter((p) => p.destacado).length,
   }
 
@@ -98,18 +97,6 @@ export default function AdminPage() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-neutral-600">Sin Relleno</p>
                   <p className="text-2xl font-bold text-neutral-900">{stats.sinRelleno}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <div className="flex items-center">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <span className="text-green-600 font-bold">T</span>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-neutral-600">Sin TACC</p>
-                  <p className="text-2xl font-bold text-neutral-900">{stats.sinTacc}</p>
                 </div>
               </div>
             </div>
@@ -162,7 +149,6 @@ export default function AdminPage() {
                   <option value="todas">Todas las categorías</option>
                   <option value="rellenas">Pastas Rellenas</option>
                   <option value="sin-relleno">Sin Relleno</option>
-                  <option value="sin-tacc">Sin TACC</option>
                   <option value="salsas">Salsas</option>
                   <option value="packs">Packs</option>
                 </select>
@@ -248,9 +234,8 @@ export default function AdminPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
                             <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                producto.disponible ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                              }`}
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${producto.disponible ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                                }`}
                             >
                               {producto.disponible ? "Disponible" : "No disponible"}
                             </span>

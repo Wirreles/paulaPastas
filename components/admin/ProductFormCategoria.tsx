@@ -28,7 +28,6 @@ export default function ProductFormCategoria({
           <option value="">Seleccionar categoría</option>
           <option value="rellenas">Pastas Rellenas</option>
           <option value="sin-relleno">Sin Relleno</option>
-          <option value="sin-tacc">Sin TACC</option>
           <option value="salsas">Salsas Caseras</option>
           <option value="packs">Packs y Combos</option>
         </select>
@@ -57,12 +56,6 @@ export default function ProductFormCategoria({
             <>
               <option value="noquis">Ñoquis</option>
               <option value="fideos">Fideos</option>
-            </>
-          )}
-          {categoria === "sin-tacc" && (
-            <>
-              <option value="ravioles">Ravioles Sin TACC</option>
-              <option value="fideos">Fideos Sin TACC</option>
             </>
           )}
           {["salsas", "packs"].includes(categoria) && (

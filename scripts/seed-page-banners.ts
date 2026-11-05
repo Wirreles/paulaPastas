@@ -45,18 +45,6 @@ const pageBanners = [
     slug: "sin-relleno",
     order: 2,
   },
-  {
-    id: "banner-sin-tacc",
-    name: "Banner Pastas Sin TACC",
-    description: "Banner principal de la página de Pastas Sin TACC",
-    imageUrl: "/placeholder.svg?height=600&width=1200",
-    title: "Pastas sin TACC artesanales en Rosario",
-    subtitle: "Si estás buscando pastas sin gluten con sabor casero y gourmet en Rosario, llegaste al lugar indicado. En Paula Pastas nos importa acompañar tu mesa.",
-    pageType: "categoria" as const,
-    categoria: "sin-tacc",
-    slug: "sin-tacc",
-    order: 3,
-  },
 
   // SUBCATEGORÍAS DE RELLENAS
   {

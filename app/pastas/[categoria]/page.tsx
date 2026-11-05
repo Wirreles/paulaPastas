@@ -58,13 +58,6 @@ const categoriaData = {
       },
     ],
   },
-  "sin-tacc": {
-    nombre: "Pastas Sin TACC",
-    descripcion:
-      "Pastas libres de gluten elaboradas con harinas certificadas sin TACC. Perfectas para celíacos sin renunciar al sabor tradicional.",
-    imagen: "/banners/banner-sintac.webp",
-    subcategorias: [],
-  },
 }
 
 export async function generateMetadata({ params }: CategoriaPageProps): Promise<Metadata> {

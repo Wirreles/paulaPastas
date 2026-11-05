@@ -4,7 +4,7 @@ import { FirebaseService } from "@/lib/firebase-service"
 // Función para convertir cualquier fecha a formato ISO 8601 válido
 function formatDateForSitemap(date: any): Date {
   if (!date) return new Date()
-  
+
   try {
     // Si es un Timestamp de Firebase, convertir a Date
     if (date && typeof date === 'object' && 'toDate' in date) {
@@ -25,7 +25,7 @@ function formatDateForSitemap(date: any): Date {
   } catch (error) {
     console.warn('Error converting date for sitemap:', error)
   }
-  
+
   // Fallback a fecha actual
   return new Date()
 }
@@ -91,12 +91,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${baseUrl}/pastas/sin-relleno`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/pastas/sin-tacc`,
       lastModified: new Date(),
       changeFrequency: "weekly" as const,
       priority: 0.9,

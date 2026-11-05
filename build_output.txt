@@ -1,6 +1,6 @@
 app/admin/blog/page.tsx(262,31): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
   Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
-app/admin/page.tsx(59,36): error TS2367: This comparison appears to be unintentional because the types '"rellenas" | "sin-relleno" | "sin-tacc" | "salsas"' and '"packs"' have no overlap.
+app/admin/page.tsx(59,36): error TS2367: This comparison appears to be unintentional because the types '"rellenas" | "sin-relleno" | "salsas"' and '"packs"' have no overlap.
 app/blog/[slug]/page.tsx(132,15): error TS2322: Type '{ src: string; alt: string; width: number; height: number; className: string; priority: true; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
   Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
 app/blog/page.tsx(190,23): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
@@ -39,7 +39,6 @@ app/pastas/salsas/page.tsx(327,67): error TS2345: Argument of type 'string | und
   Type 'undefined' is not assignable to type 'string'.
 app/pastas/salsas/page.tsx(335,67): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-app/pastas/sin-tacc/page.tsx(101,15): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; priority: true; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
   Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
 app/salsas/[salsa]/page.tsx(88,7): error TS2322: Type 'import("G:/proyectos/paulapastas/paulaPastas/lib/types").Producto' is not assignable to type 'Producto'.
   Types of property 'id' are incompatible.
@@ -49,7 +48,7 @@ app/salsas/[salsa]/page.tsx(89,7): error TS2322: Type 'import("G:/proyectos/paul
   Type 'import("G:/proyectos/paulapastas/paulaPastas/lib/types").Producto' is not assignable to type 'Producto'.
 app/salsas/[salsa]/ProductoPageClient.tsx(118,15): error TS2345: Argument of type 'Producto' is not assignable to parameter of type 'import("G:/proyectos/paulapastas/paulaPastas/lib/types").Producto'.
   Types of property 'categoria' are incompatible.
-    Type 'string' is not assignable to type '"rellenas" | "sin-relleno" | "sin-tacc" | "salsas"'.
+    Type 'string' is not assignable to type '"rellenas" | "sin-relleno" | "salsas"'.
 app/salsas/[salsa]/ProductoPageClient.tsx(223,19): error TS2322: Type '{ src: string; alt: string; fill: true; className: string; priority: true; fallback: string; placeholder: Element; }' is not assignable to type 'IntrinsicAttributes & ImageWrapperProps'.
   Property 'placeholder' does not exist on type 'IntrinsicAttributes & ImageWrapperProps'.
 app/salsas/[salsa]/ProductoPageClient.tsx(310,66): error TS2322: Type 'Producto' is not assignable to type 'import("G:/proyectos/paulapastas/paulaPastas/lib/types").Producto'.

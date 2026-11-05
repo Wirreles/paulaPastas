@@ -263,7 +263,7 @@ export default function DireccionesModal({ isOpen, onClose, userId, onDireccione
                     value={formData.codigoPostal}
                     onChange={(e) => setFormData({ ...formData, codigoPostal: e.target.value })}
                     className="w-full p-2 border border-neutral-300 rounded-md"
-                    placeholder="2000"
+                    placeholder="5158"
                   />
                 </div>
 
@@ -275,7 +275,7 @@ export default function DireccionesModal({ isOpen, onClose, userId, onDireccione
                     value={formData.ciudad}
                     onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
                     className="w-full p-2 border border-neutral-300 rounded-md"
-                    placeholder="Rosario"
+                    placeholder="Bialet Massé"
                   />
                 </div>
 
@@ -287,7 +287,7 @@ export default function DireccionesModal({ isOpen, onClose, userId, onDireccione
                     value={formData.provincia}
                     onChange={(e) => setFormData({ ...formData, provincia: e.target.value })}
                     className="w-full p-2 border border-neutral-300 rounded-md"
-                    placeholder="Santa Fe"
+                    placeholder="Córdoba"
                   />
                 </div>
               </div>

@@ -12,18 +12,18 @@ export interface Producto {
 
   precio: number
 
-  categoria: "rellenas" | "sin-relleno" | "sin-tacc" | "salsas"
+  categoria: "rellenas" | "sin-relleno" | "salsas"
 
   // IMPORTANTE: ahora es opcional para nuevas URLs
   subcategoria:
-    | "lasagna"
-    | "ravioles"
-    | "sorrentinos"
-    | "fideos"
-    | "ravioles-fritos"
-    | "salsa"
-    | "noquis"
-    
+  | "lasagna"
+  | "ravioles"
+  | "sorrentinos"
+  | "fideos"
+  | "ravioles-fritos"
+  | "salsa"
+  | "noquis"
+
   imagen: string
   // Opcional: permite mostrar galerías de imágenes en vez de una sola
   imagenes?: string[]

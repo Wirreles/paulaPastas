@@ -154,7 +154,6 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
   const CATEGORY_NAMES: Record<string, string> = {
     "rellenas": "Pastas Rellenas",
     "sin-relleno": "Sin Relleno",
-    "sin-tacc": "Sin TACC",
     "salsas": "Salsas",
   }
   const categoriaNombre = CATEGORY_NAMES[categoria] || categoria

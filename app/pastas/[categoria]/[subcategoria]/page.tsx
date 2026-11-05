@@ -174,7 +174,7 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
         {
           "@type": "ListItem",
           position: 3,
-          name: categoria === "rellenas" ? "Pastas Rellenas" : categoria === "sin-relleno" ? "Sin Relleno" : "Sin TACC",
+          name: categoria === "rellenas" ? "Pastas Rellenas" : categoria === "sin-relleno" ? "Sin Relleno" : "Pastas",
           item: `https://paulapastas.com/pastas/${categoria}`,
         },
         {
@@ -228,8 +228,7 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
                 {categoria === "rellenas"
                   ? "Pastas Rellenas"
                   : categoria === "sin-relleno"
-                    ? "Sin Relleno"
-                    : "Sin TACC"}
+                    ? "Sin Relleno" : "Categoría"}
               </Link>
               <span className="text-neutral-400">/</span>
               <span className="text-neutral-900 font-medium">{data.nombre}</span>
@@ -270,7 +269,7 @@ export default async function SubcategoriaPage({ params }: SubcategoriaPageProps
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver a{" "}
-              {categoria === "rellenas" ? "Pastas Rellenas" : categoria === "sin-relleno" ? "Sin Relleno" : "Sin TACC"}
+              {categoria === "rellenas" ? "Pastas Rellenas" : categoria === "sin-relleno" ? "Sin Relleno" : "Categoría"}
             </Link>
           </div>
 
