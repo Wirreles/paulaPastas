@@ -3,7 +3,7 @@ export const STATIC_REVIEWS = [
     id: "1",
     name: "María G.",
     rating: 5,
-    testimonial: "Las mejores pastas caseras que he probado en Rosario. ¡Frescas y deliciosas!",
+    testimonial: "Las mejores pastas caseras que he probado en Bialet Massé y Punilla. ¡Frescas y deliciosas!",
   },
   {
     id: "2",
@@ -39,9 +39,9 @@ export const STATIC_REVIEWS = [
 
 export const STATIC_FAQS = [
   {
-    question: "¿Dónde comprar pastas artesanales en Rosario? ¿Hacen envíos?",
+    question: "¿Dónde comprar pastas artesanales en Bialet Massé y Valle de Punilla? ¿Hacen envíos?",
     answer:
-      "Realizamos envíos a Rosario, Funes, Fisherton, Villa Gobernador Gálvez, Alvear y zonas cercanas. Si tenés dudas sobre tu barrio, consultanos por WhatsApp y te confirmamos la cobertura.",
+      "Realizamos envíos a Bialet Massé, Villa Carlos Paz, Cosquín, Santa María de Punilla, Córdoba Capital y todo el Valle de Punilla. Si tenés dudas sobre tu zona, consultanos por WhatsApp y te confirmamos la cobertura.",
   },
   {
     question: "¿Qué tipos de pastas ofrecen?",

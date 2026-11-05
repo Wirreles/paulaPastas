@@ -1,18 +1,19 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server"
 import { MercadoPagoService } from "@/lib/mercadopago-service"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { 
-      items, 
-      userData, 
-      deliveryOption, 
-      deliverySlot, 
-      comments, 
-      isUserLoggedIn, 
-      userId, 
-      addressId, 
+    const {
+      items,
+      userData,
+      deliveryOption,
+      deliverySlot,
+      comments,
+      isUserLoggedIn,
+      userId,
+      addressId,
       addressData,
       couponApplied // Agregar el campo del cupón
     } = body
@@ -53,10 +54,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("❌ Error en create-preference:", error)
     return NextResponse.json(
-      { 
+      {
         error: "Error al crear preferencia de pago",
         details: error instanceof Error ? error.message : "Error desconocido"
-      }, 
+      },
       { status: 500 }
     )
   }

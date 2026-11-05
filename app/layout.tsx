@@ -27,11 +27,11 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   metadataBase: new URL("https://paulapastas.com"),
   title: {
-    default: "Paula Pastas - Pastas Artesanales",
+    default: "Paula Pastas - Pastas Artesanales Congeladas",
     template: "%s | Paula Pastas",
   },
   description:
-    "Pastas frescas y salsas caseras hechas con amor y tradición. ¡Pedí online!",
+    "Fabricación y venta online de pastas artesanales congeladas con envío a domicilio en Bialet Massé, Carlos Paz, Cosquín y Córdoba.",
   icons: {
     icon: [
       { url: "/pplog2.webp", sizes: "any" },

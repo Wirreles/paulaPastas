@@ -27,7 +27,7 @@ export default function Footer() {
               </div>
             </Link>
             <p className="text-neutral-400 text-sm leading-relaxed">
-              Desde 2020 elaboramos las mejores pastas frescas en Rosario con recetas familiares.
+              Desde 2020 elaboramos las mejores pastas artesanales en Bialet Massé con recetas familiares.
               Calidad artesanal directo a tu mesa.
             </p>
             {/* Redes Sociales con Iconos (Mejor UI) */}
@@ -78,7 +78,7 @@ export default function Footer() {
               </li>
               <li className="flex items-start space-x-3">
                 <Truck className="w-5 h-5 text-neutral-500 shrink-0" />
-                <span>Rosario, Santa Fe<br /><span className="text-xs italic">Solo envíos a domicilio</span></span>
+                <span>San Pablo s/n (entre Av. Cassaffousth y Tránsito Cáceres)<br />Bialet Massé, Córdoba (C.P. 5158)<br /><span className="text-xs italic">Solo envíos a domicilio</span></span>
               </li>
             </ul>
           </div>

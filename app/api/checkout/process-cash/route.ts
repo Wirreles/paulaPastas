@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/firebase-admin"
 import { FieldValue } from "firebase-admin/firestore"
@@ -48,13 +49,13 @@ export async function POST(request: NextRequest) {
       }
 
       const productData = productSnap.data() || {}
-      
+
       // Validar disponibilidad
       if (productData.disponible === false) {
-          return NextResponse.json(
-            { error: `El producto ${productData.nombre} no está disponible actualmente.` },
-            { status: 400 }
-          )
+        return NextResponse.json(
+          { error: `El producto ${productData.nombre} no está disponible actualmente.` },
+          { status: 400 }
+        )
       }
 
       // Validar stock (solo si el campo existe en la BD)
@@ -180,10 +181,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("❌ Error crítico en process-cash:", error)
     return NextResponse.json(
-      { 
+      {
         error: "Error interno al procesar el pedido",
         details: error instanceof Error ? error.message : "Error desconocido"
-      }, 
+      },
       { status: 500 }
     )
   }

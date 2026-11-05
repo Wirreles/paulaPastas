@@ -25,12 +25,12 @@ export const revalidate = 60
 
 // Metadatos SEO (Reemplaza next/head)
 export const metadata: Metadata = {
-  title: "Paula Pastas - Pastas Artesanales en Rosario | Delivery Premium",
-  description: "Las mejores pastas artesanales de Rosario. Ravioles, sorrentinos, lasagna y más. Delivery rápido con cadena de frío. ¡Pedí online ahora!",
-  keywords: ["pastas artesanales", "rosario", "delivery", "ravioles", "sorrentinos", "lasagna", "pastas caseras", "paula pastas"],
+  title: "Paula Pastas | Pastas Artesanales Congeladas en Bialet Massé y Punilla",
+  description: "Fabricación y venta online de pastas artesanales congeladas con envío a domicilio en Bialet Massé, Carlos Paz, Cosquín y Córdoba.",
+  keywords: ["pastas artesanales", "pastas congeladas", "bialet masse", "cordoba", "valle de punilla", "carlos paz", "cosquin", "delivery", "ravioles", "sorrentinos", "lasagna", "pastas caseras", "paula pastas"],
   openGraph: {
-    title: "Paula Pastas - Pastas Artesanales en Rosario",
-    description: "Las mejores pastas artesanales de Rosario. Delivery rápido con cadena de frío. ¡Pedí online ahora!",
+    title: "Paula Pastas | Pastas Artesanales Congeladas en Bialet Massé y Punilla",
+    description: "Fabricación y venta online de pastas artesanales congeladas con envío a domicilio en Bialet Massé, Carlos Paz, Cosquín y Córdoba.",
     url: "https://paulapastas.com",
     type: "website",
     images: [
@@ -44,8 +44,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Paula Pastas - Pastas Artesanales en Rosario",
-    description: "Las mejores pastas artesanales de Rosario. Delivery rápido con cadena de frío.",
+    title: "Paula Pastas | Pastas Artesanales Congeladas en Bialet Massé y Punilla",
+    description: "Fabricación y venta online de pastas artesanales congeladas con envío a domicilio en Bialet Massé, Carlos Paz, Cosquín y Córdoba.",
     images: ["https://paulapastas.com/home-sections/hero-main-image.webp"],
   },
 }
@@ -81,7 +81,31 @@ async function HomeData() {
   const reviewsJsonLd = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    name: "Paula Pastas",
+    name: "Paula Pastas - Pastas Artesanales Congeladas",
+    description: "Fabricación y venta online de pastas artesanales congeladas con envío a domicilio en Bialet Massé, Carlos Paz, Cosquín y Córdoba.",
+    url: "https://paulapastas.com",
+    telephone: "+54 9 341 355-7400",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "San Pablo s/n (entre Av. Cassaffousth y Tránsito Cáceres)",
+      addressLocality: "Bialet Massé",
+      addressRegion: "Córdoba",
+      postalCode: "5158",
+      addressCountry: "AR",
+    },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: -31.3194549769404,
+      longitude: -64.50525418079864,
+    },
+    areaServed: [
+      "Bialet Massé",
+      "Villa Carlos Paz",
+      "Cosquín",
+      "Santa María de Punilla",
+      "Córdoba Capital",
+      "Valle de Punilla",
+    ],
     aggregateRating: {
       "@type": "AggregateRating",
       ratingValue: "4.9",
